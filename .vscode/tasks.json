@@ -1,0 +1,20 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "qt designer",
+            "type": "shell",
+            "command": "uvx --from pyside6-essentials==6.10.0 pyside6-designer ${workspaceFolder}/src/NanoVNASaver/Windows/ui/about.ui",
+            "options": {
+                "cwd": "${workspaceFolder}/src/NanoVNASaver/"
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+    ]
+}

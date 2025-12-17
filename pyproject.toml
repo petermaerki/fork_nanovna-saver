@@ -27,19 +27,22 @@ dynamic=['version']
 
 dependencies=[
   'pyserial~=3.5',
-  'pyside6~=6.8',
   'numpy~=2.1',
   'scipy~=1.14',
+  'PySide6~=6.10.0',
+  'qasync>=0.27.1',
+  'mpremote',
 ]
 
 [dependency-groups]
 dev = [
   # Static Code Analysis tools
-  "ruff~=0.9",
+  "ruff~=0.14",
   "pre-commit~=4.1",
-  "mypy~=1.14",
-  "pylint~=3.3",
+  "mypy~=1.19",
+  "pylint~=4.0",
   "types-pyserial~=3.5",
+  "PySide6-stubs>=6.7.3.0",
 
   # Testing
   "pytest~=8.3",

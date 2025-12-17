@@ -46,7 +46,10 @@ class Interface(serial.Serial):
         self.comment = comment
         self.port = None
         self.baudrate = 115200
-        self.timeout = 0.05
+        # Notebook Hans, with external 11 port hub connected:
+        # 0.05: Timeout
+        # 0.1: Ok
+        self.timeout = 0.1
         self.lock = RLock()
 
     def __str__(self) -> str:

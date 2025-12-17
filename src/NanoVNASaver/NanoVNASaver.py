@@ -54,6 +54,7 @@ from .Charts.Chart import Chart
 from .Controls.MarkerControl import MarkerControl
 from .Controls.SerialControl import SerialControl
 from .Controls.SweepControl import SweepControl
+from .antenna_peter.PeterAntennaControl import PeterAntennaControl
 from .Defaults import APP_SETTINGS, AppSettings, get_app_config
 from .Formatting import format_frequency, format_gain, format_vswr
 from .Hardware.Hardware import Interface
@@ -118,6 +119,7 @@ class NanoVNASaver(QWidget):
         self.vna: VNA = VNA(self.interface)
 
         self.calibration: Calibration = Calibration()
+        self.peter_antenna_control = PeterAntennaControl(self)
         self.sweep_control = SweepControl(self)
         self.marker_control = MarkerControl(self)
         self.serial_control = SerialControl(self)
@@ -270,6 +272,11 @@ class NanoVNASaver(QWidget):
             "setup": DisplaySettingsWindow(self),
             "tdr": TDRWindow(self),
         }
+
+        ###############################################################
+        #  peter_antenna
+        ###############################################################
+        left_column.addWidget(self.peter_antenna_control)
 
         ###############################################################
         #  Sweep control
@@ -536,9 +543,10 @@ class NanoVNASaver(QWidget):
             s11 = self.data.s11[:]
             s21 = self.data.s21[:]
 
-        for m in self.markers:
-            m.resetLabels()
-            m.updateLabels(s11, s21)
+        if not self.peter_antenna_control.checkbox_tune.isChecked():
+            for m in self.markers:
+                m.resetLabels()
+                m.updateLabels(s11, s21)
 
         for c in self.s11charts:
             c.setData(s11)
@@ -582,6 +590,11 @@ class NanoVNASaver(QWidget):
         self.communicate.data_available.emit()
 
     def sweepFinished(self):
+        self.peter_antenna_control.sweepFinished_peter_antenna()
+        if self.peter_antenna_control.checkbox_tune.isChecked():
+            self.sweep_start()
+            return
+
         self._sweep_control(start=False)
 
         for marker in self.markers:

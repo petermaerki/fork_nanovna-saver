@@ -20,7 +20,6 @@ __pycache__/*
 .pydevproject
 .settings
 .idea
-.vscode
 tags
 
 # Package files
@@ -62,3 +61,4 @@ src/NanoVNASaver/Windows/ui/about.py
 
 *.spec
 *_rc.py
+NanoVNASaver.txt

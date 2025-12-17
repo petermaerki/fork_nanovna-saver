@@ -49,7 +49,8 @@ class PeterAntennaControl(Control):
         self.button_set_values.pressed.connect(self.on_button_set_values)
         self.checkbox_tune.checkStateChanged.connect(self.on_tune_state_change)
 
-        util_mpremote.mp_exec(cmd=MICROPYTHON_MAIN)
+        self.mp_device = util_mpremote.get_device()
+        util_mpremote.mp_exec(device=self.mp_device, cmd=MICROPYTHON_MAIN)
 
     def on_tune_state_change(self):
         checked = self.checkbox_tune.isChecked()
@@ -204,4 +205,4 @@ class PeterAntennaControl(Control):
             else:
                 cmd = f"run(direction_up={direction_up}, on=True)"
 
-            util_mpremote.mp_exec(cmd=cmd)
+            util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)

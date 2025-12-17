@@ -14,5 +14,5 @@ Make sure that VSCode uses `./.venv/bin/python`.
 
 ## FAQ
 
-/home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+~/.config/NanoVNASaver/NanoVNASaver.ini
 

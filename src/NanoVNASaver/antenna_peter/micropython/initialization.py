@@ -46,8 +46,8 @@ def get_tx_aktiv():
 def set_tx_sperren(sperren: bool):
     TX_INH_out_pin(sperren)
 
-def tune_enable(tunen: bool):
-    if tunen:
+def vna_enable(enable: bool):
+    if enable:
         set_tx_sperren(sperren=True)
         time.sleep(0.3)
         K2_ATTENUATION_out_pin.value(True)

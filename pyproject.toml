@@ -28,7 +28,7 @@ dynamic=['version']
 dependencies=[
   'pyserial~=3.5',
   'numpy~=2.1',
-  'scipy~=1.14',
+  'scipy~=1.15.3',
   'PySide6~=6.10.0',
   'qasync>=0.27.1',
   'mpremote',

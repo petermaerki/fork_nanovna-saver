@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
-FILENAME_MICROPYTHON_INITIALIZATION = DIRECTORY_OF_THIS_FILE / "micropython" / "initialization.py"
+FILENAME_MICROPYTHON_INITIALIZATION = (
+    DIRECTORY_OF_THIS_FILE / "micropython" / "initialization.py"
+)
 MICROPYTHON_MAIN = FILENAME_MICROPYTHON_INITIALIZATION.read_text()
 
 class PeterAntennaControl(Control):
@@ -32,6 +34,10 @@ class PeterAntennaControl(Control):
         input_layout = QtWidgets.QFormLayout()
 
         self.checkbox_tune = QtWidgets.QCheckBox()
+        self.checkbox_vna_enable = QtWidgets.QCheckBox()
+        input_layout.addRow(
+            QtWidgets.QLabel("VNA enable"), self.checkbox_vna_enable
+        )
         input_layout.addRow(QtWidgets.QLabel("Tune"), self.checkbox_tune)
 
         self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
@@ -39,7 +45,7 @@ class PeterAntennaControl(Control):
             QtWidgets.QLabel("Set Values"), self.button_set_values
         )
 
-        self.input_set_Hz = QtWidgets.QLineEdit("3.0e6")
+        self.input_set_Hz = QtWidgets.QLineEdit("7.074e6")
         input_layout.addRow(
             QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz
         )
@@ -47,15 +53,35 @@ class PeterAntennaControl(Control):
         self.layout.addRow(input_layout)
 
         self.button_set_values.pressed.connect(self.on_button_set_values)
-        self.checkbox_tune.checkStateChanged.connect(self.on_tune_state_change)
-
+        self.checkbox_tune.checkStateChanged.connect(self.on_tune)
+        self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
         self.mp_device = util_mpremote.get_device()
         util_mpremote.mp_exec(device=self.mp_device, cmd=MICROPYTHON_MAIN)
 
-    def on_tune_state_change(self):
+    def on_tune(self):
         checked = self.checkbox_tune.isChecked()
         if checked:
-            self.on_button_set_values()
+            # self.on_button_set_values()
+            if False:
+                sweep_stop = self.app.sweep_control.inputs["Stop"]
+                assert isinstance(sweep_stop, FrequencyInputWidget)
+                if sweep_stop.get_freq() > F_USEFUL_MAX_Hz:
+                    sweep_stop.setText(f"{F_USEFUL_MAX_Hz:0.0f}Hz")
+                    sweep_start = self.app.sweep_control.inputs["Start"]
+                    assert isinstance(sweep_start, FrequencyInputWidget)
+                    sweep_start.setText(f"{F_USEFUL_MIN_Hz:0.0f}Hz")
+
+            self.app.sweep_start()
+        else:
+            util_mpremote.mp_exec(
+                device=self.mp_device, cmd="run(direction_up=True, on=False)"
+            )
+
+    def on_vna_enable(self):
+        checked = self.checkbox_vna_enable.isChecked()
+        util_mpremote.mp_exec(
+            device=self.mp_device, cmd=f"vna_enable(enable={int(checked)})"
+        )
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")
@@ -188,21 +214,25 @@ class PeterAntennaControl(Control):
             sweep_start_Hz = F_USEFUL_MIN_Hz
             sweep_stop_Hz = F_USEFUL_MAX_Hz
 
-
         self._setStartStopFrequencyFloat("Start", sweep_start_Hz)
         self._setStartStopFrequencyFloat("Stop", sweep_stop_Hz)
-        self._setDatapointCount(201)
+        sweep_range_Hz = sweep_stop_Hz - sweep_start_Hz
+        points = int(2000 * sweep_range_Hz / 30e6)
+        points = min(points, 1000)
+        points = max(points, 51)
+        self._setDatapointCount(points)
 
         logger.debug(f"{f_swr_min_Hz=} {sweep_start_Hz=} {sweep_stop_Hz=}")
 
         if f_swr_min_Hz is not None:
-            difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
-            direction_up = difference_Hz > 0
-            pulse = abs(difference_Hz) < 50_000
-            if pulse:
-                duration_s = 0.05
-                cmd = f"pulse({direction_up}, {duration_s})"
-            else:
-                cmd = f"run(direction_up={direction_up}, on=True)"
+            if F_USEFUL_MIN_Hz < f_swr_min_Hz < F_USEFUL_MAX_Hz:
+                difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
+                direction_up = difference_Hz > 0
+                pulse = abs(difference_Hz) < 10_000
+                if pulse:
+                    duration_s = 0.05
+                    cmd = f"pulse({direction_up}, {duration_s})"
+                else:
+                    cmd = f"run(direction_up={direction_up}, on=True)"
 
-            util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+                util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)

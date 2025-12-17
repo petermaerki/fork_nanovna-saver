@@ -100,7 +100,7 @@ class NanoVNASaver(QWidget):
         self.settings: AppSettings = APP_SETTINGS
         app_config = self.settings.restore_config()
         self.threadpool = QtCore.QThreadPool()
-        self.sweep = Sweep()
+        self.sweep = Sweep(start=1e6, end=30e6)
         self.worker = SweepWorker(self)
 
         self.worker.signals.updated.connect(self.dataUpdated)

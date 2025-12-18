@@ -76,6 +76,9 @@ class PeterAntennaControl(Control):
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=True, on=False)"
             )
+            sweep_start.setText(f"100kHz") # todo: disable sweep completely
+            sweep_stop.setText(f"200kHz")
+            self.app.sweep_start()
 
     def on_vna_enable(self):
         checked = self.checkbox_vna_enable.isChecked()
@@ -216,11 +219,22 @@ class PeterAntennaControl(Control):
 
         self._setStartStopFrequencyFloat("Start", sweep_start_Hz)
         self._setStartStopFrequencyFloat("Stop", sweep_stop_Hz)
-        sweep_range_Hz = sweep_stop_Hz - sweep_start_Hz
-        points = int(2000 * sweep_range_Hz / 30e6)
-        points = min(points, 1000)
-        points = max(points, 51)
-        self._setDatapointCount(points)
+        #sweep_range_relative = (sweep_stop_Hz - sweep_start_Hz)/set_f_swr_min_Hz
+        #points = int(5 * sweep_range_relative / 0.01)
+        #points = min(points, 600)
+        #points = max(points, 51)
+       
+        points = 500
+        points_pulse = 300
+        if set_f_swr_min_Hz > 5E6:
+            deviation_limit_puls = 1e-2
+            points_pulse = 51
+        if set_f_swr_min_Hz > 12E6:
+            deviation_limit_puls = 3e-2
+            points_pulse = 51
+        if set_f_swr_min_Hz > 16E6:
+            deviation_limit_puls = 5e-2
+            points_pulse = 51
 
         logger.debug(f"{f_swr_min_Hz=} {sweep_start_Hz=} {sweep_stop_Hz=}")
 
@@ -228,11 +242,21 @@ class PeterAntennaControl(Control):
             if F_USEFUL_MIN_Hz < f_swr_min_Hz < F_USEFUL_MAX_Hz:
                 difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
                 direction_up = difference_Hz > 0
-                pulse = abs(difference_Hz) < 10_000
+                deviation = abs(difference_Hz/set_f_swr_min_Hz)
+                pulse = False
+                
+                if deviation < deviation_limit_puls:
+                    pulse = True
+                    duration_s = 1.0*deviation/deviation_limit_puls
                 if pulse:
-                    duration_s = 0.05
                     cmd = f"pulse({direction_up}, {duration_s})"
+                    print(f'pulse: {duration_s=}')
+                    points=points_pulse
                 else:
                     cmd = f"run(direction_up={direction_up}, on=True)"
 
                 util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+        else:
+            cmd = f"run(direction_up=True, on=False)"
+        
+        self._setDatapointCount(points)

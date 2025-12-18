@@ -3,7 +3,7 @@ import pathlib
 from typing import TYPE_CHECKING
 
 import numpy as np
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 from ..Controls.Control import Control
 from ..Controls.SweepControl import FrequencyInputWidget
@@ -34,11 +34,15 @@ class PeterAntennaControl(Control):
         input_layout = QtWidgets.QFormLayout()
 
         self.checkbox_tune = QtWidgets.QCheckBox()
+        self.checkbox_up = QtWidgets.QCheckBox()
+        self.checkbox_down = QtWidgets.QCheckBox()
         self.checkbox_vna_enable = QtWidgets.QCheckBox()
         input_layout.addRow(
             QtWidgets.QLabel("VNA enable"), self.checkbox_vna_enable
         )
         input_layout.addRow(QtWidgets.QLabel("Tune"), self.checkbox_tune)
+        input_layout.addRow(QtWidgets.QLabel("up"), self.checkbox_up)
+        input_layout.addRow(QtWidgets.QLabel("down"), self.checkbox_down)
 
         self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
         input_layout.addRow(
@@ -46,6 +50,19 @@ class PeterAntennaControl(Control):
         )
 
         self.input_set_Hz = QtWidgets.QLineEdit("7.074e6")
+
+        # Minimal hard-coded adjustments so the input visually matches
+        # the sweep inputs: fixed height, minimum width and right alignment
+        self.input_set_Hz.setFixedHeight(20)
+        self.input_set_Hz.setMinimumWidth(60)
+        self.input_set_Hz.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight
+        )
+        # Make the input font a bit larger for better readability
+        font = self.input_set_Hz.font()
+        font.setPointSize(11)
+        self.input_set_Hz.setFont(font)
+
         input_layout.addRow(
             QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz
         )
@@ -54,6 +71,8 @@ class PeterAntennaControl(Control):
 
         self.button_set_values.pressed.connect(self.on_button_set_values)
         self.checkbox_tune.checkStateChanged.connect(self.on_tune)
+        self.checkbox_up.checkStateChanged.connect(self.on_up)
+        self.checkbox_down.checkStateChanged.connect(self.on_down)
         self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
         self.mp_device = util_mpremote.get_device()
         util_mpremote.mp_exec(device=self.mp_device, cmd=MICROPYTHON_MAIN)
@@ -80,11 +99,37 @@ class PeterAntennaControl(Control):
             sweep_stop.setText(f"200kHz")
             self.app.sweep_start()
 
+
     def on_vna_enable(self):
         checked = self.checkbox_vna_enable.isChecked()
         util_mpremote.mp_exec(
             device=self.mp_device, cmd=f"vna_enable(enable={int(checked)})"
         )
+
+
+    def on_up(self):
+        checked = self.checkbox_up.isChecked()
+        if checked:
+            util_mpremote.mp_exec(
+                device=self.mp_device, cmd="run(direction_up=True, on=True)"
+            )
+        else:
+            util_mpremote.mp_exec(
+                device=self.mp_device, cmd="run(direction_up=True, on=False)"
+            )
+    def on_down(self):
+        checked = self.checkbox_down.isChecked()
+        if checked:
+            util_mpremote.mp_exec(
+                device=self.mp_device, cmd="run(direction_up=False, on=True)"
+            )
+        else:
+            util_mpremote.mp_exec(
+                device=self.mp_device, cmd="run(direction_up=False, on=False)"
+            )
+
+
+
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")

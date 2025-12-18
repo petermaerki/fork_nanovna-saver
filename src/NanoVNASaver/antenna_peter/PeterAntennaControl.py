@@ -3,6 +3,7 @@ import pathlib
 from typing import TYPE_CHECKING
 
 import numpy as np
+import socket
 from PySide6 import QtWidgets, QtCore
 
 from ..Controls.Control import Control
@@ -48,7 +49,10 @@ class PeterAntennaControl(Control):
         input_layout.addRow(
             QtWidgets.QLabel("Set Values"), self.button_set_values
         )
-
+        self.checkbox_auto_get_f=QtWidgets.QCheckBox()
+        input_layout.addRow(
+            QtWidgets.QLabel("Auto get frequency"), self.checkbox_auto_get_f
+        )
         self.input_set_Hz = QtWidgets.QLineEdit("7.074e6")
 
         # Minimal hard-coded adjustments so the input visually matches
@@ -62,6 +66,14 @@ class PeterAntennaControl(Control):
         font = self.input_set_Hz.font()
         font.setPointSize(11)
         self.input_set_Hz.setFont(font)
+
+        # Timer for automatic frequency fetch (when enabled)
+        self.auto_get_timer = QtCore.QTimer(self)
+        self.auto_get_timer.setInterval(1000)  # 1 second
+        self.auto_get_timer.timeout.connect(self._auto_get_frequency)
+        self.checkbox_auto_get_f.checkStateChanged.connect(
+            self.on_auto_get_frequency_toggle
+        )
 
         input_layout.addRow(
             QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz
@@ -105,6 +117,43 @@ class PeterAntennaControl(Control):
         util_mpremote.mp_exec(
             device=self.mp_device, cmd=f"vna_enable(enable={int(checked)})"
         )
+
+    def on_auto_get_frequency_toggle(self):
+        """Start/stop the automatic frequency polling based on checkbox state."""
+        if self.checkbox_auto_get_f.isChecked():
+            logger.debug("Starting auto frequency fetch timer (1s)")
+            # do an immediate fetch, then rely on timer for subsequent updates
+            self._auto_get_frequency()
+            self.auto_get_timer.start()
+        else:
+            logger.debug("Stopping auto frequency fetch timer")
+            self.auto_get_timer.stop()
+
+    def _auto_get_frequency(self):
+        """Fetch frequency from localhost socket and set it to the SWR input field.
+
+        The expected protocol: connect to localhost:4532, send 'f\n', receive an
+        integer frequency in Hz (as bytes). Any errors are logged and ignored.
+        """
+        try:
+            with socket.create_connection(("localhost", 4532), timeout=1) as s:
+                s.sendall(b"f\n")
+                data = s.recv(1024).strip()
+                if not data:
+                    logger.warning("Auto-get frequency: no data received")
+                    return
+                try:
+                    freq_hz = int(data)
+                except ValueError:
+                    logger.warning(
+                        "Auto-get frequency: received non-integer: %r", data
+                    )
+                    return
+                # Insert the raw Hz integer into the input field (naked number)
+                QtWidgets.QLineEdit.setText(self.input_set_Hz, str(freq_hz))
+                logger.debug("Auto-get frequency: set %d Hz", freq_hz)
+        except Exception as e:
+            logger.debug("Auto-get frequency failed: %s", e)
 
 
     def on_up(self):

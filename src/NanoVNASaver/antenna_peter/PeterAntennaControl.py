@@ -319,16 +319,14 @@ class PeterAntennaControl(Control):
         #points = max(points, 51)
        
         points = 500
-        points_pulse = 300
+        deviation_limit_puls = 5e-3
+        points_pulse = 51
         if set_f_swr_min_Hz > 5E6:
             deviation_limit_puls = 1e-2
-            points_pulse = 51
         if set_f_swr_min_Hz > 12E6:
             deviation_limit_puls = 3e-2
-            points_pulse = 51
         if set_f_swr_min_Hz > 16E6:
             deviation_limit_puls = 5e-2
-            points_pulse = 51
 
         logger.debug(f"{f_swr_min_Hz=} {sweep_start_Hz=} {sweep_stop_Hz=}")
 

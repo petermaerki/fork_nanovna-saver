@@ -74,6 +74,8 @@ class PeterAntennaControl(Control):
         self.checkbox_auto_get_f.checkStateChanged.connect(
             self.on_auto_get_frequency_toggle
         )
+        # Enable auto-get by default at initialization
+        self.checkbox_auto_get_f.setChecked(True)
 
         input_layout.addRow(
             QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz

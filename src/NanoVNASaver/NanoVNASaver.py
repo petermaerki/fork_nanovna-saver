@@ -103,6 +103,11 @@ class NanoVNASaver(QWidget):
         self.sweep = Sweep(start=1e6, end=30e6)
         self.worker = SweepWorker(self)
 
+        # Internal flags to temporarily suppress UI updates when running
+        # harmless/background sweeps (so the visible graph is not overwritten)
+        self._suppress_display_updates = False
+        self._harmless_sweep_active = False
+
         self.worker.signals.updated.connect(self.dataUpdated)
         self.worker.signals.finished.connect(self.sweepFinished)
         self.worker.signals.sweep_error.connect(self.showSweepError)
@@ -537,8 +542,16 @@ class NanoVNASaver(QWidget):
                 self.delta_marker.resetLabels()
                 with contextlib.suppress(IndexError):
                     self.delta_marker.updateLabels()
+        # Q display should only be updated after sweep finish / after
+        # find_min_swr(), so we do not update it here.
 
     def dataUpdated(self):
+        # If a harmless sweep is running and the caller asked to suppress
+        # display updates, skip updating charts/labels so the visible graph
+        # is not overwritten.
+        if getattr(self, "_suppress_display_updates", False):
+            return
+
         with self.dataLock:
             s11 = self.data.s11[:]
             s21 = self.data.s21[:]
@@ -590,12 +603,21 @@ class NanoVNASaver(QWidget):
         self.communicate.data_available.emit()
 
     def sweepFinished(self):
-        self.peter_antenna_control.sweepFinished_peter_antenna()
         if self.peter_antenna_control.checkbox_tune.isChecked():
+            self.peter_antenna_control.sweepFinished_peter_antenna()
             self.sweep_start()
             return
 
         self._sweep_control(start=False)
+
+        # If we just finished the harmless sweep that was started when tune
+        # was disabled, clear the suppression flags and do NOT update the
+        # displayed graph or markers so the visible plots remain unchanged.
+        if getattr(self, "_harmless_sweep_active", False):
+            self._harmless_sweep_active = False
+            self._suppress_display_updates = False
+            logger.debug("Harmless sweep finished; display updates restored")
+            return
 
         for marker in self.markers:
             marker.frequencyInput.textEdited.emit(marker.frequencyInput.text())

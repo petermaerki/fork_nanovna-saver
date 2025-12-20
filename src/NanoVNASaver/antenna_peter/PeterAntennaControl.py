@@ -12,6 +12,7 @@ from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
 from . import util_mpremote
+ 
 
 if TYPE_CHECKING:
     from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
@@ -39,35 +40,42 @@ class PeterAntennaControl(Control):
         self.checkbox_down = QtWidgets.QCheckBox()
         self.checkbox_vna_enable = QtWidgets.QCheckBox()
         input_layout.addRow(
-            QtWidgets.QLabel("VNA enable"), self.checkbox_vna_enable
+            QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable
         )
-        input_layout.addRow(QtWidgets.QLabel("Tune"), self.checkbox_tune)
-        input_layout.addRow(QtWidgets.QLabel("up"), self.checkbox_up)
-        input_layout.addRow(QtWidgets.QLabel("down"), self.checkbox_down)
+        input_layout.addRow(QtWidgets.QLabel("Tune automatic"), self.checkbox_tune)
+        # Tune iteration counter (internal; display removed)
+        self._tune_iteration = 0
+        input_layout.addRow(QtWidgets.QLabel("manual f up"), self.checkbox_up)
+        input_layout.addRow(QtWidgets.QLabel("manual f down"), self.checkbox_down)
 
-        self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
-        input_layout.addRow(
-            QtWidgets.QLabel("Set Values"), self.button_set_values
-        )
+        # motor status display (under the 'down' checkbox)
+        self.motor_status = QtWidgets.QLabel("stop")
+        # align the motor status to the right (consistent with other numeric fields)
+        self.motor_status.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        input_layout.addRow(QtWidgets.QLabel("Motor status"), self.motor_status)
+        # The 'Set Values' input was intentionally disabled/commented out.
+        # self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
+        # input_layout.addRow(
+        #     QtWidgets.QLabel("Set Values"), self.button_set_values
+        # )
         self.checkbox_auto_get_f=QtWidgets.QCheckBox()
         input_layout.addRow(
             QtWidgets.QLabel("Auto get frequency"), self.checkbox_auto_get_f
         )
         self.input_set_Hz = QtWidgets.QLineEdit("7.074e6")
 
-        # Minimal hard-coded adjustments so the input visually matches
-        # the sweep inputs: fixed height, minimum width and right alignment
+
+
+
         self.input_set_Hz.setFixedHeight(20)
         self.input_set_Hz.setMinimumWidth(60)
         self.input_set_Hz.setAlignment(
             QtCore.Qt.AlignmentFlag.AlignRight
         )
-        # Make the input font a bit larger for better readability
         font = self.input_set_Hz.font()
         font.setPointSize(11)
         self.input_set_Hz.setFont(font)
 
-        # Timer for automatic frequency fetch (when enabled)
         self.auto_get_timer = QtCore.QTimer(self)
         self.auto_get_timer.setInterval(1000)  # 1 second
         self.auto_get_timer.timeout.connect(self._auto_get_frequency)
@@ -81,9 +89,27 @@ class PeterAntennaControl(Control):
             QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz
         )
 
+        # delta frequency display (shows deviation of SWR min to set SWR min in kHz)
+        # placed before Q display for easier reading of frequency deviation
+        self.delta_display = QtWidgets.QLabel("--")
+        self.delta_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        input_layout.addRow(QtWidgets.QLabel("Δ kHz (SWR min)"), self.delta_display)
+
+        # Q display label (shows Q = marker2 / (marker3 - marker1))
+        self.q_display = QtWidgets.QLabel("--")
+        # display Q aligned to the right to match numeric input styling
+        self.q_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        input_layout.addRow(QtWidgets.QLabel("Q (SWR 2.64)"), self.q_display)
+
+        # SWR min display (shows minimum SWR found in the sweep, e.g., 1.21)
+        self.swrmin_display = QtWidgets.QLabel("--")
+        self.swrmin_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        input_layout.addRow(QtWidgets.QLabel("SWR min"), self.swrmin_display)
+
         self.layout.addRow(input_layout)
 
-        self.button_set_values.pressed.connect(self.on_button_set_values)
+        # 'Set Values' signal connection commented out because the input is disabled
+        # self.button_set_values.pressed.connect(self.on_button_set_values)
         self.checkbox_tune.checkStateChanged.connect(self.on_tune)
         self.checkbox_up.checkStateChanged.connect(self.on_up)
         self.checkbox_down.checkStateChanged.connect(self.on_down)
@@ -94,6 +120,8 @@ class PeterAntennaControl(Control):
     def on_tune(self):
         checked = self.checkbox_tune.isChecked()
         if checked:
+            # reset tune iteration counter on initial enable; first sweep is a dry-run
+            self._tune_iteration = 0
             # self.on_button_set_values()
             if False:
                 sweep_stop = self.app.sweep_control.inputs["Stop"]
@@ -104,14 +132,41 @@ class PeterAntennaControl(Control):
                     assert isinstance(sweep_start, FrequencyInputWidget)
                     sweep_start.setText(f"{F_USEFUL_MIN_Hz:0.0f}Hz")
 
+            self._setStartStopFrequencyFloat("Start", 1e6)
+            self._setStartStopFrequencyFloat("Stop", 30e6)
+            self._setDatapointCount(1000)
+            self.app.sweep.set_logarithmic(True)
+
             self.app.sweep_start()
         else:
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=True, on=False)"
             )
-            sweep_start.setText(f"100kHz") # todo: disable sweep completely
-            sweep_stop.setText(f"200kHz")
-            self.app.sweep_start()
+            self._set_motor_status("stop")
+            # clear internal tune iteration counter when tuning disabled
+            self._tune_iteration = 0
+            # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
+            try:
+                # Restore a harmless sweep on low frequencies and start it so the
+                # VNA runs there (this keeps the device quiet on other bands).
+                # Update the UI fields so behavior is visible and consistent.
+                self._setStartStopFrequencyFloat("Start", 100e3)
+                self._setStartStopFrequencyFloat("Stop", 200e3)
+                # use a small number of points for quick harmless sweep
+                self._setDatapointCount(201)
+                self.app.sweep.set_logarithmic(False)
+                # mark/apply suppression of display updates while this
+                # harmless sweep runs so the visible graph is not overwritten
+                self.app._suppress_display_updates = True
+                self.app._harmless_sweep_active = True
+                # start the harmless sweep so the VNA actually runs at low freq
+                self.app.sweep_start()
+                logger.debug("Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)")
+            except Exception:
+                logger.exception("Failed to set harmless sweep on tune disable")
+            #sweep_start.setText(f"100kHz") # todo: disable sweep completely
+            #sweep_stop.setText(f"200kHz")
+            #self.app.sweep_start()
 
 
     def on_vna_enable(self):
@@ -119,6 +174,14 @@ class PeterAntennaControl(Control):
         util_mpremote.mp_exec(
             device=self.mp_device, cmd=f"vna_enable(enable={int(checked)})"
         )
+        # If the user enabled VNA, also try to connect the serial port control
+        # (do nothing if already connected)
+        if checked:
+            try:
+                if not self.app.serial_control.is_vna_connected():
+                    self.app.serial_control.connect_device()
+            except Exception:
+                logger.exception("Failed to auto-connect serial port on VNA enable")
 
     def on_auto_get_frequency_toggle(self):
         """Start/stop the automatic frequency polling based on checkbox state."""
@@ -164,20 +227,25 @@ class PeterAntennaControl(Control):
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=True, on=True)"
             )
+            self._set_motor_status("motor run f up")
         else:
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=True, on=False)"
             )
+            self._set_motor_status("stop")
     def on_down(self):
         checked = self.checkbox_down.isChecked()
         if checked:
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=False, on=True)"
             )
+            self._set_motor_status("motor run f down")
         else:
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=False, on=False)"
             )
+            self._set_motor_status("stop")
+
 
 
 
@@ -188,7 +256,52 @@ class PeterAntennaControl(Control):
     def _setStartStopFrequency(self, tag: str, text: str):
         input = self.app.sweep_control.inputs[tag]
         assert isinstance(input, FrequencyInputWidget)
+        # Log incoming requested update and existing content
+        try:
+            logger.debug(
+                "_setStartStopFrequency request: tag=%s text=%s (before=%s)",
+                tag,
+                text,
+                input.text(),
+            )
+        except Exception:
+            logger.exception("Failed to log before-set state for sweep input")
+
+        # Update the visible input field
         input.setText(text)
+
+        # Log the field after setText to verify the widget contains the
+        # expected value (diagnostic for why the hardware may not receive it)
+        try:
+            logger.debug(
+                "_setStartStopFrequency after setText: tag=%s content=%s",
+                tag,
+                input.text(),
+            )
+        except Exception:
+            logger.exception("Failed to log after-set state for sweep input")
+        # Make sure the sweep control reacts to the change so the
+        # internal Sweep object is updated immediately (otherwise the
+        # VNA will keep using the old sweep range).
+        try:
+            input.textEdited.emit(input.text())
+        except Exception:
+            logger.exception("Failed to emit textEdited for sweep input")
+        try:
+            self.app.sweep_control.update_sweep()
+        except Exception:
+            logger.exception("Failed to update sweep after changing Start/Stop")
+        else:
+            # Log the active sweep range for diagnostics
+            try:
+                logger.debug(
+                    "Set sweep Start/Stop -> %s - %s",
+                    self.app.sweep.start,
+                    self.app.sweep.end,
+                )
+            except Exception:
+                # Best-effort, do not crash on logging
+                logger.exception("Failed to log new sweep range")
 
     def _setMakerFrequencyFloat(
         self,
@@ -219,11 +332,14 @@ class PeterAntennaControl(Control):
 
         # self._setStartStopFrequency("Start", "2MHz")
         # self._setStartStopFrequency("Stop", "30MHz")
-        self._setStartStopFrequency("Start", "2MHz")
-        self._setStartStopFrequency("Stop", "3MHz")
-        self._setMakerFrequency(0, "8MHz")
-        self._setMakerFrequency(-1, "16MHz")
-
+        #self._setStartStartFrequency("Start", "2MHz")
+        #self._setStartStopFrequency("Stop", "28MHz")
+        #self._setMakerFrequency(0, "1MHz")
+        #self._setMakerFrequency(-1, "30MHz")
+        self._setStartStopFrequencyFloat("Start", 1e6)
+        self._setStartStopFrequencyFloat("Stop", 30e6)
+        self._setDatapointCount(1000)
+        self.app.sweep.set_logarithmic(True)
         self.app.sweep_start()
 
     def sweepFinished_peter_antenna(self):
@@ -236,6 +352,25 @@ class PeterAntennaControl(Control):
                 f_swr_min_Hz,
                 f_swr_p2_64_h_Hz,
             )
+            # Update ppm and Q displays only after sweep finish / after find_min_swr()
+            try:
+                self._update_delta_display()
+            except Exception:
+                logger.exception("Failed to update delta display after sweep finish")
+            try:
+                self._update_q_display()
+            except Exception:
+                logger.exception("Failed to update Q display after sweep finish")
+            try:
+                self._update_swrmin_display()
+            except Exception:
+                logger.exception("Failed to update SWR min display after sweep finish")
+            # increment tune iteration counter if tuning is still enabled
+            try:
+                if self.checkbox_tune.isChecked():
+                    self._tune_iteration += 1
+            except Exception:
+                logger.exception("Failed to increment tune iteration counter")
         except Exception as e:
             logger.exception(e)
 
@@ -254,7 +389,7 @@ class PeterAntennaControl(Control):
         f_swr_p2_64_l_Hz = None
         f_swr_p2_64_h_Hz = None
 
-        if swr_min < 2.0:
+        if swr_min < 4.0:
             f_swr_min_Hz = freq_Hz[idx_min]
             target_swr = 2.64
 
@@ -271,6 +406,92 @@ class PeterAntennaControl(Control):
         self._setMakerFrequencyFloat(2, f_swr_p2_64_h_Hz, freq_Hz[0])
 
         return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz
+
+    def _update_q_display(self):
+        """Compute Q = marker2 / (marker3 - marker1) and update label.
+
+        If markers are missing or the denominator is non-positive, show `--`.
+        """
+        try:
+            markers = self.app.markers
+            if len(markers) < 3:
+                self.q_display.setText("--")
+                return
+            m1 = markers[0]
+            m2 = markers[1]
+            m3 = markers[2]
+            # Use frequencyInput.get_freq() to parse the displayed frequency
+            f1 = m1.frequencyInput.get_freq()
+            f2 = m2.frequencyInput.get_freq()
+            f3 = m3.frequencyInput.get_freq()
+            denom = float(f3 - f1)
+            if denom <= 0:
+                self.q_display.setText("--")
+                return
+            q = float(f2) / denom
+            # show numeric value only, no decimal places
+            self.q_display.setText(f"{q:.0f}")
+        except Exception:
+            logger.exception("Failed to update Q display")
+            self.q_display.setText("--")
+
+    def _update_delta_display(self):
+        """Compute deviation of SWR min to set SWR min in kHz and update label.
+
+        The display shows (f_swr_min - set_f) / 1e3 as an integer kHz value with
+        unit 'kHz'. If markers or set frequency are missing/invalid, show `--`.
+        """
+        try:
+            markers = self.app.markers
+            if len(markers) < 2:
+                self.delta_display.setText("--")
+                return
+            m2 = markers[1]
+            f_min = m2.frequencyInput.get_freq()
+            try:
+                set_f = float(self.input_set_Hz.text())
+            except Exception:
+                self.delta_display.setText("--")
+                return
+            if set_f == 0 or f_min is None:
+                self.delta_display.setText("--")
+                return
+            delta = f_min - set_f
+            # determine sign based on comparison before rounding
+            sign = "-" if delta < 0 else "+"
+            delta_khz_abs = abs(delta) / 1e3
+            # show numeric value with three decimal places, include explicit sign and unit
+            self.delta_display.setText(f"{sign}{delta_khz_abs:.3f} kHz")
+        except Exception:
+            logger.exception("Failed to update delta display")
+            self.delta_display.setText("--")
+
+    def _update_swrmin_display(self):
+        """Compute the minimum SWR from the latest sweep and update label.
+
+        The display shows the numeric SWR value with two decimal places (e.g., 1.21).
+        If sweep data is missing or invalid, show `--`.
+        """
+        try:
+            with self.app.dataLock:
+                s11: list[Datapoint]
+                s11 = self.app.data.s11[:]
+                if not s11:
+                    self.swrmin_display.setText("--")
+                    return
+                swr = np.asarray([d.vswr for d in s11])
+            swr_min = float(np.min(swr))
+            self.swrmin_display.setText(f"{swr_min:.2f}")
+        except Exception:
+            logger.exception("Failed to update SWR min display")
+            self.swrmin_display.setText("--")
+
+    def _set_motor_status(self, status: str):
+        """Set the motor status label safely."""
+        try:
+            self.motor_status.setText(status)
+        except Exception:
+            logger.exception("Failed to set motor status")
 
     def find_sweep_start_stop(
         self,
@@ -322,7 +543,7 @@ class PeterAntennaControl(Control):
        
         points = 500
         deviation_limit_puls = 5e-3
-        points_pulse = 51
+        points_pulse = 101
         if set_f_swr_min_Hz > 5E6:
             deviation_limit_puls = 1e-2
         if set_f_swr_min_Hz > 12E6:
@@ -344,13 +565,31 @@ class PeterAntennaControl(Control):
                     duration_s = 1.0*deviation/deviation_limit_puls
                 if pulse:
                     cmd = f"pulse({direction_up}, {duration_s})"
-                    print(f'pulse: {duration_s=}')
-                    points=points_pulse
+                    # show pulse status (pulse up/down 0.3s)
+                    dir_str = "up" if direction_up else "down"
+                    dur_str = f"{duration_s:.2f}".rstrip("0").rstrip(".")
+                    # first iteration is a dry-run: do not actuate motor and do not
+                    # change sweep points; only set points_pulse when actually
+                    # actuating the motor (iteration > 0).
+                    if getattr(self, "_tune_iteration", 0) == 0:
+                        self._set_motor_status(f"pulse {dir_str} {dur_str}s (preview)")
+                        print(f'pulse: {duration_s=} (preview)')
+                    else:
+                        self._set_motor_status(f"pulse {dir_str} {dur_str}s")
+                        util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+                        points = points_pulse
                 else:
                     cmd = f"run(direction_up={direction_up}, on=True)"
-
-                util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+                    dir_str = "up" if direction_up else "down"
+                    if getattr(self, "_tune_iteration", 0) == 0:
+                        # dry-run on first iteration: do not actuate motor
+                        self._set_motor_status(f"motor run {dir_str} (preview)")
+                    else:
+                        self._set_motor_status(f"motor run {dir_str}")
+                        util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
         else:
             cmd = f"run(direction_up=True, on=False)"
+            # no best freq -> ensure motor stopped
+            self._set_motor_status("stop")
         
         self._setDatapointCount(points)

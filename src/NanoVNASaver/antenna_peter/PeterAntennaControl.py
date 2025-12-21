@@ -1,6 +1,7 @@
 import logging
 import pathlib
 from typing import TYPE_CHECKING
+import math
 
 import numpy as np
 import socket
@@ -18,6 +19,25 @@ if TYPE_CHECKING:
     from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
 
 logger = logging.getLogger(__name__)
+
+
+def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=0.95):
+    """Calculates the minimum safety distance for a Magnetic Loop antenna based on H-field limits."""
+    f_hz = f_mhz * 1e6
+    radius = loop_diameter_m / 2
+    area = math.pi * (radius ** 2)
+    l_henry = 1.2e-6 * loop_diameter_m * (math.log(loop_diameter_m / 0.02) - 0.5)
+    i_loop = math.sqrt((p_watt * q_factor) / (2 * math.pi * f_hz * l_henry))
+    if f_mhz < 1.0:
+        h_limit = 1.6
+    elif 1.0 <= f_mhz <= 30.0:
+        h_limit = 0.73 / f_mhz
+    else:
+        h_limit = 0.16
+    r_meters = ((i_loop * area) / (2 * math.pi * h_limit))**(1/3)
+    r_safety = r_meters * 1.0
+    return {"frequency_mhz": f_mhz, "power_watts": p_watt, "q_factor": q_factor,
+            "loop_current_amps": round(i_loop, 2), "h_limit_am": round(h_limit, 4), "min_distance_m": round(r_safety, 2)}
 
 
 DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
@@ -52,6 +72,9 @@ class PeterAntennaControl(Control):
         self.motor_status = QtWidgets.QLabel("stop")
         # align the motor status to the right (consistent with other numeric fields)
         self.motor_status.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.motor_status.font()
+        font.setPointSize(11)
+        self.motor_status.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("Motor status"), self.motor_status)
         # The 'Set Values' input was intentionally disabled/commented out.
         # self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
@@ -93,17 +116,26 @@ class PeterAntennaControl(Control):
         # placed before Q display for easier reading of frequency deviation
         self.delta_display = QtWidgets.QLabel("--")
         self.delta_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.delta_display.font()
+        font.setPointSize(11)
+        self.delta_display.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("Δ kHz (SWR min)"), self.delta_display)
 
         # Q display label (shows Q = marker2 / (marker3 - marker1))
         self.q_display = QtWidgets.QLabel("--")
         # display Q aligned to the right to match numeric input styling
         self.q_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.q_display.font()
+        font.setPointSize(11)
+        self.q_display.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("Q (SWR 2.64)"), self.q_display)
 
         # SWR min display (shows minimum SWR found in the sweep, e.g., 1.21)
         self.swrmin_display = QtWidgets.QLabel("--")
         self.swrmin_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.swrmin_display.font()
+        font.setPointSize(11)
+        self.swrmin_display.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("SWR min"), self.swrmin_display)
 
         # Power input: allow user to enter transmit power in Watts (5..100)
@@ -113,10 +145,50 @@ class PeterAntennaControl(Control):
         self.power_spin.setFixedHeight(20)
         self.power_spin.setMinimumWidth(60)
         self.power_spin.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        self.power_spin.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
         font = self.power_spin.font()
         font.setPointSize(11)
         self.power_spin.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("Power W"), self.power_spin)
+
+        # Safety calculation fields (read-only display)
+        self.cap_voltage_display = QtWidgets.QLabel("--")
+        self.cap_voltage_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.cap_voltage_display.font()
+        font.setPointSize(11)
+        self.cap_voltage_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("Cap Voltage"), self.cap_voltage_display)
+
+        self.loop_current_display = QtWidgets.QLabel("--")
+        self.loop_current_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.loop_current_display.font()
+        font.setPointSize(11)
+        self.loop_current_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("Loop Current"), self.loop_current_display)
+
+        self.h_limit_display = QtWidgets.QLabel("--")
+        self.h_limit_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.h_limit_display.font()
+        font.setPointSize(11)
+        self.h_limit_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("H_Limit (NISV/IGW)"), self.h_limit_display)
+
+        self.safety_distance_display = QtWidgets.QLabel("--")
+        self.safety_distance_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.safety_distance_display.font()
+        font.setPointSize(11)
+        self.safety_distance_display.setFont(font)
+        
+        # Create a horizontal layout for safety distance and info button
+        safety_layout = QtWidgets.QHBoxLayout()
+        safety_layout.addWidget(self.safety_distance_display, 1)
+        self.safety_info_button = QtWidgets.QPushButton("INFO")
+        self.safety_info_button.setMaximumWidth(50)
+        self.safety_info_button.setToolTip("Show technical background")
+        self.safety_info_button.clicked.connect(self.show_safety_info)
+        safety_layout.addWidget(self.safety_info_button)
+        
+        input_layout.addRow(QtWidgets.QLabel("Safety distance"), safety_layout)
 
         # (power status label removed — FT-991 cannot be queried for power)
         # connect power control immediately so changes always send to rigctld
@@ -141,6 +213,11 @@ class PeterAntennaControl(Control):
         if checked:
             # reset tune iteration counter on initial enable; first sweep is a dry-run
             self._tune_iteration = 0
+            # Send current power setting to FT-991 when tuning is enabled
+            try:
+                self.on_power_changed()
+            except Exception:
+                logger.exception("Failed to send initial power on tune enable")
             # self.on_button_set_values()
             if False:
                 sweep_stop = self.app.sweep_control.inputs["Stop"]
@@ -209,6 +286,7 @@ class PeterAntennaControl(Control):
 
         Convert from 5..100 W to 0.05..1.0 scale (value/100) and send via
         rigctl: `rigctl -m 2 -r localhost:4532 L RFPOWER <scaled>`.
+        Also update safety calculation displays.
         """
         try:
             watts = int(self.power_spin.value())
@@ -253,8 +331,105 @@ class PeterAntennaControl(Control):
                     )
                 except Exception:
                     logger.exception("Failed to show RFPOWER failure message box")
+            # Update safety calculation displays
+            self._update_safety_calculation()
         except Exception:
             logger.exception("Failed to prepare RFPOWER command")
+
+    def _update_safety_calculation(self):
+        """Update safety calculation fields based on current settings."""
+        try:
+            # Get values from UI; use reasonable defaults if missing
+            try:
+                set_f_hz = float(self.input_set_Hz.text())
+                f_mhz = set_f_hz / 1e6
+            except Exception:
+                f_mhz = 14.150  # default 40m band
+            
+            watts = int(self.power_spin.value())
+            
+            # Try to get Q from marker calculation (if available)
+            try:
+                markers = self.app.markers
+                if len(markers) >= 3:
+                    m1 = markers[0]
+                    m2 = markers[1]
+                    m3 = markers[2]
+                    f1 = m1.frequencyInput.get_freq()
+                    f2 = m2.frequencyInput.get_freq()
+                    f3 = m3.frequencyInput.get_freq()
+                    denom = float(f3 - f1)
+                    if denom > 0:
+                        q_factor = float(f2) / denom
+                    else:
+                        q_factor = 500  # default
+                else:
+                    q_factor = 500  # default
+            except Exception:
+                q_factor = 500  # default
+            
+            # Calculate safety parameters
+            results = calculate_safety_distance(f_mhz, watts, q_factor)
+            
+            # Update display fields
+            # Cap Voltage estimate: V = sqrt(P * Z) where Z~50 ohm nominal
+            cap_voltage = math.sqrt(watts * 50)
+            self.cap_voltage_display.setText(f"{cap_voltage:.0f} V")
+            
+            # Loop Current
+            self.loop_current_display.setText(f"{results['loop_current_amps']} A")
+            
+            # H-Limit
+            self.h_limit_display.setText(f"{results['h_limit_am']:.3f} A/m")
+            
+            # Safety Distance
+            self.safety_distance_display.setText(f"{results['min_distance_m']} m")
+            
+            logger.debug(
+                "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_limit=%s A/m, dist=%s m",
+                f_mhz, watts, q_factor, results['loop_current_amps'],
+                results['h_limit_am'], results['min_distance_m']
+            )
+        except Exception:
+            logger.exception("Failed to update safety calculation")
+            self.cap_voltage_display.setText("--")
+            self.loop_current_display.setText("--")
+            self.h_limit_display.setText("--")
+            self.safety_distance_display.setText("--")
+
+    def show_safety_info(self):
+        """Show technical background information about safety calculations."""
+        info_text = """Technical Background & Safety Compliance
+
+Electromagnetic Field Dynamics (Near-Field)
+This application calculates the physical parameters of a high-Q resonant loop antenna. Unlike conventional antennas, a Magnetic Loop operates primarily by generating an intense Magnetic Near-Field (H-Field).
+
+Due to the extremely high resonance quality (Q-factor), the circulating currents within the main inductor (the copper braid) can reach values significantly higher than the feedline current. This leads to:
+• High Magnetic Flux Density: Concentrated in the immediate vicinity of the loop.
+• Inductive Voltage Peaks: At the tuning capacitor, voltages reach levels that require specific dielectric strength (kV-range).
+
+Computational Methodology
+The calculation of the safety distance is based on the Inverse-Cube Law for magnetic dipoles in the near-field (1/r³).
+
+Geometry Factor: The copper braid is modeled using an equivalent conductor radius to account for skin effect and reduced RF resistance.
+
+Inductance & Reactance: These values are derived from the physical diameter and conductor surface area to determine the precise circulating current at a given power level.
+
+Legal Standards (Switzerland)
+The safety distances provided are calculated in accordance with the Swiss Ordinance on Protection against Non-Ionizing Radiation (NISV / ONIR).
+
+Immissionsgrenzwerte (IGW): The primary safety boundary is based on the exposure limits for the general public, designed to prevent thermal and non-thermal biological effects.
+
+Frequency Dependence: In the High Frequency (HF) range, the permissible magnetic field strength (H) is frequency-dependent (0.73 / f). The safety distance is dynamically adjusted as you tune your transceiver.
+
+Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-factor) is applied to account for environmental reflections and local field enhancements."""
+        
+        QtWidgets.QMessageBox.information(
+            self,
+            "Safety Distance - Technical Background",
+            info_text,
+            QtWidgets.QMessageBox.StandardButton.Ok
+        )
 
     def on_auto_get_frequency_toggle(self):
         """Start/stop the automatic frequency polling based on checkbox state."""
@@ -438,6 +613,11 @@ class PeterAntennaControl(Control):
                 self._update_swrmin_display()
             except Exception:
                 logger.exception("Failed to update SWR min display after sweep finish")
+            # Update safety calculation when Q is recalculated
+            try:
+                self._update_safety_calculation()
+            except Exception:
+                logger.exception("Failed to update safety calculation after sweep finish")
             # increment tune iteration counter if tuning is still enabled
             try:
                 if self.checkbox_tune.isChecked():

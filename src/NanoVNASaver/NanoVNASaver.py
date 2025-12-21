@@ -155,6 +155,7 @@ class NanoVNASaver(QWidget):
         self.setLayout(outer)
         scrollarea.setWidgetResizable(True)
         self.resize(app_config.gui.window_width, app_config.gui.window_height)
+        self.setMinimumHeight(int(app_config.gui.window_height * 1.1) if app_config.gui.window_height else 600)
         scrollarea.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,

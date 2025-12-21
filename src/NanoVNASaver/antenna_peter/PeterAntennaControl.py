@@ -106,6 +106,25 @@ class PeterAntennaControl(Control):
         self.swrmin_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         input_layout.addRow(QtWidgets.QLabel("SWR min"), self.swrmin_display)
 
+        # Power input: allow user to enter transmit power in Watts (5..100)
+        self.power_spin = QtWidgets.QSpinBox()
+        self.power_spin.setRange(5, 100)
+        self.power_spin.setValue(5)
+        self.power_spin.setFixedHeight(20)
+        self.power_spin.setMinimumWidth(60)
+        self.power_spin.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.power_spin.font()
+        font.setPointSize(11)
+        self.power_spin.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("Power W"), self.power_spin)
+
+        # (power status label removed — FT-991 cannot be queried for power)
+        # connect power control immediately so changes always send to rigctld
+        try:
+            self.power_spin.valueChanged.connect(self.on_power_changed)
+        except Exception:
+            logger.exception("Failed to connect power spin signal at init")
+
         self.layout.addRow(input_layout)
 
         # 'Set Values' signal connection commented out because the input is disabled
@@ -182,6 +201,60 @@ class PeterAntennaControl(Control):
                     self.app.serial_control.connect_device()
             except Exception:
                 logger.exception("Failed to auto-connect serial port on VNA enable")
+
+        # Note: power spin is connected at init; no further action needed here
+
+    def on_power_changed(self):
+        """Handle changes to the Power W spinbox.
+
+        Convert from 5..100 W to 0.05..1.0 scale (value/100) and send via
+        rigctl: `rigctl -m 2 -r localhost:4532 L RFPOWER <scaled>`.
+        """
+        try:
+            watts = int(self.power_spin.value())
+            # enforce allowed range 5..100 (defensive clamp)
+            if watts < 5:
+                watts = 5
+            elif watts > 100:
+                watts = 100
+            # map 5..100 -> 0.05..1.0
+            scaled = watts / 100.0
+            scaled_str = f"{scaled:.2f}".rstrip("0").rstrip(".")
+            logger.debug("Setting RF power: %s W -> %s (socket)", watts, scaled_str)
+            # Send command over the same localhost:4532 socket used by _auto_get_frequency
+            try:
+                with socket.create_connection(("localhost", 4532), timeout=1) as s:
+                    # send rigctl-style command over socket; server accepts newline-terminated commands
+                    cmd = f"L RFPOWER {scaled_str}\n"
+                    s.sendall(cmd.encode("ascii"))
+                    # try to read a short response to know if server accepted the command
+                    try:
+                        s.settimeout(0.5)
+                        resp = s.recv(1024).strip()
+                        if resp:
+                            try:
+                                resp_text = resp.decode("utf-8", errors="replace")
+                            except Exception:
+                                resp_text = repr(resp)
+                            logger.debug("RFPOWER response: %s", resp_text)
+                        else:
+                            logger.debug("RFPOWER: no response from server")
+                    except socket.timeout:
+                        logger.debug("RFPOWER: no response (timeout)")
+                    except Exception as e:
+                        logger.debug("RFPOWER: reading response failed: %s", e)
+            except Exception as e:
+                logger.debug("Failed to send RFPOWER over socket: %s", e)
+                try:
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "RF power send failed",
+                        f"Failed to send RFPOWER command to localhost:4532:\n{e}",
+                    )
+                except Exception:
+                    logger.exception("Failed to show RFPOWER failure message box")
+        except Exception:
+            logger.exception("Failed to prepare RFPOWER command")
 
     def on_auto_get_frequency_toggle(self):
         """Start/stop the automatic frequency polling based on checkbox state."""

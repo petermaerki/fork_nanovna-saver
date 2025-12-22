@@ -40,6 +40,10 @@ def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=0.95):
             "loop_current_amps": round(i_loop, 2), "h_limit_am": round(h_limit, 4), "min_distance_m": round(r_safety, 2)}
 
 
+# Frequency limits for magnetic loop antenna
+F_USEFUL_MIN_Hz = 1.0e6
+F_USEFUL_MAX_Hz = 30.0e6
+
 DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
 FILENAME_MICROPYTHON_INITIALIZATION = (
     DIRECTORY_OF_THIS_FILE / "micropython" / "initialization.py"
@@ -59,14 +63,20 @@ class PeterAntennaControl(Control):
         self.checkbox_up = QtWidgets.QCheckBox()
         self.checkbox_down = QtWidgets.QCheckBox()
         self.checkbox_vna_enable = QtWidgets.QCheckBox()
-        input_layout.addRow(
-            QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable
-        )
+        
+        input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
         input_layout.addRow(QtWidgets.QLabel("Tune automatic"), self.checkbox_tune)
         # Tune iteration counter (internal; display removed)
         self._tune_iteration = 0
-        input_layout.addRow(QtWidgets.QLabel("manual f up"), self.checkbox_up)
-        input_layout.addRow(QtWidgets.QLabel("manual f down"), self.checkbox_down)
+        
+        # Manual F controls in one row
+        manual_f_layout = QtWidgets.QHBoxLayout()
+        manual_f_layout.addWidget(self.checkbox_up)
+        manual_f_layout.addWidget(QtWidgets.QLabel("up"))
+        manual_f_layout.addWidget(self.checkbox_down)
+        manual_f_layout.addWidget(QtWidgets.QLabel("down"))
+        manual_f_layout.addStretch()
+        input_layout.addRow(QtWidgets.QLabel("Manual F"), manual_f_layout)
 
         # motor status display (under the 'down' checkbox)
         self.motor_status = QtWidgets.QLabel("stop")
@@ -149,7 +159,7 @@ class PeterAntennaControl(Control):
         font = self.power_spin.font()
         font.setPointSize(11)
         self.power_spin.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Power W"), self.power_spin)
+        input_layout.addRow(QtWidgets.QLabel("Power W 5...100"), self.power_spin)
 
         # Safety calculation fields (read-only display)
         self.cap_voltage_display = QtWidgets.QLabel("--")
@@ -179,16 +189,18 @@ class PeterAntennaControl(Control):
         font.setPointSize(11)
         self.safety_distance_display.setFont(font)
         
-        # Create a horizontal layout for safety distance and info button
-        safety_layout = QtWidgets.QHBoxLayout()
-        safety_layout.addWidget(self.safety_distance_display, 1)
+        # Create complete row with label, info button, and display value
+        safety_row_layout = QtWidgets.QHBoxLayout()
+        safety_row_layout.addWidget(QtWidgets.QLabel("Safety distance"))
         self.safety_info_button = QtWidgets.QPushButton("INFO")
         self.safety_info_button.setMaximumWidth(50)
         self.safety_info_button.setToolTip("Show technical background")
         self.safety_info_button.clicked.connect(self.show_safety_info)
-        safety_layout.addWidget(self.safety_info_button)
+        safety_row_layout.addWidget(self.safety_info_button)
+        safety_row_layout.addStretch()
+        safety_row_layout.addWidget(self.safety_distance_display)
         
-        input_layout.addRow(QtWidgets.QLabel("Safety distance"), safety_layout)
+        input_layout.addRow(safety_row_layout)
 
         # (power status label removed — FT-991 cannot be queried for power)
         # connect power control immediately so changes always send to rigctld
@@ -752,8 +764,6 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         f_swr_min_Hz: float,
         f_swr_p2_64_h_Hz: float,
     ):
-        F_USEFUL_MIN_Hz = 1.0e6
-        F_USEFUL_MAX_Hz = 30.0e6
         SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.64 band
         assert SWEEP_RANGE_OVERLAP > 1.1
 

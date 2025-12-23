@@ -170,7 +170,13 @@ class NanoVNA_V2(VNA):
             thru = complex(rev1_real, rev1_imag)
             if i == 0:
                 logger.debug("Freq index from: %i", freq_index)
-            self._sweepdata[freq_index] = (refl / fwd, thru / fwd)
+            try:
+                self._sweepdata[freq_index] = (refl / fwd, thru / fwd)
+            except IndexError:
+                logger.warning(
+                    "freq_index %d out of range (sweepdata len=%d)",
+                    freq_index, len(self._sweepdata)
+                )
 
         logger.debug("Freq index to: %i", freq_index)
 

@@ -28,16 +28,36 @@ def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=0.95):
     area = math.pi * (radius ** 2)
     l_henry = 1.2e-6 * loop_diameter_m * (math.log(loop_diameter_m / 0.02) - 0.5)
     i_loop = math.sqrt((p_watt * q_factor) / (2 * math.pi * f_hz * l_henry))
+    
+    # Capacitor voltage at resonance: V_c = I_loop * X_L (X_L = X_C at resonance)
+    x_l = 2 * math.pi * f_hz * l_henry
+    v_cap = i_loop * x_l
+    
+    # Immissionsgrenzwert IGW (public exposure limit)
     if f_mhz < 1.0:
-        h_limit = 1.6
+        h_limit_igw = 1.6
     elif 1.0 <= f_mhz <= 30.0:
-        h_limit = 0.73 / f_mhz
+        h_limit_igw = 0.73 / f_mhz
     else:
-        h_limit = 0.16
-    r_meters = ((i_loop * area) / (2 * math.pi * h_limit))**(1/3)
-    r_safety = r_meters * 1.0
-    return {"frequency_mhz": f_mhz, "power_watts": p_watt, "q_factor": q_factor,
-            "loop_current_amps": round(i_loop, 2), "h_limit_am": round(h_limit, 4), "min_distance_m": round(r_safety, 2)}
+        h_limit_igw = 0.16
+    
+    # Anlagengrenzwert OMEN (installation limit) - 5x stricter than IGW
+    h_limit_omen = h_limit_igw / 5.0
+    
+    r_meters_igw = ((i_loop * area) / (2 * math.pi * h_limit_igw))**(1/3)
+    r_meters_omen = ((i_loop * area) / (2 * math.pi * h_limit_omen))**(1/3)
+    
+    return {
+        "frequency_mhz": f_mhz, 
+        "power_watts": p_watt, 
+        "q_factor": q_factor,
+        "loop_current_amps": round(i_loop, 2), 
+        "cap_voltage_volts": round(v_cap, 0),
+        "h_limit_igw_am": round(h_limit_igw, 4),
+        "h_limit_omen_am": round(h_limit_omen, 4),
+        "min_distance_igw_m": round(r_meters_igw, 2),
+        "min_distance_omen_m": round(r_meters_omen, 2)
+    }
 
 
 # Frequency limits for magnetic loop antenna
@@ -183,6 +203,13 @@ class PeterAntennaControl(Control):
         self.h_limit_display.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("H_Limit (NISV/IGW)"), self.h_limit_display)
 
+        self.h_limit_omen_display = QtWidgets.QLabel("--")
+        self.h_limit_omen_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.h_limit_omen_display.font()
+        font.setPointSize(11)
+        self.h_limit_omen_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("H_Limit (OMEN)"), self.h_limit_omen_display)
+
         self.safety_distance_display = QtWidgets.QLabel("--")
         self.safety_distance_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         font = self.safety_distance_display.font()
@@ -191,7 +218,7 @@ class PeterAntennaControl(Control):
         
         # Create complete row with label, info button, and display value
         safety_row_layout = QtWidgets.QHBoxLayout()
-        safety_row_layout.addWidget(QtWidgets.QLabel("Safety distance"))
+        safety_row_layout.addWidget(QtWidgets.QLabel("Safety distance IGW"))
         self.safety_info_button = QtWidgets.QPushButton("INFO")
         self.safety_info_button.setMaximumWidth(50)
         self.safety_info_button.setToolTip("Show technical background")
@@ -201,6 +228,13 @@ class PeterAntennaControl(Control):
         safety_row_layout.addWidget(self.safety_distance_display)
         
         input_layout.addRow(safety_row_layout)
+
+        self.safety_distance_omen_display = QtWidgets.QLabel("--")
+        self.safety_distance_omen_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.safety_distance_omen_display.font()
+        font.setPointSize(11)
+        self.safety_distance_omen_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("Safety distance OMEN"), self.safety_distance_omen_display)
 
         # (power status label removed — FT-991 cannot be queried for power)
         # connect power control immediately so changes always send to rigctld
@@ -383,31 +417,39 @@ class PeterAntennaControl(Control):
             # Calculate safety parameters
             results = calculate_safety_distance(f_mhz, watts, q_factor)
             
-            # Update display fields
-            # Cap Voltage estimate: V = sqrt(P * Z) where Z~50 ohm nominal
-            cap_voltage = math.sqrt(watts * 50)
-            self.cap_voltage_display.setText(f"{cap_voltage:.0f} V")
+            # Update display fields with values from loop calculation
+            # Cap Voltage from loop (not feedline)
+            self.cap_voltage_display.setText(f"{results['cap_voltage_volts']:.0f} V")
             
             # Loop Current
             self.loop_current_display.setText(f"{results['loop_current_amps']} A")
             
-            # H-Limit
-            self.h_limit_display.setText(f"{results['h_limit_am']:.3f} A/m")
+            # H-Limit IGW
+            self.h_limit_display.setText(f"{results['h_limit_igw_am']:.3f} A/m")
             
-            # Safety Distance
-            self.safety_distance_display.setText(f"{results['min_distance_m']} m")
+            # H-Limit OMEN
+            self.h_limit_omen_display.setText(f"{results['h_limit_omen_am']:.3f} A/m")
+            
+            # Safety Distance IGW
+            self.safety_distance_display.setText(f"{results['min_distance_igw_m']} m")
+            
+            # Safety Distance OMEN
+            self.safety_distance_omen_display.setText(f"{results['min_distance_omen_m']} m")
             
             logger.debug(
-                "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_limit=%s A/m, dist=%s m",
+                "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_IGW=%s A/m, dist_IGW=%s m, H_OMEN=%s A/m, dist_OMEN=%s m",
                 f_mhz, watts, q_factor, results['loop_current_amps'],
-                results['h_limit_am'], results['min_distance_m']
+                results['h_limit_igw_am'], results['min_distance_igw_m'],
+                results['h_limit_omen_am'], results['min_distance_omen_m']
             )
         except Exception:
             logger.exception("Failed to update safety calculation")
             self.cap_voltage_display.setText("--")
             self.loop_current_display.setText("--")
             self.h_limit_display.setText("--")
+            self.h_limit_omen_display.setText("--")
             self.safety_distance_display.setText("--")
+            self.safety_distance_omen_display.setText("--")
 
     def show_safety_info(self):
         """Show technical background information about safety calculations."""

@@ -187,14 +187,12 @@ class FrequencyChart(Chart):
         self.menu.addAction(self.action_popout)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
-        self.setMinimumSize(
-            self.dim.width + self.rightMargin + self.leftMargin,
-            self.dim.height + self.topMargin + self.bottomMargin,
-        )
+        self.setMinimumSize(300, 300)
+        self.setMaximumSize(450, 450)
         self.setSizePolicy(
             QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+                QtWidgets.QSizePolicy.Policy.Preferred,
+                QtWidgets.QSizePolicy.Policy.Preferred,
             )
         )
         pal = QtGui.QPalette()

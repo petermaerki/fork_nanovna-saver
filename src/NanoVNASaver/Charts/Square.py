@@ -31,13 +31,14 @@ class SquareChart(Chart):
     def __init__(self, name=""):
         super().__init__(name)
         sizepolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Policy.Fixed,
-            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.Preferred,
+            QtWidgets.QSizePolicy.Policy.Preferred,
         )
         self.setSizePolicy(sizepolicy)
         self.dim.width = 250
         self.dim.height = 250
-        self.setMinimumSize(self.dim.width + 40, self.dim.height + 40)
+        self.setMinimumSize(300, 300)
+        self.setMaximumSize(450, 450)
 
         pal = QtGui.QPalette()
         pal.setColor(QtGui.QPalette.ColorRole.Window, Chart.color.background)

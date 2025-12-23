@@ -72,11 +72,12 @@ class TDRChart(Chart):
         self.bottomMargin = 25
         self.topMargin = 20
 
-        self.setMinimumSize(300, 300)
+        self.setMinimumSize(225, 225)
+        self.setMaximumSize(375, 375)
         self.setSizePolicy(
             QSizePolicy(
-                QSizePolicy.Policy.MinimumExpanding,
-                QSizePolicy.Policy.MinimumExpanding,
+                QSizePolicy.Policy.Preferred,
+                QSizePolicy.Policy.Preferred,
             )
         )
         pal = QPalette()

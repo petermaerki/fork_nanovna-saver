@@ -21,12 +21,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=0.95):
+def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0):
     """Calculates the minimum safety distance for a Magnetic Loop antenna based on H-field limits."""
     f_hz = f_mhz * 1e6
     radius = loop_diameter_m / 2
     area = math.pi * (radius ** 2)
-    l_henry = 1.2e-6 * loop_diameter_m * (math.log(loop_diameter_m / 0.02) - 0.5)
+    l_henry = 1.55e-6
     i_loop = math.sqrt((p_watt * q_factor) / (2 * math.pi * f_hz * l_henry))
     
     # Capacitor voltage at resonance: V_c = I_loop * X_L (X_L = X_C at resonance)
@@ -130,13 +130,25 @@ class PeterAntennaControl(Control):
         self.input_set_Hz.setFont(font)
 
         self.auto_get_timer = QtCore.QTimer(self)
-        self.auto_get_timer.setInterval(1000)  # 1 second
+        self.auto_get_timer.setInterval(2000)  # 2 seconds
         self.auto_get_timer.timeout.connect(self._auto_get_frequency)
         self.checkbox_auto_get_f.checkStateChanged.connect(
             self.on_auto_get_frequency_toggle
         )
         # Enable auto-get by default at initialization
         self.checkbox_auto_get_f.setChecked(True)
+
+        # SWR offset input field
+        self.input_swr_offset_Hz = QtWidgets.QLineEdit("1500")
+        self.input_swr_offset_Hz.setFixedHeight(20)
+        self.input_swr_offset_Hz.setMinimumWidth(60)
+        self.input_swr_offset_Hz.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.input_swr_offset_Hz.font()
+        font.setPointSize(11)
+        self.input_swr_offset_Hz.setFont(font)
+        input_layout.addRow(
+            QtWidgets.QLabel("Set offset [Hz]"), self.input_swr_offset_Hz
+        )
 
         input_layout.addRow(
             QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz
@@ -276,7 +288,7 @@ class PeterAntennaControl(Control):
 
             self._setStartStopFrequencyFloat("Start", 1e6)
             self._setStartStopFrequencyFloat("Stop", 30e6)
-            self._setDatapointCount(1000)
+            self._setDatapointCount(3000) # initial bei overview
             self.app.sweep.set_logarithmic(True)
 
             self.app.sweep_start()
@@ -516,9 +528,15 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                         "Auto-get frequency: received non-integer: %r", data
                     )
                     return
-                # Insert the raw Hz integer into the input field (naked number)
-                QtWidgets.QLineEdit.setText(self.input_set_Hz, str(freq_hz))
-                logger.debug("Auto-get frequency: set %d Hz", freq_hz)
+                # Apply SWR offset to received frequency
+                try:
+                    offset_hz = int(self.input_swr_offset_Hz.text())
+                except (ValueError, AttributeError):
+                    offset_hz = 0
+                freq_hz_with_offset = freq_hz + offset_hz
+                # Insert the offset-adjusted Hz integer into the input field (naked number)
+                QtWidgets.QLineEdit.setText(self.input_set_Hz, str(freq_hz_with_offset))
+                logger.debug("Auto-get frequency: set %d Hz (received %d Hz + offset %d Hz)", freq_hz_with_offset, freq_hz, offset_hz)
         except Exception as e:
             logger.debug("Auto-get frequency failed: %s", e)
 
@@ -846,15 +864,50 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         #points = min(points, 600)
         #points = max(points, 51)
        
+        BAND_160M_HZ = 1905000
+        BAND_80M_HZ = 3650000
+        BAND_60M_HZ = 5358000
+        BAND_40M_HZ = 7100000
+        BAND_30M_HZ = 10125000
+        BAND_20M_HZ = 14175000
+        BAND_17M_HZ = 18118000
+        BAND_15M_HZ = 21225000
+        BAND_12M_HZ = 24940000
+        BAND_10M_HZ = 28850000
+
+        BAND_160M_80M_HZ = (BAND_160M_HZ + BAND_80M_HZ)/2
+        BAND_80M_60M_HZ = (BAND_80M_HZ + BAND_60M_HZ)/2
+        BAND_60M_40M_HZ = (BAND_60M_HZ + BAND_40M_HZ)/2
+        BAND_40M_30M_HZ = (BAND_40M_HZ + BAND_30M_HZ)/2
+        BAND_30M_20M_HZ = (BAND_30M_HZ + BAND_20M_HZ)/2
+        BAND_20M_17M_HZ = (BAND_20M_HZ + BAND_17M_HZ)/2
+        BAND_17M_15M_HZ = (BAND_17M_HZ + BAND_15M_HZ)/2
+        BAND_15M_12M_HZ = (BAND_15M_HZ + BAND_12M_HZ)/2
+        BAND_12M_10M_HZ = (BAND_12M_HZ + BAND_10M_HZ)/2
+
+
+
         points = 500
-        deviation_limit_puls = 5e-3
+        deviation_limit_puls = 1e-2 # kleiner = agressiver
         points_pulse = 101
-        if set_f_swr_min_Hz > 5E6:
-            deviation_limit_puls = 1e-2
-        if set_f_swr_min_Hz > 12E6:
-            deviation_limit_puls = 3e-2
-        if set_f_swr_min_Hz > 16E6:
-            deviation_limit_puls = 5e-2
+        if set_f_swr_min_Hz > BAND_160M_80M_HZ:
+            pass
+        if set_f_swr_min_Hz > BAND_80M_60M_HZ:
+            deviation_limit_puls = 0.3e-2 
+        if set_f_swr_min_Hz > BAND_60M_40M_HZ:
+            deviation_limit_puls = 0.5e-2 # 20260109 ok
+        if set_f_swr_min_Hz > BAND_40M_30M_HZ:
+            deviation_limit_puls = 0.8e-2 # 20260109 ok
+        if set_f_swr_min_Hz > BAND_30M_20M_HZ:
+            deviation_limit_puls = 2e-2 # 20260109 ok
+        if set_f_swr_min_Hz > BAND_20M_17M_HZ:
+            deviation_limit_puls = 4e-2 # 20260109 ok
+        if set_f_swr_min_Hz > BAND_17M_15M_HZ:
+            deviation_limit_puls = 3e-2 # 20260109 ok
+        if set_f_swr_min_Hz > BAND_15M_12M_HZ:
+            deviation_limit_puls = 1.5e-2 # 20260109 ok
+        if set_f_swr_min_Hz > BAND_12M_10M_HZ:
+            deviation_limit_puls = 1.2e-2 # 20260109 ok
 
         logger.debug(f"{f_swr_min_Hz=} {sweep_start_Hz=} {sweep_stop_Hz=}")
 

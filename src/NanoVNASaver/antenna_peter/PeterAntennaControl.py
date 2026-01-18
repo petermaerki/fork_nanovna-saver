@@ -400,15 +400,7 @@ class PeterAntennaControl(Control):
                         logger.debug("RFPOWER: reading response failed: %s", e)
             except Exception as e:
                 logger.debug("Failed to send RFPOWER over socket: %s", e)
-                try:
-                    QtWidgets.QMessageBox.warning(
-                        self,
-                        "RF power send failed",
-                        f"Failed to send RFPOWER command to localhost:4532:\n{e}",
-                    )
-                except Exception:
-                    logger.exception("Failed to show RFPOWER failure message box")
-            # Update safety calculation displays
+            # Update safety calculation displays (always, regardless of socket success)
             self._update_safety_calculation()
         except Exception:
             logger.exception("Failed to prepare RFPOWER command")

@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 import socket
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 
 from ..Controls.Control import Control
 from ..Controls.SweepControl import FrequencyInputWidget
@@ -84,8 +84,15 @@ class PeterAntennaControl(Control):
         self.checkbox_down = QtWidgets.QCheckBox()
         self.checkbox_vna_enable = QtWidgets.QCheckBox()
         
+        # Create label for tune checkbox with yellow highlight
+        self.label_tune = QtWidgets.QLabel("Tune automatic")
+        self.label_tune.setAutoFillBackground(True)
+        palette = self.label_tune.palette()
+        palette.setColor(self.label_tune.backgroundRole(), QtGui.QColor("#FFFF99"))
+        self.label_tune.setPalette(palette)
+        
         input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
-        input_layout.addRow(QtWidgets.QLabel("Tune automatic"), self.checkbox_tune)
+        input_layout.addRow(self.label_tune, self.checkbox_tune)
         # Tune iteration counter (internal; display removed)
         self._tune_iteration = 0
         
@@ -269,6 +276,11 @@ class PeterAntennaControl(Control):
     def on_tune(self):
         checked = self.checkbox_tune.isChecked()
         if checked:
+            # Auto-enable VNA if not already enabled
+            if not self.checkbox_vna_enable.isChecked():
+                logger.debug("Tune enabled: auto-enabling VNA")
+                self.checkbox_vna_enable.setChecked(True)
+            
             # reset tune iteration counter on initial enable; first sweep is a dry-run
             self._tune_iteration = 0
             # Send current power setting to FT-991 when tuning is enabled
@@ -664,13 +676,17 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
 
     def sweepFinished_peter_antenna(self):
         try:
-            f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz = (
+            f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
                 self.find_min_swr()
             )
+            if f_swr_p2_64_l_Hz is None and f_swr_min_Hz is None and f_swr_p2_64_h_Hz is None:
+                logger.warning("sweepFinished: No valid frequencies found")
+                # Still call find_sweep_start_stop to handle the case properly
             self.find_sweep_start_stop(
                 f_swr_p2_64_l_Hz,
                 f_swr_min_Hz,
                 f_swr_p2_64_h_Hz,
+                swr_min,
             )
             # Update ppm and Q displays only after sweep finish / after find_min_swr()
             try:
@@ -696,8 +712,14 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                     self._tune_iteration += 1
             except Exception:
                 logger.exception("Failed to increment tune iteration counter")
-        except Exception as e:
-            logger.exception(e)
+        except Exception:
+            logger.exception("Critical error in sweepFinished_peter_antenna")
+            # Ensure motor is stopped on any error
+            try:
+                util_mpremote.mp_exec(device=self.mp_device, cmd="run(direction_up=True, on=False)")
+                self._set_motor_status("stop (error)")
+            except Exception:
+                logger.exception("Failed to stop motor after error")
 
     def find_min_swr(self):
         with self.app.dataLock:
@@ -707,6 +729,11 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             swr = np.asarray([d.vswr for d in s11])
             freq_Hz = np.asarray([float(d.freq) for d in s11])
 
+        # Safety check: return early if no data available
+        if len(swr) == 0 or len(freq_Hz) == 0:
+            logger.warning("find_min_swr: No data available")
+            return None, None, None, float('inf')
+
         idx_min = np.argmin(swr)
         swr_min = swr[idx_min]
 
@@ -714,8 +741,65 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         f_swr_p2_64_l_Hz = None
         f_swr_p2_64_h_Hz = None
 
-        if swr_min < 4.0:
+        if swr_min < 2.0:
             f_swr_min_Hz = freq_Hz[idx_min]
+
+        else:
+            # S11 betrag phase doppelt abgeleitet: falls ein peak grösser als
+            # 5 mal der mittelwert ist, so ist f_swr_min_Hz an der stelle vom
+            # peak. sonst bleibt f_swr_min_Hz = none
+            try:
+                # Calculate phase double derivative absolute values
+                if len(s11) >= 3:
+                    phases = [d.phase for d in s11]
+                    unwrapped = np.degrees(np.unwrap(phases))
+                    freqs = [float(d.freq) for d in s11]
+
+                    # First derivative
+                    first_deriv = []
+                    for i in range(len(unwrapped) - 1):
+                        delta_phase = unwrapped[i + 1] - unwrapped[i]
+                        delta_freq = freqs[i + 1] - freqs[i]
+                        if delta_freq != 0:
+                            first_deriv.append(delta_phase / delta_freq)
+                        else:
+                            first_deriv.append(0.0)
+
+                    # Second derivative absolute values
+                    second_deriv_abs = []
+                    for i in range(len(first_deriv) - 1):
+                        delta_deriv = first_deriv[i + 1] - first_deriv[i]
+                        delta_freq = (
+                            (freqs[i + 2] - freqs[i + 1]) +
+                            (freqs[i + 1] - freqs[i])
+                        ) / 2
+                        if delta_freq != 0:
+                            # Absolute value in °/MHz²
+                            deriv = abs((delta_deriv / delta_freq) * 1e12)
+                            second_deriv_abs.append(deriv)
+                        else:
+                            second_deriv_abs.append(0.0)
+
+                    if second_deriv_abs:
+                        mean_val = np.mean(second_deriv_abs)
+                        max_val = np.max(second_deriv_abs)
+                        
+                        # Check if peak is > 5x mean
+                        if max_val > 5 * mean_val:
+                            # Find index of peak (add 2 for offset)
+                            peak_idx = np.argmax(second_deriv_abs) + 2
+                            if peak_idx < len(freq_Hz):
+                                f_swr_min_Hz = freq_Hz[peak_idx]
+                                logger.debug(
+                                    "Phase deriv peak detection: peak=%s, "
+                                    "mean=%s, freq=%s Hz",
+                                    max_val, mean_val, f_swr_min_Hz
+                                )
+            except Exception:
+                logger.exception("Failed to analyze phase double derivative")
+
+
+        if f_swr_min_Hz is not None:
             target_swr = 2.64
 
             left_idx = np.where(swr[:idx_min] >= target_swr)[0]
@@ -726,11 +810,15 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 freq_Hz[idx_min + right_idx[0]] if len(right_idx) else None
             )
 
+
+
+
+
         self._setMakerFrequencyFloat(0, f_swr_p2_64_l_Hz, freq_Hz[0])
         self._setMakerFrequencyFloat(1, f_swr_min_Hz, freq_Hz[0])
         self._setMakerFrequencyFloat(2, f_swr_p2_64_h_Hz, freq_Hz[0])
 
-        return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz
+        return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min
 
     def _update_q_display(self):
         """Compute Q = marker2 / (marker3 - marker1) and update label.
@@ -823,13 +911,25 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         f_swr_p2_64_l_Hz: float,
         f_swr_min_Hz: float,
         f_swr_p2_64_h_Hz: float,
+        swr_min: float,
     ):
         SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.64 band
         assert SWEEP_RANGE_OVERLAP > 1.1
 
-        # set_f_swr_min_Hz = 3.0e6
-        # set_f_swr_min_Hz = 22.0e6
-        set_f_swr_min_Hz = float(self.input_set_Hz.text())
+        # Safety check: if no valid data from find_min_swr, use full range
+        if f_swr_min_Hz is None and f_swr_p2_64_l_Hz is None and f_swr_p2_64_h_Hz is None:
+            logger.warning("find_sweep_start_stop: No valid frequency data, using full range")
+            self._setStartStopFrequencyFloat("Start", F_USEFUL_MIN_Hz)
+            self._setStartStopFrequencyFloat("Stop", F_USEFUL_MAX_Hz)
+            self._setDatapointCount(500)
+            self._set_motor_status("stop (no data)")
+            return
+
+        try:
+            set_f_swr_min_Hz = float(self.input_set_Hz.text())
+        except (ValueError, AttributeError) as e:
+            logger.warning("find_sweep_start_stop: Invalid set frequency: %s", e)
+            set_f_swr_min_Hz = 7.074e6  # default fallback
 
         def min_found() -> bool:
             if f_swr_min_Hz is None:
@@ -911,24 +1011,26 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
 
         logger.debug(f"{f_swr_min_Hz=} {sweep_start_Hz=} {sweep_stop_Hz=}")
 
-        if f_swr_min_Hz is not None:
+        # Motor control condition:
+        # - f_swr_min_Hz must exist AND
+        # - either deviation > 1 MHz OR both 2.64 markers exist (good SWR)
+        should_stop = False
+        if (f_swr_min_Hz is not None and
+            (abs(f_swr_min_Hz - set_f_swr_min_Hz) > 1e6 or
+             swr_min < 2.0)):
             if F_USEFUL_MIN_Hz < f_swr_min_Hz < F_USEFUL_MAX_Hz:
                 difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
                 direction_up = difference_Hz > 0
                 deviation = abs(difference_Hz/set_f_swr_min_Hz)
-                pulse = False
                 
-                if deviation < deviation_limit_puls:
+                # Check if we're close enough to stop (smaller than pulse threshold)
+                if deviation < deviation_limit_puls * 3:
+                    # Small deviation: use pulse
                     pulse = True
                     duration_s = 1.0*deviation/deviation_limit_puls
-                if pulse:
                     cmd = f"pulse({direction_up}, {duration_s})"
-                    # show pulse status (pulse up/down 0.3s)
                     dir_str = "up" if direction_up else "down"
                     dur_str = f"{duration_s:.2f}".rstrip("0").rstrip(".")
-                    # first iteration is a dry-run: do not actuate motor and do not
-                    # change sweep points; only set points_pulse when actually
-                    # actuating the motor (iteration > 0).
                     if getattr(self, "_tune_iteration", 0) == 0:
                         self._set_motor_status(f"pulse {dir_str} {dur_str}s (preview)")
                         print(f'pulse: {duration_s=} (preview)')
@@ -937,17 +1039,32 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                         util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
                         points = points_pulse
                 else:
+                    # Large deviation: continuous run
                     cmd = f"run(direction_up={direction_up}, on=True)"
                     dir_str = "up" if direction_up else "down"
                     if getattr(self, "_tune_iteration", 0) == 0:
-                        # dry-run on first iteration: do not actuate motor
                         self._set_motor_status(f"motor run {dir_str} (preview)")
                     else:
                         self._set_motor_status(f"motor run {dir_str}")
                         util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+            else:
+                should_stop = True
         else:
-            cmd = f"run(direction_up=True, on=False)"
-            # no best freq -> ensure motor stopped
-            self._set_motor_status("stop")
+            should_stop = True
         
-        self._setDatapointCount(points)
+        # Always send explicit stop command when needed
+        if should_stop:
+            if getattr(self, "_tune_iteration", 0) > 0:
+                util_mpremote.mp_exec(device=self.mp_device, cmd="run(direction_up=True, on=False)")
+            if not hasattr(self, '_motor_status_already_set'):
+                self._set_motor_status("stop")
+        
+        # Safety check: ensure points is defined
+        if 'points' not in locals():
+            points = 500
+            logger.warning("points variable not set, using default: %d", points)
+        
+        try:
+            self._setDatapointCount(points)
+        except Exception:
+            logger.exception("Failed to set datapoint count")

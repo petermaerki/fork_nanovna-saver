@@ -11,6 +11,9 @@ from .MagnitudeZSeries import MagnitudeZSeriesChart
 from .MagnitudeZShunt import MagnitudeZShuntChart
 from .Permeability import PermeabilityChart
 from .Phase import PhaseChart
+from .PhaseDerived import PhaseDerivedChart
+from .PhaseDoubleDerived import PhaseDoubleDerivedChart
+from .PhaseDoubleDerivativeAbs import PhaseDoubleDerivativeAbsChart
 from .Polar import PolarChart
 from .QFactor import QualityFactorChart
 from .RI import RealImaginaryChart
@@ -38,6 +41,9 @@ __all__ = [
     "MagnitudeZShuntChart",
     "PermeabilityChart",
     "PhaseChart",
+    "PhaseDerivedChart",
+    "PhaseDoubleDerivedChart",
+    "PhaseDoubleDerivativeAbsChart",
     "PolarChart",
     "QualityFactorChart",
     "RealImaginaryChart",

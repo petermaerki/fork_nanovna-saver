@@ -39,6 +39,9 @@ from .Charts import (
     MagnitudeZShuntChart,
     PermeabilityChart,
     PhaseChart,
+    PhaseDerivedChart,
+    PhaseDoubleDerivedChart,
+    PhaseDoubleDerivativeAbsChart,
     PolarChart,
     QualityFactorChart,
     RealImaginaryMuChart,
@@ -185,6 +188,13 @@ class NanoVNASaver(QWidget):
                     " X/\N{GREEK SMALL LETTER OMEGA}"
                 ),
                 "phase": PhaseChart("S11 Phase"),
+                "phase_derived": PhaseDerivedChart("S11 Phase abgeleitet"),
+                "phase_double_derived": PhaseDoubleDerivedChart(
+                    "S11 Phase doppelt abgeleitet"
+                ),
+                "phase_double_derivative_abs": PhaseDoubleDerivativeAbsChart(
+                    "S11 Betrag Phase doppelt abgeleitet"
+                ),
                 "q_factor": QualityFactorChart("S11 Quality Factor"),
                 "real_imag": RealImaginaryZChart("S11 R+jX"),
                 "real_imag_mu": RealImaginaryMuChart(

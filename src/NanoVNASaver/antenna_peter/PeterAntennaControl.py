@@ -95,6 +95,8 @@ class PeterAntennaControl(Control):
         input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
         # Tune iteration counter (internal; display removed)
         self._tune_iteration = 0
+        # Store calculated Q factor for safety calculations
+        self._q_factor = 500.0  # default value
         
         # Manual F controls in one row
         manual_f_layout = QtWidgets.QHBoxLayout()
@@ -261,6 +263,18 @@ class PeterAntennaControl(Control):
             self.power_spin.valueChanged.connect(self.on_power_changed)
         except Exception:
             logger.exception("Failed to connect power spin signal at init")
+        
+        # Connect frequency input field to update safety calculations
+        try:
+            self.input_set_Hz.textChanged.connect(self._update_safety_calculation)
+        except Exception:
+            logger.exception("Failed to connect frequency input signal at init")
+        
+        # Perform initial safety calculation
+        try:
+            self._update_safety_calculation()
+        except Exception:
+            logger.exception("Failed to perform initial safety calculation")
 
         self.layout.addRow(input_layout)
 
@@ -365,6 +379,9 @@ class PeterAntennaControl(Control):
         rigctl: `rigctl -m 2 -r localhost:4532 L RFPOWER <scaled>`.
         Also update safety calculation displays.
         """
+        # Always update safety calculations first, regardless of any errors
+        self._update_safety_calculation()
+        
         try:
             watts = int(self.power_spin.value())
             # enforce allowed range 5..100 (defensive clamp)
@@ -400,8 +417,6 @@ class PeterAntennaControl(Control):
                         logger.debug("RFPOWER: reading response failed: %s", e)
             except Exception as e:
                 logger.debug("Failed to send RFPOWER over socket: %s", e)
-            # Update safety calculation displays (always, regardless of socket success)
-            self._update_safety_calculation()
         except Exception:
             logger.exception("Failed to prepare RFPOWER command")
 
@@ -417,25 +432,8 @@ class PeterAntennaControl(Control):
             
             watts = int(self.power_spin.value())
             
-            # Try to get Q from marker calculation (if available)
-            try:
-                markers = self.app.markers
-                if len(markers) >= 3:
-                    m1 = markers[0]
-                    m2 = markers[1]
-                    m3 = markers[2]
-                    f1 = m1.frequencyInput.get_freq()
-                    f2 = m2.frequencyInput.get_freq()
-                    f3 = m3.frequencyInput.get_freq()
-                    denom = float(f3 - f1)
-                    if denom > 0:
-                        q_factor = float(f2) / denom
-                    else:
-                        q_factor = 500  # default
-                else:
-                    q_factor = 500  # default
-            except Exception:
-                q_factor = 500  # default
+            # Use stored Q factor from Q display (updated after sweep)
+            q_factor = self._q_factor
             
             # Calculate safety parameters
             results = calculate_safety_distance(f_mhz, watts, q_factor)
@@ -828,6 +826,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             markers = self.app.markers
             if len(markers) < 3:
                 self.q_display.setText("--")
+                self._q_factor = 500.0  # reset to default
                 return
             m1 = markers[0]
             m2 = markers[1]
@@ -839,8 +838,11 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             denom = float(f3 - f1)
             if denom <= 0:
                 self.q_display.setText("--")
+                self._q_factor = 500.0  # reset to default
                 return
             q = float(f2) / denom
+            # Store Q for use in safety calculations
+            self._q_factor = q
             # show numeric value only, no decimal places
             self.q_display.setText(f"{q:.0f}")
         except Exception:

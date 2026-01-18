@@ -91,8 +91,8 @@ class PeterAntennaControl(Control):
         palette.setColor(self.label_tune.backgroundRole(), QtGui.QColor("#FFFF99"))
         self.label_tune.setPalette(palette)
         
-        input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
         input_layout.addRow(self.label_tune, self.checkbox_tune)
+        input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
         # Tune iteration counter (internal; display removed)
         self._tune_iteration = 0
         
@@ -300,7 +300,7 @@ class PeterAntennaControl(Control):
 
             self._setStartStopFrequencyFloat("Start", 1e6)
             self._setStartStopFrequencyFloat("Stop", 30e6)
-            self._setDatapointCount(3000) # initial bei overview
+            self._setDatapointCount(1000) # initial bei overview
             self.app.sweep.set_logarithmic(True)
 
             self.app.sweep_start()
@@ -308,6 +308,10 @@ class PeterAntennaControl(Control):
             util_mpremote.mp_exec(
                 device=self.mp_device, cmd="run(direction_up=True, on=False)"
             )
+            # When tune is disabled, also disable VNA enable
+            if self.checkbox_vna_enable.isChecked():
+                logger.debug("Tune disabled: auto-disabling VNA")
+                self.checkbox_vna_enable.setChecked(False)
             self._set_motor_status("stop")
             # clear internal tune iteration counter when tuning disabled
             self._tune_iteration = 0
@@ -348,6 +352,9 @@ class PeterAntennaControl(Control):
                     self.app.serial_control.connect_device()
             except Exception:
                 logger.exception("Failed to auto-connect serial port on VNA enable")
+        else:
+            # When VNA is disabled, also uncheck tune automatic
+            self.checkbox_tune.setChecked(False)
 
         # Note: power spin is connected at init; no further action needed here
 

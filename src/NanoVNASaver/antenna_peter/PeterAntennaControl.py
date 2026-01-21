@@ -1043,29 +1043,45 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             logger.warning("find_sweep_start_stop: Invalid set frequency: %s", e)
             set_f_swr_min_Hz = 7.074e6  # default fallback
 
-        def min_found() -> bool:
-            if f_swr_min_Hz is None:
-                return False
-            if f_swr_p2_64_l_Hz is None:
-                return False
-            if f_swr_p2_64_h_Hz is None:
-                return False
-            return True
-
-        if min_found():
-            distance_f = abs(set_f_swr_min_Hz - f_swr_min_Hz)
-            distance_f = max(
-                abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f
-            )
-            distance_f = max(
-                abs(f_swr_p2_64_h_Hz - set_f_swr_min_Hz), distance_f
-            )
+        # Check if we have at least SWR min frequency
+        if f_swr_min_Hz is not None:
+            # Check if 2.64 markers are missing or too far from SWR min (>500 kHz)
+            use_fixed_zoom = False
+            if f_swr_p2_64_l_Hz is None or f_swr_p2_64_h_Hz is None:
+                use_fixed_zoom = True
+                logger.debug("2.64 markers missing, using ±1 MHz zoom")
+            elif (abs(f_swr_p2_64_l_Hz - f_swr_min_Hz) > 500e3 or
+                  abs(f_swr_p2_64_h_Hz - f_swr_min_Hz) > 500e3):
+                use_fixed_zoom = True
+                logger.debug("2.64 markers >500 kHz from SWR min, using ±1 MHz zoom")
+            
+            if use_fixed_zoom:
+                # Use fixed ±1 MHz zoom around set frequency
+                distance_f = 1e6
+            else:
+                # Use 2.64 markers for zoom calculation
+                distance_f = abs(set_f_swr_min_Hz - f_swr_min_Hz)
+                distance_f = max(
+                    abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f
+                )
+                distance_f = max(
+                    abs(f_swr_p2_64_h_Hz - set_f_swr_min_Hz), distance_f
+                )
 
             sweep_stop_Hz = set_f_swr_min_Hz + distance_f * SWEEP_RANGE_OVERLAP
             sweep_stop_Hz = min(F_USEFUL_MAX_Hz, sweep_stop_Hz)
             sweep_start_Hz = set_f_swr_min_Hz - distance_f * SWEEP_RANGE_OVERLAP
             sweep_start_Hz = max(F_USEFUL_MIN_Hz, sweep_start_Hz)
+            
+            logger.debug(
+                "Zoom calc: f_swr_min=%s Hz, set_f=%s Hz, distance_f=%s Hz, "
+                "sweep: %s - %s Hz",
+                f_swr_min_Hz, set_f_swr_min_Hz, distance_f, 
+                sweep_start_Hz, sweep_stop_Hz
+            )
         else:
+            # No SWR min found at all, use full range
+            logger.debug("No SWR min found, using full range")
             sweep_start_Hz = F_USEFUL_MIN_Hz
             sweep_stop_Hz = F_USEFUL_MAX_Hz
 
@@ -1103,7 +1119,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         deviation_limit_puls = 1e-2 # kleiner = agressiver
         points_pulse = 101
         if set_f_swr_min_Hz > BAND_160M_80M_HZ:
-            pass
+            deviation_limit_puls = 0.5e-2 
         if set_f_swr_min_Hz > BAND_80M_60M_HZ:
             deviation_limit_puls = 0.3e-2 
         if set_f_swr_min_Hz > BAND_60M_40M_HZ:

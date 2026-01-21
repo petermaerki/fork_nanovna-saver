@@ -189,6 +189,14 @@ class PeterAntennaControl(Control):
         self.swrmin_display.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("SWR min"), self.swrmin_display)
 
+        # Impedance at SWR min display (shows impedance at resonance frequency)
+        self.impedance_display = QtWidgets.QLabel("--")
+        self.impedance_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.impedance_display.font()
+        font.setPointSize(11)
+        self.impedance_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("R @ SWR min"), self.impedance_display)
+
         # Power input: allow user to enter transmit power in Watts (5..100)
         self.power_spin = QtWidgets.QSpinBox()
         self.power_spin.setRange(5, 100)
@@ -698,6 +706,10 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 self._update_swrmin_display()
             except Exception:
                 logger.exception("Failed to update SWR min display after sweep finish")
+            try:
+                self._update_impedance_display()
+            except Exception:
+                logger.exception("Failed to update impedance display after sweep finish")
             # Update safety calculation when Q is recalculated
             try:
                 self._update_safety_calculation()
@@ -899,6 +911,105 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         except Exception:
             logger.exception("Failed to update SWR min display")
             self.swrmin_display.setText("--")
+
+    def _update_impedance_display(self):
+        """Compute and display the antenna impedance from the Smith chart circle.
+
+        The three marker points form a circle in the Smith chart.
+        Check if the center of the Smith chart (50 Ω, Gamma=0) is inside the circle:
+        - If inside: overcoupled → R = 50 Ω × SWR_min
+        - If outside: undercoupled → R = 50 Ω / SWR_min
+        """
+        try:
+            markers = self.app.markers
+            if len(markers) < 3:
+                self.impedance_display.setText("--")
+                return
+            
+            # Get all three marker frequencies
+            f1 = markers[0].frequencyInput.get_freq()  # SWR 2.64 low
+            f2 = markers[1].frequencyInput.get_freq()  # SWR min
+            f3 = markers[2].frequencyInput.get_freq()  # SWR 2.64 high
+            
+            if f1 is None or f2 is None or f3 is None:
+                self.impedance_display.setText("--")
+                return
+            
+            # Get S11 data
+            with self.app.dataLock:
+                s11: list[Datapoint] = self.app.data.s11[:]
+                if not s11:
+                    self.impedance_display.setText("--")
+                    return
+                # Also get SWR at marker 2 (SWR min)
+                swr_array = np.asarray([d.vswr for d in s11])
+            
+            swr_min = float(np.min(swr_array))
+            
+            # Find closest datapoints for all three markers
+            def find_closest(freq_target):
+                min_diff = float('inf')
+                closest = None
+                for dp in s11:
+                    diff = abs(dp.freq - freq_target)
+                    if diff < min_diff:
+                        min_diff = diff
+                        closest = dp
+                return closest
+            
+            dp1 = find_closest(f1)
+            dp2 = find_closest(f2)
+            dp3 = find_closest(f3)
+            
+            if dp1 is None or dp2 is None or dp3 is None:
+                self.impedance_display.setText("--")
+                return
+            
+            # Get S11 (Gamma) for all three points
+            g1 = complex(dp1.re, dp1.im)
+            g2 = complex(dp2.re, dp2.im)
+            g3 = complex(dp3.re, dp3.im)
+            
+            # Calculate circle center using perpendicular bisectors
+            mid12 = (g1 + g2) / 2
+            mid23 = (g2 + g3) / 2
+            
+            d12 = g2 - g1
+            d23 = g3 - g2
+            
+            # Perpendicular vectors (rotate by 90°)
+            perp12 = complex(-d12.imag, d12.real)
+            perp23 = complex(-d23.imag, d23.real)
+            
+            diff = mid23 - mid12
+            det = perp12.real * perp23.imag - perp12.imag * perp23.real
+            
+            if abs(det) < 1e-10:
+                # Points are collinear
+                self.impedance_display.setText("--")
+                return
+            
+            t = (diff.real * perp23.imag - diff.imag * perp23.real) / det
+            circle_center = mid12 + t * perp12
+            
+            # Calculate radius
+            radius = abs(g1 - circle_center)
+            
+            # Check if Smith chart center (Gamma=0, representing 50 Ω) is inside circle
+            distance_to_center = abs(circle_center)  # distance from Gamma=0
+            
+            if distance_to_center < radius:
+                # Center is inside circle → overcoupled
+                r_antenna = 50.0 * swr_min
+            else:
+                # Center is outside circle → undercoupled
+                r_antenna = 50.0 / swr_min
+            
+            self.impedance_display.setText(f"{r_antenna:.0f} Ω")
+            
+        except Exception:
+            logger.exception("Failed to update impedance display")
+            self.impedance_display.setText("--")
 
     def _set_motor_status(self, status: str):
         """Set the motor status label safely."""

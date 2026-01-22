@@ -161,7 +161,7 @@ class NanoVNASaver(QWidget):
         width = app_config.gui.window_width
         height = app_config.gui.window_height
         self.resize(width, height)
-        self.setMinimumHeight(500)
+        self.setMinimumHeight(1100)  # Increased to ensure both S11 charts are visible
         scrollarea.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0):
+def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0, loop_area_m2=0.78):
     """Calculates the minimum safety distance for a Magnetic Loop antenna based on H-field limits."""
     f_hz = f_mhz * 1e6
     radius = loop_diameter_m / 2
@@ -47,6 +47,25 @@ def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0):
     r_meters_igw = ((i_loop * area) / (2 * math.pi * h_limit_igw))**(1/3)
     r_meters_omen = ((i_loop * area) / (2 * math.pi * h_limit_omen))**(1/3)
     
+    # Calculate radiation resistance and efficiency for small loop antenna
+    # R_rad = 31171 × (A/λ²)² Ω  (for circular loop)
+    # R_loss = 2πfL / Q
+    # η = R_rad / (R_rad + R_loss)
+    # P_radiated = P_input × η
+    c = 299792458  # speed of light m/s
+    wavelength = c / f_hz
+    
+    # Radiation resistance (small loop formula)
+    r_rad = 31171 * ((loop_area_m2 / (wavelength**2))**2)
+    
+    # Loss resistance from Q factor
+    omega_l = 2 * math.pi * f_hz * l_henry
+    r_loss = omega_l / q_factor
+    
+    # Efficiency and radiated power
+    efficiency = (r_rad / (r_rad + r_loss)) * 100.0
+    p_radiated = p_watt * (r_rad / (r_rad + r_loss))
+    
     return {
         "frequency_mhz": f_mhz, 
         "power_watts": p_watt, 
@@ -56,7 +75,9 @@ def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0):
         "h_limit_igw_am": round(h_limit_igw, 4),
         "h_limit_omen_am": round(h_limit_omen, 4),
         "min_distance_igw_m": round(r_meters_igw, 2),
-        "min_distance_omen_m": round(r_meters_omen, 2)
+        "min_distance_omen_m": round(r_meters_omen, 2),
+        "p_radiated_watts": round(p_radiated, 2),
+        "efficiency_percent": round(efficiency, 1)
     }
 
 
@@ -197,6 +218,14 @@ class PeterAntennaControl(Control):
         self.impedance_display.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("R @ SWR min"), self.impedance_display)
 
+        # Efficiency display (η = P_radiated / P_input in %)
+        self.efficiency_display = QtWidgets.QLabel("--")
+        self.efficiency_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.efficiency_display.font()
+        font.setPointSize(11)
+        self.efficiency_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("Efficiency η"), self.efficiency_display)
+
         # Power input: allow user to enter transmit power in Watts (5..100)
         self.power_spin = QtWidgets.QSpinBox()
         self.power_spin.setRange(5, 100)
@@ -209,6 +238,14 @@ class PeterAntennaControl(Control):
         font.setPointSize(11)
         self.power_spin.setFont(font)
         input_layout.addRow(QtWidgets.QLabel("Power W 5...100"), self.power_spin)
+
+        # Radiated power display (calculated from loop area, current, frequency)
+        self.radiated_power_display = QtWidgets.QLabel("--")
+        self.radiated_power_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.radiated_power_display.font()
+        font.setPointSize(11)
+        self.radiated_power_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("P radiated"), self.radiated_power_display)
 
         # Safety calculation fields (read-only display)
         self.cap_voltage_display = QtWidgets.QLabel("--")
@@ -465,6 +502,12 @@ class PeterAntennaControl(Control):
             # Safety Distance OMEN
             self.safety_distance_omen_display.setText(f"{results['min_distance_omen_m']} m")
             
+            # Radiated Power
+            self.radiated_power_display.setText(f"{results['p_radiated_watts']:.2f} W")
+            
+            # Efficiency
+            self.efficiency_display.setText(f"{results['efficiency_percent']:.1f} %")
+            
             logger.debug(
                 "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_IGW=%s A/m, dist_IGW=%s m, H_OMEN=%s A/m, dist_OMEN=%s m",
                 f_mhz, watts, q_factor, results['loop_current_amps'],
@@ -479,6 +522,8 @@ class PeterAntennaControl(Control):
             self.h_limit_omen_display.setText("--")
             self.safety_distance_display.setText("--")
             self.safety_distance_omen_display.setText("--")
+            self.radiated_power_display.setText("--")
+            self.efficiency_display.setText("--")
 
     def show_safety_info(self):
         """Show technical background information about safety calculations."""
@@ -1119,7 +1164,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         deviation_limit_puls = 1e-2 # kleiner = agressiver
         points_pulse = 101
         if set_f_swr_min_Hz > BAND_160M_80M_HZ:
-            deviation_limit_puls = 0.5e-2 
+            deviation_limit_puls = 0.2e-2 
         if set_f_swr_min_Hz > BAND_80M_60M_HZ:
             deviation_limit_puls = 0.3e-2 
         if set_f_swr_min_Hz > BAND_60M_40M_HZ:

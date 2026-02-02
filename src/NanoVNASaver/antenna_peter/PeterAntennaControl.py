@@ -114,6 +114,12 @@ class PeterAntennaControl(Control):
         
         input_layout.addRow(self.label_tune, self.checkbox_tune)
         input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
+        self.tx_inhibit_switch_display = QtWidgets.QLabel("--")
+        self.tx_inhibit_switch_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        font = self.tx_inhibit_switch_display.font()
+        font.setPointSize(11)
+        self.tx_inhibit_switch_display.setFont(font)
+        input_layout.addRow(QtWidgets.QLabel("TX inhibited by switch"), self.tx_inhibit_switch_display)
         # Tune iteration counter (internal; display removed)
         self._tune_iteration = 0
         # Store calculated Q factor for safety calculations
@@ -162,6 +168,9 @@ class PeterAntennaControl(Control):
         self.auto_get_timer = QtCore.QTimer(self)
         self.auto_get_timer.setInterval(2000)  # 2 seconds
         self.auto_get_timer.timeout.connect(self._auto_get_frequency)
+        self.tx_inhibit_timer = QtCore.QTimer(self)
+        self.tx_inhibit_timer.setInterval(1000)
+        self.tx_inhibit_timer.timeout.connect(self._update_tx_inhibit_switch)
         self.checkbox_auto_get_f.checkStateChanged.connect(
             self.on_auto_get_frequency_toggle
         )
@@ -331,6 +340,10 @@ class PeterAntennaControl(Control):
         self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
         self.mp_device = util_mpremote.get_device()
         util_mpremote.mp_exec(device=self.mp_device, cmd=MICROPYTHON_MAIN)
+        self._default_app_palette = QtGui.QPalette(self.app.palette())
+        self._app_bg_inhibit_active = False
+        self._update_tx_inhibit_switch()
+        self.tx_inhibit_timer.start()
 
     def on_tune(self):
         checked = self.checkbox_tune.isChecked()
@@ -601,6 +614,36 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 logger.debug("Auto-get frequency: set %d Hz (received %d Hz + offset %d Hz)", freq_hz_with_offset, freq_hz, offset_hz)
         except Exception as e:
             logger.debug("Auto-get frequency failed: %s", e)
+
+    def _update_tx_inhibit_switch(self):
+        try:
+            result = util_mpremote.mp_exec_output(
+                device=self.mp_device, cmd="print(int(get_tx_inhibit_switch()))"
+            )
+            if result is None:
+                self.tx_inhibit_switch_display.setText("--")
+                self._set_app_background(inhibited=False)
+                return
+            value = int(result.strip())
+            self.tx_inhibit_switch_display.setText("YES" if value == 1 else "NO")
+            self._set_app_background(inhibited=(value == 1))
+        except Exception as e:
+            logger.debug("TX inhibit switch read failed: %s", e)
+            self.tx_inhibit_switch_display.setText("--")
+            self._set_app_background(inhibited=False)
+
+    def _set_app_background(self, inhibited: bool) -> None:
+        if inhibited == self._app_bg_inhibit_active:
+            return
+        if inhibited:
+            palette = QtGui.QPalette(self._default_app_palette)
+            palette.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor("#CCFFCC"))
+            self.app.setAutoFillBackground(True)
+            self.app.setPalette(palette)
+            self._app_bg_inhibit_active = True
+        else:
+            self.app.setPalette(self._default_app_palette)
+            self._app_bg_inhibit_active = False
 
 
     def on_up(self):

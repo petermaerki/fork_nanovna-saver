@@ -30,6 +30,16 @@ def mp_exec(device: str, cmd: str) -> None:
     if result.returncode != 0:
         logger.error(f"mpremote error: {result.stderr}")
 
+def mp_exec_output(device: str, cmd: str) -> str | None:
+    args = ["mpremote", "connect", device, "resume", "exec", cmd]
+    result = subprocess.run(args, capture_output=True, text=True, check=False)
+    logger.info(f'mpremote connect {device} resume exec "{cmd}"')
+    logger.debug(f"mpremote result: {result.stdout}")
+    if result.returncode != 0:
+        logger.error(f"mpremote error: {result.stderr}")
+        return None
+    return result.stdout.strip()
+
 def get_device() -> str:
     """Find the connected device with specific vendor and product IDs.
     

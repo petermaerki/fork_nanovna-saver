@@ -10,6 +10,7 @@ K4_50_OHM_out_pin = Pin("GPIO9", Pin.OUT, value=0)
 K5_FREQ_UP_center_minus_out_pin = Pin("GPIO8", Pin.OUT, value=0)
 motor_out_pin = Pin("GPIO6", Pin.OUT, value=0)
 TX_INH_out_pin = Pin("GPIO15", Pin.OUT, value=0)
+TX_INH_switch_input_pin = Pin("GPIO14", Pin.IN)
 
 
 #K2_ATTENUATION_out_pin.value(1)
@@ -42,6 +43,9 @@ def run(direction_up: bool, on: bool) -> None:
 
 def get_tx_aktiv():
     return not TX_GND_input_pin.value()
+
+def get_tx_inhibit_switch() -> bool:
+    return TX_INH_switch_input_pin.value() == 1
 
 def set_tx_sperren(sperren: bool):
     TX_INH_out_pin(sperren)

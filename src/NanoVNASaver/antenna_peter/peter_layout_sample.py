@@ -23,7 +23,7 @@ class LayoutSample(QtWidgets.QMainWindow):
         mainframe = QtWidgets.QWidget()
         self._layout = QtWidgets.QVBoxLayout(mainframe)
 
-        row1 = self.add_row(peter_widgets.LineEditWidget(label= "Label",value= 42.0, unit="V"))
+        row1 = self.add_row(peter_widgets.DoubleSpinBoxWidget(label= "Label",value= 42.0, unit="V"))
 
         self.add_row(peter_widgets.SeparatorWidget())
 

@@ -11,6 +11,7 @@ QWidgetRightT = TypeVar("QWidgetRightT", bound=QtWidgets.QWidget)
 SPACING = 4
 CONTENTS_MARGINS = QtCore.QMargins(0, 0, 0, 0)
 
+
 class FormLayoutWidget[QWidgetLeftT, QWidgetRightT](QtWidgets.QWidget):
     def __init__(
         self,
@@ -53,7 +54,7 @@ class SeparatorWidget(QtWidgets.QFrame):
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
 
 
-class LineEditWidget(QtWidgets.QWidget):
+class DoubleSpinBoxWidget(QtWidgets.QWidget):
     def __init__(
         self,
         label: str,
@@ -73,6 +74,7 @@ class LineEditWidget(QtWidgets.QWidget):
         self.entry.setFixedHeight(20)
         self.entry.setValue(value)
         self.unit = QtWidgets.QLabel(unit)
+        self.label.setOpenExternalLinks(True)
 
         self.entry.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.entry.setSizePolicy(
@@ -101,6 +103,7 @@ class PowerspinWidget(QtWidgets.QWidget):
         layout.setSpacing(SPACING)
 
         self.label = QtWidgets.QLabel(label)
+        self.label.setOpenExternalLinks(True)
 
         self.power_spin = QtWidgets.QSpinBox()
         self.power_spin.setRange(min_value, max_value)
@@ -139,6 +142,7 @@ class ValueWidget(QtWidgets.QWidget):
 
         self.label = QtWidgets.QLabel(label)
         self.value = QtWidgets.QLabel(value)
+        self.label.setOpenExternalLinks(True)
 
         self.value.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.label.setSizePolicy(
@@ -146,7 +150,7 @@ class ValueWidget(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Policy.Fixed,
         )
 
-        layout.addWidget(self.label,1)
+        layout.addWidget(self.label, 1)
         layout.addWidget(self.value)
 
 
@@ -163,10 +167,10 @@ class CheckboxWidget(QtWidgets.QWidget):
 
         self.label = QtWidgets.QLabel(label)
         self.checkbox = QtWidgets.QCheckBox()
+        self.label.setOpenExternalLinks(True)
 
         layout.addWidget(self.label, 1)
         layout.addWidget(self.checkbox)
-
 
 
 class PushButtonWidget(QtWidgets.QWidget):
@@ -186,10 +190,10 @@ class PushButtonWidget(QtWidgets.QWidget):
         self.value = QtWidgets.QLabel(value)
         self.unit = QtWidgets.QLabel(unit)
         self.button = QtWidgets.QPushButton("set")
+        self.label.setOpenExternalLinks(True)
 
         self.value.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignRight
-            | QtCore.Qt.AlignmentFlag.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
 
         self.button.setSizePolicy(
@@ -241,5 +245,3 @@ class PushButtonWidget(QtWidgets.QWidget):
             return float(text)
         except ValueError:
             return 0.0
-
-

@@ -2,6 +2,7 @@ import logging
 import math
 import pathlib
 import socket
+import time
 from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -115,7 +116,9 @@ class PeterAntennaControl(Control):
 
         self._layout = QtWidgets.QVBoxLayout(self)
 
-        self.checkbox_tune =self.add_row(peter_widgets.CheckboxWidget("Tune automatic")).checkbox
+        self.checkbox_tune = self.add_row(
+            peter_widgets.CheckboxWidget("Tune automatic")
+        ).checkbox
         self.checkbox_vna_enable = self.add_row(
             peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
         ).checkbox
@@ -178,11 +181,13 @@ class PeterAntennaControl(Control):
             self.checkbox_auto_get_f.setChecked(True)
 
         self.input_swr_offset_Hz = self.add_row(
-            peter_widgets.LineEditWidget(label="Set offset", value=1500, unit="Hz")
+            peter_widgets.DoubleSpinBoxWidget(label="Set offset", value=1500, unit="Hz")
         ).entry
 
         self.input_set_Hz = self.add_row(
-            peter_widgets.LineEditWidget(label="Set swr min", value=7.074e6, unit="Hz")
+            peter_widgets.DoubleSpinBoxWidget(
+                label="Set swr min", value=7.074e6, unit="Hz"
+            )
         ).entry
 
         self.delta_display = self.add_row(
@@ -401,15 +406,15 @@ class PeterAntennaControl(Control):
                                 resp_text = resp.decode("utf-8", errors="replace")
                             except Exception:
                                 resp_text = repr(resp)
-                            logger.debug("RFPOWER response: %s", resp_text)
+                            logger.warning("RFPOWER response: %s", resp_text)
                         else:
-                            logger.debug("RFPOWER: no response from server")
+                            logger.warning("RFPOWER: no response from server")
                     except socket.timeout:
-                        logger.debug("RFPOWER: no response (timeout)")
+                        logger.warning("RFPOWER: no response (timeout)")
                     except Exception as e:
-                        logger.debug("RFPOWER: reading response failed: %s", e)
+                        logger.warning("RFPOWER: reading response failed: %s", e)
             except Exception as e:
-                logger.debug("Failed to send RFPOWER over socket: %s", e)
+                logger.warning("Failed to send RFPOWER over socket: %s", e)
         except Exception:
             logger.exception("Failed to prepare RFPOWER command")
 
@@ -480,7 +485,6 @@ class PeterAntennaControl(Control):
             self.radiated_power_display.setText("--")
             self.efficiency_display.setText("--")
 
-
     def on_auto_get_frequency_toggle(self):
         """Start/stop the automatic frequency polling based on checkbox state."""
         if self.checkbox_auto_get_f.isChecked():
@@ -517,7 +521,8 @@ class PeterAntennaControl(Control):
                     offset_hz = 0
                 freq_hz_with_offset = freq_hz + offset_hz
                 # Insert the offset-adjusted Hz integer into the input field (naked number)
-                QtWidgets.QLineEdit.setText(self.input_set_Hz, str(freq_hz_with_offset))
+                if hasattr(self, "input_set_Hz"):
+                    self.input_set_Hz.setValue(freq_hz_with_offset)
                 logger.debug(
                     "Auto-get frequency: set %d Hz (received %d Hz + offset %d Hz)",
                     freq_hz_with_offset,
@@ -525,7 +530,7 @@ class PeterAntennaControl(Control):
                     offset_hz,
                 )
         except Exception as e:
-            logger.debug("Auto-get frequency failed: %s", e)
+            logger.warning("Auto-get frequency failed: %s", e)
 
     def _update_tx_inhibit_switch(self):
         try:

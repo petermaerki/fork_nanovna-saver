@@ -1,38 +1,41 @@
 import logging
-import pathlib
-from typing import TYPE_CHECKING
 import math
+import pathlib
+import socket
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
-import socket
-from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from ..Controls.Control import Control
 from ..Controls.SweepControl import FrequencyInputWidget
 from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
-from . import util_mpremote
- 
+from . import peter_widgets, util_mpremote
 
 if TYPE_CHECKING:
     from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
 
 logger = logging.getLogger(__name__)
 
+QWidgetT = TypeVar("QWidgetT", bound=QtWidgets.QWidget)
 
-def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0, loop_area_m2=0.78):
+
+def calculate_safety_distance(
+    f_mhz, p_watt, q_factor, loop_diameter_m=1.0, loop_area_m2=0.78
+):
     """Calculates the minimum safety distance for a Magnetic Loop antenna based on H-field limits."""
     f_hz = f_mhz * 1e6
     radius = loop_diameter_m / 2
-    area = math.pi * (radius ** 2)
+    area = math.pi * (radius**2)
     l_henry = 1.55e-6
     i_loop = math.sqrt((p_watt * q_factor) / (2 * math.pi * f_hz * l_henry))
-    
+
     # Capacitor voltage at resonance: V_c = I_loop * X_L (X_L = X_C at resonance)
     x_l = 2 * math.pi * f_hz * l_henry
     v_cap = i_loop * x_l
-    
+
     # Immissionsgrenzwert IGW (public exposure limit)
     if f_mhz < 1.0:
         h_limit_igw = 1.6
@@ -40,13 +43,13 @@ def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0, loop
         h_limit_igw = 0.73 / f_mhz
     else:
         h_limit_igw = 0.16
-    
+
     # Anlagengrenzwert OMEN (installation limit) - 5x stricter than IGW
     h_limit_omen = h_limit_igw / 5.0
-    
-    r_meters_igw = ((i_loop * area) / (2 * math.pi * h_limit_igw))**(1/3)
-    r_meters_omen = ((i_loop * area) / (2 * math.pi * h_limit_omen))**(1/3)
-    
+
+    r_meters_igw = ((i_loop * area) / (2 * math.pi * h_limit_igw)) ** (1 / 3)
+    r_meters_omen = ((i_loop * area) / (2 * math.pi * h_limit_omen)) ** (1 / 3)
+
     # Calculate radiation resistance and efficiency for small loop antenna
     # R_rad = 31171 × (A/λ²)² Ω  (for circular loop)
     # R_loss = 2πfL / Q
@@ -54,30 +57,30 @@ def calculate_safety_distance(f_mhz, p_watt, q_factor, loop_diameter_m=1.0, loop
     # P_radiated = P_input × η
     c = 299792458  # speed of light m/s
     wavelength = c / f_hz
-    
+
     # Radiation resistance (small loop formula)
-    r_rad = 31171 * ((loop_area_m2 / (wavelength**2))**2)
-    
+    r_rad = 31171 * ((loop_area_m2 / (wavelength**2)) ** 2)
+
     # Loss resistance from Q factor
     omega_l = 2 * math.pi * f_hz * l_henry
     r_loss = omega_l / q_factor
-    
+
     # Efficiency and radiated power
     efficiency = (r_rad / (r_rad + r_loss)) * 100.0
     p_radiated = p_watt * (r_rad / (r_rad + r_loss))
-    
+
     return {
-        "frequency_mhz": f_mhz, 
-        "power_watts": p_watt, 
+        "frequency_mhz": f_mhz,
+        "power_watts": p_watt,
         "q_factor": q_factor,
-        "loop_current_amps": round(i_loop, 2), 
+        "loop_current_amps": round(i_loop, 2),
         "cap_voltage_volts": round(v_cap, 0),
         "h_limit_igw_am": round(h_limit_igw, 4),
         "h_limit_omen_am": round(h_limit_omen, 4),
         "min_distance_igw_m": round(r_meters_igw, 2),
         "min_distance_omen_m": round(r_meters_omen, 2),
         "p_radiated_watts": round(p_radiated, 2),
-        "efficiency_percent": round(efficiency, 1)
+        "efficiency_percent": round(efficiency, 1),
     }
 
 
@@ -91,225 +94,156 @@ FILENAME_MICROPYTHON_INITIALIZATION = (
 )
 MICROPYTHON_MAIN = FILENAME_MICROPYTHON_INITIALIZATION.read_text()
 
+
 class PeterAntennaControl(Control):
+    def add_row(self, widget: QWidgetT) -> QWidgetT:
+        self._layout.addWidget(widget)
+        return widget
+
+    def add_row_old(
+        self, left: QtWidgets.QWidget, right: QtWidgets.QWidget | None = None
+    ) -> QtWidgets.QWidget:
+        widget = peter_widgets.FormLayoutWidget(left=left, right=right)
+        self._layout.addWidget(widget)
+        return widget
+
     def __init__(self, app: "vna_app"):
         super().__init__(app, "Peter Antenna control")
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
 
-        input_layout = QtWidgets.QFormLayout()
+        self._layout = QtWidgets.QVBoxLayout(self)
 
-        self.checkbox_tune = QtWidgets.QCheckBox()
-        self.checkbox_up = QtWidgets.QCheckBox()
-        self.checkbox_down = QtWidgets.QCheckBox()
-        self.checkbox_vna_enable = QtWidgets.QCheckBox()
-        
-        # Create label for tune checkbox with yellow highlight
-        self.label_tune = QtWidgets.QLabel("Tune automatic")
-        self.label_tune.setAutoFillBackground(True)
-        palette = self.label_tune.palette()
-        palette.setColor(self.label_tune.backgroundRole(), QtGui.QColor("#FFFF99"))
-        self.label_tune.setPalette(palette)
-        
-        input_layout.addRow(self.label_tune, self.checkbox_tune)
-        input_layout.addRow(QtWidgets.QLabel("VNA enable, TX inhibit"), self.checkbox_vna_enable)
-        self.tx_inhibit_switch_display = QtWidgets.QLabel("--")
-        self.tx_inhibit_switch_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.tx_inhibit_switch_display.font()
-        font.setPointSize(11)
-        self.tx_inhibit_switch_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("TX inhibited by switch"), self.tx_inhibit_switch_display)
-        # Tune iteration counter (internal; display removed)
-        self._tune_iteration = 0
-        # Store calculated Q factor for safety calculations
-        self._q_factor = 500.0  # default value
-        
-        # Manual F controls in one row
-        manual_f_layout = QtWidgets.QHBoxLayout()
-        manual_f_layout.addWidget(self.checkbox_up)
-        manual_f_layout.addWidget(QtWidgets.QLabel("up"))
-        manual_f_layout.addWidget(self.checkbox_down)
-        manual_f_layout.addWidget(QtWidgets.QLabel("down"))
-        manual_f_layout.addStretch()
-        input_layout.addRow(QtWidgets.QLabel("Manual F"), manual_f_layout)
+        self.checkbox_tune =self.add_row(peter_widgets.CheckboxWidget("Tune automatic")).checkbox
+        self.checkbox_vna_enable = self.add_row(
+            peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
+        ).checkbox
 
-        # motor status display (under the 'down' checkbox)
-        self.motor_status = QtWidgets.QLabel("stop")
-        # align the motor status to the right (consistent with other numeric fields)
-        self.motor_status.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.motor_status.font()
-        font.setPointSize(11)
-        self.motor_status.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Motor status"), self.motor_status)
-        # The 'Set Values' input was intentionally disabled/commented out.
-        # self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
-        # input_layout.addRow(
-        #     QtWidgets.QLabel("Set Values"), self.button_set_values
-        # )
-        self.checkbox_auto_get_f=QtWidgets.QCheckBox()
-        input_layout.addRow(
-            QtWidgets.QLabel("Auto get frequency"), self.checkbox_auto_get_f
-        )
-        self.input_set_Hz = QtWidgets.QLineEdit("7.074e6")
+        self.tx_inhibit_switch_display = self.add_row(
+            peter_widgets.ValueWidget(label="TX inhibited by switch", value="--")
+        ).value
 
+        if True:
+            # OBSOLETE
+            self.checkbox_up = QtWidgets.QCheckBox()
+            self.checkbox_down = QtWidgets.QCheckBox()
 
+            # Tune iteration counter (internal; display removed)
+            self._tune_iteration = 0
+            # Store calculated Q factor for safety calculations
+            self._q_factor = 500.0  # default value
 
+            # Manual F controls in one row
+            manual_f_layout = QtWidgets.QHBoxLayout()
+            manual_f_layout.addWidget(self.checkbox_up)
+            manual_f_layout.addWidget(QtWidgets.QLabel("up"))
+            manual_f_layout.addWidget(self.checkbox_down)
+            manual_f_layout.addWidget(QtWidgets.QLabel("down"))
+            manual_f_layout.addStretch()
+            self.add_row_old(QtWidgets.QLabel("Manual F"), manual_f_layout)
 
-        self.input_set_Hz.setFixedHeight(20)
-        self.input_set_Hz.setMinimumWidth(60)
-        self.input_set_Hz.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignRight
-        )
-        font = self.input_set_Hz.font()
-        font.setPointSize(11)
-        self.input_set_Hz.setFont(font)
+            # motor status display (under the 'down' checkbox)
+            self.motor_status = QtWidgets.QLabel("stop")
+            # align the motor status to the right (consistent with other numeric fields)
+            self.motor_status.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+            font = self.motor_status.font()
+            font.setPointSize(11)
+            self.motor_status.setFont(font)
+            self.add_row_old(QtWidgets.QLabel("Motor status"), self.motor_status)
+            # The 'Set Values' input was intentionally disabled/commented out.
+            # self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
+            # self.add_row_old(
+            #     QtWidgets.QLabel("Set Values"), self.button_set_values
+            # )
 
-        self.auto_get_timer = QtCore.QTimer(self)
-        self.auto_get_timer.setInterval(2000)  # 2 seconds
-        self.auto_get_timer.timeout.connect(self._auto_get_frequency)
-        self.tx_inhibit_timer = QtCore.QTimer(self)
-        self.tx_inhibit_timer.setInterval(1000)
-        self.tx_inhibit_timer.timeout.connect(self._update_tx_inhibit_switch)
-        self.checkbox_auto_get_f.checkStateChanged.connect(
-            self.on_auto_get_frequency_toggle
-        )
-        # Enable auto-get by default at initialization
-        self.checkbox_auto_get_f.setChecked(True)
+        self.checkbox_auto_get_f = self.add_row(
+            peter_widgets.CheckboxWidget("Auto get frequency")
+        ).checkbox
 
-        # SWR offset input field
-        self.input_swr_offset_Hz = QtWidgets.QLineEdit("1500")
-        self.input_swr_offset_Hz.setFixedHeight(20)
-        self.input_swr_offset_Hz.setMinimumWidth(60)
-        self.input_swr_offset_Hz.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.input_swr_offset_Hz.font()
-        font.setPointSize(11)
-        self.input_swr_offset_Hz.setFont(font)
-        input_layout.addRow(
-            QtWidgets.QLabel("Set offset [Hz]"), self.input_swr_offset_Hz
-        )
+        if True:
+            # MOVE
+            self.auto_get_timer = QtCore.QTimer(self)
+            self.auto_get_timer.setInterval(2000)  # 2 seconds
+            self.auto_get_timer.timeout.connect(self._auto_get_frequency)
 
-        input_layout.addRow(
-            QtWidgets.QLabel("Set swr min [Hz]"), self.input_set_Hz
-        )
+            self.tx_inhibit_timer = QtCore.QTimer(self)
+            self.tx_inhibit_timer.setInterval(1000)
+            self.tx_inhibit_timer.timeout.connect(self._update_tx_inhibit_switch)
 
-        # delta frequency display (shows deviation of SWR min to set SWR min in kHz)
-        # placed before Q display for easier reading of frequency deviation
-        self.delta_display = QtWidgets.QLabel("--")
-        self.delta_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.delta_display.font()
-        font.setPointSize(11)
-        self.delta_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Δ kHz (SWR min)"), self.delta_display)
+            self.checkbox_auto_get_f.checkStateChanged.connect(
+                self.on_auto_get_frequency_toggle
+            )
+            # Enable auto-get by default at initialization
+            self.checkbox_auto_get_f.setChecked(True)
 
-        # Q display label (shows Q = marker2 / (marker3 - marker1))
-        self.q_display = QtWidgets.QLabel("--")
-        # display Q aligned to the right to match numeric input styling
-        self.q_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.q_display.font()
-        font.setPointSize(11)
-        self.q_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Q (SWR 2.64)"), self.q_display)
+        self.input_swr_offset_Hz = self.add_row(
+            peter_widgets.LineEditWidget(label="Set offset", value=1500, unit="Hz")
+        ).entry
 
-        # SWR min display (shows minimum SWR found in the sweep, e.g., 1.21)
-        self.swrmin_display = QtWidgets.QLabel("--")
-        self.swrmin_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.swrmin_display.font()
-        font.setPointSize(11)
-        self.swrmin_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("SWR min"), self.swrmin_display)
+        self.input_set_Hz = self.add_row(
+            peter_widgets.LineEditWidget(label="Set swr min", value=7.074e6, unit="Hz")
+        ).entry
 
-        # Impedance at SWR min display (shows impedance at resonance frequency)
-        self.impedance_display = QtWidgets.QLabel("--")
-        self.impedance_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.impedance_display.font()
-        font.setPointSize(11)
-        self.impedance_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("R @ SWR min"), self.impedance_display)
+        self.delta_display = self.add_row(
+            peter_widgets.ValueWidget(label="Δ kHz (SWR min)", value="--")
+        ).value
 
-        # Efficiency display (η = P_radiated / P_input in %)
-        self.efficiency_display = QtWidgets.QLabel("--")
-        self.efficiency_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.efficiency_display.font()
-        font.setPointSize(11)
-        self.efficiency_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Efficiency η"), self.efficiency_display)
+        self.q_display = self.add_row(
+            peter_widgets.ValueWidget(label="Q (SWR 2.64)", value="--")
+        ).value
+        self.swrmin_display = self.add_row(
+            peter_widgets.ValueWidget(label="SWR min", value="--")
+        ).value
+        self.impedance_display = self.add_row(
+            peter_widgets.ValueWidget(label="R @ SWR min", value="--")
+        ).value
+        self.efficiency_display = self.add_row(
+            peter_widgets.ValueWidget(label="Efficiency η", value="--")
+        ).value
 
-        # Power input: allow user to enter transmit power in Watts (5..100)
-        self.power_spin = QtWidgets.QSpinBox()
-        self.power_spin.setRange(5, 100)
-        self.power_spin.setValue(5)
-        self.power_spin.setFixedHeight(20)
-        self.power_spin.setMinimumWidth(60)
-        self.power_spin.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        self.power_spin.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
-        font = self.power_spin.font()
-        font.setPointSize(11)
-        self.power_spin.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Power W 5...100"), self.power_spin)
+        self.power_spin = self.add_row(
+            peter_widgets.PowerspinWidget(
+                label="Power 5...100", value=5, min_value=5, max_value=100, unit="W"
+            )
+        ).power_spin
 
         # Radiated power display (calculated from loop area, current, frequency)
-        self.radiated_power_display = QtWidgets.QLabel("--")
-        self.radiated_power_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.radiated_power_display.font()
-        font.setPointSize(11)
-        self.radiated_power_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("P radiated"), self.radiated_power_display)
+        self.radiated_power_display = self.add_row(
+            peter_widgets.ValueWidget(label="P radiated", value="--")
+        ).value
+
+        self.add_row(peter_widgets.SeparatorWidget())
 
         # Safety calculation fields (read-only display)
-        self.cap_voltage_display = QtWidgets.QLabel("--")
-        self.cap_voltage_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.cap_voltage_display.font()
-        font.setPointSize(11)
-        self.cap_voltage_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Cap Voltage"), self.cap_voltage_display)
+        self.cap_voltage_display = self.add_row(
+            peter_widgets.ValueWidget(label="Cap Voltage", value="--")
+        ).value
 
-        self.loop_current_display = QtWidgets.QLabel("--")
-        self.loop_current_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.loop_current_display.font()
-        font.setPointSize(11)
-        self.loop_current_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Loop Current"), self.loop_current_display)
+        self.loop_current_display = self.add_row(
+            peter_widgets.ValueWidget(label="Loop Current", value="--")
+        ).value
 
-        self.h_limit_display = QtWidgets.QLabel("--")
-        self.h_limit_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.h_limit_display.font()
-        font.setPointSize(11)
-        self.h_limit_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("H_Limit (NISV/IGW)"), self.h_limit_display)
+        self.h_limit_display = self.add_row(
+            peter_widgets.ValueWidget(label="H_Limit (NISV/IGW)", value="--")
+        ).value
 
-        self.h_limit_omen_display = QtWidgets.QLabel("--")
-        self.h_limit_omen_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.h_limit_omen_display.font()
-        font.setPointSize(11)
-        self.h_limit_omen_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("H_Limit (OMEN)"), self.h_limit_omen_display)
+        self.h_limit_omen_display = self.add_row(
+            peter_widgets.ValueWidget(label="H_Limit (OMEN)", value="--")
+        ).value
 
-        self.safety_distance_display = QtWidgets.QLabel("--")
-        self.safety_distance_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.safety_distance_display.font()
-        font.setPointSize(11)
-        self.safety_distance_display.setFont(font)
-        
-        # Create complete row with label, info button, and display value
-        safety_row_layout = QtWidgets.QHBoxLayout()
-        safety_row_layout.addWidget(QtWidgets.QLabel("Safety distance IGW"))
-        self.safety_info_button = QtWidgets.QPushButton("INFO")
-        self.safety_info_button.setMaximumWidth(50)
-        self.safety_info_button.setToolTip("Show technical background")
-        self.safety_info_button.clicked.connect(self.show_safety_info)
-        safety_row_layout.addWidget(self.safety_info_button)
-        safety_row_layout.addStretch()
-        safety_row_layout.addWidget(self.safety_distance_display)
-        
-        input_layout.addRow(safety_row_layout)
+        self.safety_distance_display = self.add_row(
+            peter_widgets.ValueWidget(label="Safety distance IGW", value="--")
+        ).value
 
-        self.safety_distance_omen_display = QtWidgets.QLabel("--")
-        self.safety_distance_omen_display.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        font = self.safety_distance_omen_display.font()
-        font.setPointSize(11)
-        self.safety_distance_omen_display.setFont(font)
-        input_layout.addRow(QtWidgets.QLabel("Safety distance OMEN"), self.safety_distance_omen_display)
+        self.safety_distance_omen_display = self.add_row(
+            peter_widgets.ValueWidget(
+                label="Safety distance <a href='https://github.com/petermaerki/fork_nanovna-saver/blob/antenna_tuner/src/NanoVNASaver/antenna_peter/SAFETY_INFO.md'>OMEN</a>",
+                value="--",
+            )
+        ).value
+
+        self.add_row(peter_widgets.SeparatorWidget())
 
         # (power status label removed — FT-991 cannot be queried for power)
         # connect power control immediately so changes always send to rigctld
@@ -317,20 +251,20 @@ class PeterAntennaControl(Control):
             self.power_spin.valueChanged.connect(self.on_power_changed)
         except Exception:
             logger.exception("Failed to connect power spin signal at init")
-        
+
         # Connect frequency input field to update safety calculations
         try:
             self.input_set_Hz.textChanged.connect(self._update_safety_calculation)
         except Exception:
             logger.exception("Failed to connect frequency input signal at init")
-        
+
         # Perform initial safety calculation
         try:
             self._update_safety_calculation()
         except Exception:
             logger.exception("Failed to perform initial safety calculation")
 
-        self.layout.addRow(input_layout)
+        self.layout.addRow(self._layout)
 
         # 'Set Values' signal connection commented out because the input is disabled
         # self.button_set_values.pressed.connect(self.on_button_set_values)
@@ -352,7 +286,7 @@ class PeterAntennaControl(Control):
             if not self.checkbox_vna_enable.isChecked():
                 logger.debug("Tune enabled: auto-enabling VNA")
                 self.checkbox_vna_enable.setChecked(True)
-            
+
             # reset tune iteration counter on initial enable; first sweep is a dry-run
             self._tune_iteration = 0
             # Send current power setting to FT-991 when tuning is enabled
@@ -372,7 +306,7 @@ class PeterAntennaControl(Control):
 
             self._setStartStopFrequencyFloat("Start", 1e6)
             self._setStartStopFrequencyFloat("Stop", 30e6)
-            self._setDatapointCount(1000) # initial bei overview
+            self._setDatapointCount(1000)  # initial bei overview
             self.app.sweep.set_logarithmic(True)
 
             self.app.sweep_start()
@@ -403,13 +337,14 @@ class PeterAntennaControl(Control):
                 self.app._harmless_sweep_active = True
                 # start the harmless sweep so the VNA actually runs at low freq
                 self.app.sweep_start()
-                logger.debug("Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)")
+                logger.debug(
+                    "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"
+                )
             except Exception:
                 logger.exception("Failed to set harmless sweep on tune disable")
-            #sweep_start.setText(f"100kHz") # todo: disable sweep completely
-            #sweep_stop.setText(f"200kHz")
-            #self.app.sweep_start()
-
+            # sweep_start.setText(f"100kHz") # todo: disable sweep completely
+            # sweep_stop.setText(f"200kHz")
+            # self.app.sweep_start()
 
     def on_vna_enable(self):
         checked = self.checkbox_vna_enable.isChecked()
@@ -439,7 +374,7 @@ class PeterAntennaControl(Control):
         """
         # Always update safety calculations first, regardless of any errors
         self._update_safety_calculation()
-        
+
         try:
             watts = int(self.power_spin.value())
             # enforce allowed range 5..100 (defensive clamp)
@@ -487,45 +422,52 @@ class PeterAntennaControl(Control):
                 f_mhz = set_f_hz / 1e6
             except Exception:
                 f_mhz = 14.150  # default 40m band
-            
+
             watts = int(self.power_spin.value())
-            
+
             # Use stored Q factor from Q display (updated after sweep)
             q_factor = self._q_factor
-            
+
             # Calculate safety parameters
             results = calculate_safety_distance(f_mhz, watts, q_factor)
-            
+
             # Update display fields with values from loop calculation
             # Cap Voltage from loop (not feedline)
             self.cap_voltage_display.setText(f"{results['cap_voltage_volts']:.0f} V")
-            
+
             # Loop Current
             self.loop_current_display.setText(f"{results['loop_current_amps']} A")
-            
+
             # H-Limit IGW
             self.h_limit_display.setText(f"{results['h_limit_igw_am']:.3f} A/m")
-            
+
             # H-Limit OMEN
             self.h_limit_omen_display.setText(f"{results['h_limit_omen_am']:.3f} A/m")
-            
+
             # Safety Distance IGW
             self.safety_distance_display.setText(f"{results['min_distance_igw_m']} m")
-            
+
             # Safety Distance OMEN
-            self.safety_distance_omen_display.setText(f"{results['min_distance_omen_m']} m")
-            
+            self.safety_distance_omen_display.setText(
+                f"{results['min_distance_omen_m']} m"
+            )
+
             # Radiated Power
             self.radiated_power_display.setText(f"{results['p_radiated_watts']:.2f} W")
-            
+
             # Efficiency
             self.efficiency_display.setText(f"{results['efficiency_percent']:.1f} %")
-            
+
             logger.debug(
                 "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_IGW=%s A/m, dist_IGW=%s m, H_OMEN=%s A/m, dist_OMEN=%s m",
-                f_mhz, watts, q_factor, results['loop_current_amps'],
-                results['h_limit_igw_am'], results['min_distance_igw_m'],
-                results['h_limit_omen_am'], results['min_distance_omen_m']
+                f_mhz,
+                watts,
+                q_factor,
+                results["loop_current_amps"],
+                results["h_limit_igw_am"],
+                results["min_distance_igw_m"],
+                results["h_limit_omen_am"],
+                results["min_distance_omen_m"],
             )
         except Exception:
             logger.exception("Failed to update safety calculation")
@@ -538,39 +480,6 @@ class PeterAntennaControl(Control):
             self.radiated_power_display.setText("--")
             self.efficiency_display.setText("--")
 
-    def show_safety_info(self):
-        """Show technical background information about safety calculations."""
-        info_text = """Technical Background & Safety Compliance
-
-Electromagnetic Field Dynamics (Near-Field)
-This application calculates the physical parameters of a high-Q resonant loop antenna. Unlike conventional antennas, a Magnetic Loop operates primarily by generating an intense Magnetic Near-Field (H-Field).
-
-Due to the extremely high resonance quality (Q-factor), the circulating currents within the main inductor (the copper braid) can reach values significantly higher than the feedline current. This leads to:
-• High Magnetic Flux Density: Concentrated in the immediate vicinity of the loop.
-• Inductive Voltage Peaks: At the tuning capacitor, voltages reach levels that require specific dielectric strength (kV-range).
-
-Computational Methodology
-The calculation of the safety distance is based on the Inverse-Cube Law for magnetic dipoles in the near-field (1/r³).
-
-Geometry Factor: The copper braid is modeled using an equivalent conductor radius to account for skin effect and reduced RF resistance.
-
-Inductance & Reactance: These values are derived from the physical diameter and conductor surface area to determine the precise circulating current at a given power level.
-
-Legal Standards (Switzerland)
-The safety distances provided are calculated in accordance with the Swiss Ordinance on Protection against Non-Ionizing Radiation (NISV / ONIR).
-
-Immissionsgrenzwerte (IGW): The primary safety boundary is based on the exposure limits for the general public, designed to prevent thermal and non-thermal biological effects.
-
-Frequency Dependence: In the High Frequency (HF) range, the permissible magnetic field strength (H) is frequency-dependent (0.73 / f). The safety distance is dynamically adjusted as you tune your transceiver.
-
-Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-factor) is applied to account for environmental reflections and local field enhancements."""
-        
-        QtWidgets.QMessageBox.information(
-            self,
-            "Safety Distance - Technical Background",
-            info_text,
-            QtWidgets.QMessageBox.StandardButton.Ok
-        )
 
     def on_auto_get_frequency_toggle(self):
         """Start/stop the automatic frequency polling based on checkbox state."""
@@ -599,9 +508,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 try:
                     freq_hz = int(data)
                 except ValueError:
-                    logger.warning(
-                        "Auto-get frequency: received non-integer: %r", data
-                    )
+                    logger.warning("Auto-get frequency: received non-integer: %r", data)
                     return
                 # Apply SWR offset to received frequency
                 try:
@@ -611,7 +518,12 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 freq_hz_with_offset = freq_hz + offset_hz
                 # Insert the offset-adjusted Hz integer into the input field (naked number)
                 QtWidgets.QLineEdit.setText(self.input_set_Hz, str(freq_hz_with_offset))
-                logger.debug("Auto-get frequency: set %d Hz (received %d Hz + offset %d Hz)", freq_hz_with_offset, freq_hz, offset_hz)
+                logger.debug(
+                    "Auto-get frequency: set %d Hz (received %d Hz + offset %d Hz)",
+                    freq_hz_with_offset,
+                    freq_hz,
+                    offset_hz,
+                )
         except Exception as e:
             logger.debug("Auto-get frequency failed: %s", e)
 
@@ -645,7 +557,6 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             self.app.setPalette(self._default_app_palette)
             self._app_bg_inhibit_active = False
 
-
     def on_up(self):
         checked = self.checkbox_up.isChecked()
         if checked:
@@ -658,6 +569,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 device=self.mp_device, cmd="run(direction_up=True, on=False)"
             )
             self._set_motor_status("stop")
+
     def on_down(self):
         checked = self.checkbox_down.isChecked()
         if checked:
@@ -670,10 +582,6 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 device=self.mp_device, cmd="run(direction_up=False, on=False)"
             )
             self._set_motor_status("stop")
-
-
-
-
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")
@@ -757,10 +665,10 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
 
         # self._setStartStopFrequency("Start", "2MHz")
         # self._setStartStopFrequency("Stop", "30MHz")
-        #self._setStartStartFrequency("Start", "2MHz")
-        #self._setStartStopFrequency("Stop", "28MHz")
-        #self._setMakerFrequency(0, "1MHz")
-        #self._setMakerFrequency(-1, "30MHz")
+        # self._setStartStartFrequency("Start", "2MHz")
+        # self._setStartStopFrequency("Stop", "28MHz")
+        # self._setMakerFrequency(0, "1MHz")
+        # self._setMakerFrequency(-1, "30MHz")
         self._setStartStopFrequencyFloat("Start", 1e6)
         self._setStartStopFrequencyFloat("Stop", 30e6)
         self._setDatapointCount(1000)
@@ -772,7 +680,11 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
                 self.find_min_swr()
             )
-            if f_swr_p2_64_l_Hz is None and f_swr_min_Hz is None and f_swr_p2_64_h_Hz is None:
+            if (
+                f_swr_p2_64_l_Hz is None
+                and f_swr_min_Hz is None
+                and f_swr_p2_64_h_Hz is None
+            ):
                 logger.warning("sweepFinished: No valid frequencies found")
                 # Still call find_sweep_start_stop to handle the case properly
             self.find_sweep_start_stop(
@@ -797,12 +709,16 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             try:
                 self._update_impedance_display()
             except Exception:
-                logger.exception("Failed to update impedance display after sweep finish")
+                logger.exception(
+                    "Failed to update impedance display after sweep finish"
+                )
             # Update safety calculation when Q is recalculated
             try:
                 self._update_safety_calculation()
             except Exception:
-                logger.exception("Failed to update safety calculation after sweep finish")
+                logger.exception(
+                    "Failed to update safety calculation after sweep finish"
+                )
             # increment tune iteration counter if tuning is still enabled
             try:
                 if self.checkbox_tune.isChecked():
@@ -813,7 +729,10 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             logger.exception("Critical error in sweepFinished_peter_antenna")
             # Ensure motor is stopped on any error
             try:
-                util_mpremote.mp_exec(device=self.mp_device, cmd="run(direction_up=True, on=False)")
+                util_mpremote.mp_exec(
+                    device=self.mp_device,
+                    cmd="run(direction_up=True, on=False)",
+                )
                 self._set_motor_status("stop (error)")
             except Exception:
                 logger.exception("Failed to stop motor after error")
@@ -829,7 +748,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         # Safety check: return early if no data available
         if len(swr) == 0 or len(freq_Hz) == 0:
             logger.warning("find_min_swr: No data available")
-            return None, None, None, float('inf')
+            return None, None, None, float("inf")
 
         idx_min = np.argmin(swr)
         swr_min = swr[idx_min]
@@ -867,8 +786,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                     for i in range(len(first_deriv) - 1):
                         delta_deriv = first_deriv[i + 1] - first_deriv[i]
                         delta_freq = (
-                            (freqs[i + 2] - freqs[i + 1]) +
-                            (freqs[i + 1] - freqs[i])
+                            (freqs[i + 2] - freqs[i + 1]) + (freqs[i + 1] - freqs[i])
                         ) / 2
                         if delta_freq != 0:
                             # Absolute value in °/MHz²
@@ -880,7 +798,7 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                     if second_deriv_abs:
                         mean_val = np.mean(second_deriv_abs)
                         max_val = np.max(second_deriv_abs)
-                        
+
                         # Check if peak is > 5x mean
                         if max_val > 5 * mean_val:
                             # Find index of peak (add 2 for offset)
@@ -890,11 +808,12 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                                 logger.debug(
                                     "Phase deriv peak detection: peak=%s, "
                                     "mean=%s, freq=%s Hz",
-                                    max_val, mean_val, f_swr_min_Hz
+                                    max_val,
+                                    mean_val,
+                                    f_swr_min_Hz,
                                 )
             except Exception:
                 logger.exception("Failed to analyze phase double derivative")
-
 
         if f_swr_min_Hz is not None:
             target_swr = 2.64
@@ -906,10 +825,6 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             f_swr_p2_64_h_Hz = (
                 freq_Hz[idx_min + right_idx[0]] if len(right_idx) else None
             )
-
-
-
-
 
         self._setMakerFrequencyFloat(0, f_swr_p2_64_l_Hz, freq_Hz[0])
         self._setMakerFrequencyFloat(1, f_swr_min_Hz, freq_Hz[0])
@@ -1013,16 +928,16 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             if len(markers) < 3:
                 self.impedance_display.setText("--")
                 return
-            
+
             # Get all three marker frequencies
             f1 = markers[0].frequencyInput.get_freq()  # SWR 2.64 low
             f2 = markers[1].frequencyInput.get_freq()  # SWR min
             f3 = markers[2].frequencyInput.get_freq()  # SWR 2.64 high
-            
+
             if f1 is None or f2 is None or f3 is None:
                 self.impedance_display.setText("--")
                 return
-            
+
             # Get S11 data
             with self.app.dataLock:
                 s11: list[Datapoint] = self.app.data.s11[:]
@@ -1031,12 +946,12 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                     return
                 # Also get SWR at marker 2 (SWR min)
                 swr_array = np.asarray([d.vswr for d in s11])
-            
+
             swr_min = float(np.min(swr_array))
-            
+
             # Find closest datapoints for all three markers
             def find_closest(freq_target):
-                min_diff = float('inf')
+                min_diff = float("inf")
                 closest = None
                 for dp in s11:
                     diff = abs(dp.freq - freq_target)
@@ -1044,57 +959,57 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                         min_diff = diff
                         closest = dp
                 return closest
-            
+
             dp1 = find_closest(f1)
             dp2 = find_closest(f2)
             dp3 = find_closest(f3)
-            
+
             if dp1 is None or dp2 is None or dp3 is None:
                 self.impedance_display.setText("--")
                 return
-            
+
             # Get S11 (Gamma) for all three points
             g1 = complex(dp1.re, dp1.im)
             g2 = complex(dp2.re, dp2.im)
             g3 = complex(dp3.re, dp3.im)
-            
+
             # Calculate circle center using perpendicular bisectors
             mid12 = (g1 + g2) / 2
             mid23 = (g2 + g3) / 2
-            
+
             d12 = g2 - g1
             d23 = g3 - g2
-            
+
             # Perpendicular vectors (rotate by 90°)
             perp12 = complex(-d12.imag, d12.real)
             perp23 = complex(-d23.imag, d23.real)
-            
+
             diff = mid23 - mid12
             det = perp12.real * perp23.imag - perp12.imag * perp23.real
-            
+
             if abs(det) < 1e-10:
                 # Points are collinear
                 self.impedance_display.setText("--")
                 return
-            
+
             t = (diff.real * perp23.imag - diff.imag * perp23.real) / det
             circle_center = mid12 + t * perp12
-            
+
             # Calculate radius
             radius = abs(g1 - circle_center)
-            
+
             # Check if Smith chart center (Gamma=0, representing 50 Ω) is inside circle
             distance_to_center = abs(circle_center)  # distance from Gamma=0
-            
+
             if distance_to_center < radius:
                 # Center is inside circle → overcoupled
                 r_antenna = 50.0 * swr_min
             else:
                 # Center is outside circle → undercoupled
                 r_antenna = 50.0 / swr_min
-            
+
             self.impedance_display.setText(f"{r_antenna:.0f} Ω")
-            
+
         except Exception:
             logger.exception("Failed to update impedance display")
             self.impedance_display.setText("--")
@@ -1117,8 +1032,14 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         assert SWEEP_RANGE_OVERLAP > 1.1
 
         # Safety check: if no valid data from find_min_swr, use full range
-        if f_swr_min_Hz is None and f_swr_p2_64_l_Hz is None and f_swr_p2_64_h_Hz is None:
-            logger.warning("find_sweep_start_stop: No valid frequency data, using full range")
+        if (
+            f_swr_min_Hz is None
+            and f_swr_p2_64_l_Hz is None
+            and f_swr_p2_64_h_Hz is None
+        ):
+            logger.warning(
+                "find_sweep_start_stop: No valid frequency data, using full range"
+            )
             self._setStartStopFrequencyFloat("Start", F_USEFUL_MIN_Hz)
             self._setStartStopFrequencyFloat("Stop", F_USEFUL_MAX_Hz)
             self._setDatapointCount(500)
@@ -1138,34 +1059,35 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
             if f_swr_p2_64_l_Hz is None or f_swr_p2_64_h_Hz is None:
                 use_fixed_zoom = True
                 logger.debug("2.64 markers missing, using ±1 MHz zoom")
-            elif (abs(f_swr_p2_64_l_Hz - f_swr_min_Hz) > 500e3 or
-                  abs(f_swr_p2_64_h_Hz - f_swr_min_Hz) > 500e3):
+            elif (
+                abs(f_swr_p2_64_l_Hz - f_swr_min_Hz) > 500e3
+                or abs(f_swr_p2_64_h_Hz - f_swr_min_Hz) > 500e3
+            ):
                 use_fixed_zoom = True
                 logger.debug("2.64 markers >500 kHz from SWR min, using ±1 MHz zoom")
-            
+
             if use_fixed_zoom:
                 # Use fixed ±1 MHz zoom around set frequency
                 distance_f = 1e6
             else:
                 # Use 2.64 markers for zoom calculation
                 distance_f = abs(set_f_swr_min_Hz - f_swr_min_Hz)
-                distance_f = max(
-                    abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f
-                )
-                distance_f = max(
-                    abs(f_swr_p2_64_h_Hz - set_f_swr_min_Hz), distance_f
-                )
+                distance_f = max(abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f)
+                distance_f = max(abs(f_swr_p2_64_h_Hz - set_f_swr_min_Hz), distance_f)
 
             sweep_stop_Hz = set_f_swr_min_Hz + distance_f * SWEEP_RANGE_OVERLAP
             sweep_stop_Hz = min(F_USEFUL_MAX_Hz, sweep_stop_Hz)
             sweep_start_Hz = set_f_swr_min_Hz - distance_f * SWEEP_RANGE_OVERLAP
             sweep_start_Hz = max(F_USEFUL_MIN_Hz, sweep_start_Hz)
-            
+
             logger.debug(
                 "Zoom calc: f_swr_min=%s Hz, set_f=%s Hz, distance_f=%s Hz, "
                 "sweep: %s - %s Hz",
-                f_swr_min_Hz, set_f_swr_min_Hz, distance_f, 
-                sweep_start_Hz, sweep_stop_Hz
+                f_swr_min_Hz,
+                set_f_swr_min_Hz,
+                distance_f,
+                sweep_start_Hz,
+                sweep_stop_Hz,
             )
         else:
             # No SWR min found at all, use full range
@@ -1175,11 +1097,11 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
 
         self._setStartStopFrequencyFloat("Start", sweep_start_Hz)
         self._setStartStopFrequencyFloat("Stop", sweep_stop_Hz)
-        #sweep_range_relative = (sweep_stop_Hz - sweep_start_Hz)/set_f_swr_min_Hz
-        #points = int(5 * sweep_range_relative / 0.01)
-        #points = min(points, 600)
-        #points = max(points, 51)
-       
+        # sweep_range_relative = (sweep_stop_Hz - sweep_start_Hz)/set_f_swr_min_Hz
+        # points = int(5 * sweep_range_relative / 0.01)
+        # points = min(points, 600)
+        # points = max(points, 51)
+
         BAND_160M_HZ = 1905000
         BAND_80M_HZ = 3650000
         BAND_60M_HZ = 5358000
@@ -1191,39 +1113,37 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         BAND_12M_HZ = 24940000
         BAND_10M_HZ = 28850000
 
-        BAND_160M_80M_HZ = (BAND_160M_HZ + BAND_80M_HZ)/2
-        BAND_80M_60M_HZ = (BAND_80M_HZ + BAND_60M_HZ)/2
-        BAND_60M_40M_HZ = (BAND_60M_HZ + BAND_40M_HZ)/2
-        BAND_40M_30M_HZ = (BAND_40M_HZ + BAND_30M_HZ)/2
-        BAND_30M_20M_HZ = (BAND_30M_HZ + BAND_20M_HZ)/2
-        BAND_20M_17M_HZ = (BAND_20M_HZ + BAND_17M_HZ)/2
-        BAND_17M_15M_HZ = (BAND_17M_HZ + BAND_15M_HZ)/2
-        BAND_15M_12M_HZ = (BAND_15M_HZ + BAND_12M_HZ)/2
-        BAND_12M_10M_HZ = (BAND_12M_HZ + BAND_10M_HZ)/2
-
-
+        BAND_160M_80M_HZ = (BAND_160M_HZ + BAND_80M_HZ) / 2
+        BAND_80M_60M_HZ = (BAND_80M_HZ + BAND_60M_HZ) / 2
+        BAND_60M_40M_HZ = (BAND_60M_HZ + BAND_40M_HZ) / 2
+        BAND_40M_30M_HZ = (BAND_40M_HZ + BAND_30M_HZ) / 2
+        BAND_30M_20M_HZ = (BAND_30M_HZ + BAND_20M_HZ) / 2
+        BAND_20M_17M_HZ = (BAND_20M_HZ + BAND_17M_HZ) / 2
+        BAND_17M_15M_HZ = (BAND_17M_HZ + BAND_15M_HZ) / 2
+        BAND_15M_12M_HZ = (BAND_15M_HZ + BAND_12M_HZ) / 2
+        BAND_12M_10M_HZ = (BAND_12M_HZ + BAND_10M_HZ) / 2
 
         points = 500
-        deviation_limit_puls = 1e-2 # kleiner = agressiver
+        deviation_limit_puls = 1e-2  # kleiner = agressiver
         points_pulse = 101
         if set_f_swr_min_Hz > BAND_160M_80M_HZ:
-            deviation_limit_puls = 0.2e-2 
+            deviation_limit_puls = 0.2e-2
         if set_f_swr_min_Hz > BAND_80M_60M_HZ:
-            deviation_limit_puls = 0.3e-2 
+            deviation_limit_puls = 0.3e-2
         if set_f_swr_min_Hz > BAND_60M_40M_HZ:
-            deviation_limit_puls = 0.5e-2 # 20260109 ok
+            deviation_limit_puls = 0.5e-2  # 20260109 ok
         if set_f_swr_min_Hz > BAND_40M_30M_HZ:
-            deviation_limit_puls = 0.8e-2 # 20260109 ok
+            deviation_limit_puls = 0.8e-2  # 20260109 ok
         if set_f_swr_min_Hz > BAND_30M_20M_HZ:
-            deviation_limit_puls = 2e-2 # 20260109 ok
+            deviation_limit_puls = 2e-2  # 20260109 ok
         if set_f_swr_min_Hz > BAND_20M_17M_HZ:
-            deviation_limit_puls = 4e-2 # 20260109 ok
+            deviation_limit_puls = 4e-2  # 20260109 ok
         if set_f_swr_min_Hz > BAND_17M_15M_HZ:
-            deviation_limit_puls = 3e-2 # 20260109 ok
+            deviation_limit_puls = 3e-2  # 20260109 ok
         if set_f_swr_min_Hz > BAND_15M_12M_HZ:
-            deviation_limit_puls = 1.5e-2 # 20260109 ok
+            deviation_limit_puls = 1.5e-2  # 20260109 ok
         if set_f_swr_min_Hz > BAND_12M_10M_HZ:
-            deviation_limit_puls = 1.2e-2 # 20260109 ok
+            deviation_limit_puls = 1.2e-2  # 20260109 ok
 
         logger.debug(f"{f_swr_min_Hz=} {sweep_start_Hz=} {sweep_stop_Hz=}")
 
@@ -1231,25 +1151,25 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
         # - f_swr_min_Hz must exist AND
         # - either deviation > 1 MHz OR both 2.64 markers exist (good SWR)
         should_stop = False
-        if (f_swr_min_Hz is not None and
-            (abs(f_swr_min_Hz - set_f_swr_min_Hz) > 1e6 or
-             swr_min < 2.0)):
+        if f_swr_min_Hz is not None and (
+            abs(f_swr_min_Hz - set_f_swr_min_Hz) > 1e6 or swr_min < 2.0
+        ):
             if F_USEFUL_MIN_Hz < f_swr_min_Hz < F_USEFUL_MAX_Hz:
                 difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
                 direction_up = difference_Hz > 0
-                deviation = abs(difference_Hz/set_f_swr_min_Hz)
-                
+                deviation = abs(difference_Hz / set_f_swr_min_Hz)
+
                 # Check if we're close enough to stop (smaller than pulse threshold)
                 if deviation < deviation_limit_puls * 3:
                     # Small deviation: use pulse
                     pulse = True
-                    duration_s = 1.0*deviation/deviation_limit_puls
+                    duration_s = 1.0 * deviation / deviation_limit_puls
                     cmd = f"pulse({direction_up}, {duration_s})"
                     dir_str = "up" if direction_up else "down"
                     dur_str = f"{duration_s:.2f}".rstrip("0").rstrip(".")
                     if getattr(self, "_tune_iteration", 0) == 0:
                         self._set_motor_status(f"pulse {dir_str} {dur_str}s (preview)")
-                        print(f'pulse: {duration_s=} (preview)')
+                        print(f"pulse: {duration_s=} (preview)")
                     else:
                         self._set_motor_status(f"pulse {dir_str} {dur_str}s")
                         util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
@@ -1267,19 +1187,22 @@ Precautionary Principle: Following Swiss regulatory logic, a safety margin (k-fa
                 should_stop = True
         else:
             should_stop = True
-        
+
         # Always send explicit stop command when needed
         if should_stop:
             if getattr(self, "_tune_iteration", 0) > 0:
-                util_mpremote.mp_exec(device=self.mp_device, cmd="run(direction_up=True, on=False)")
-            if not hasattr(self, '_motor_status_already_set'):
+                util_mpremote.mp_exec(
+                    device=self.mp_device,
+                    cmd="run(direction_up=True, on=False)",
+                )
+            if not hasattr(self, "_motor_status_already_set"):
                 self._set_motor_status("stop")
-        
+
         # Safety check: ensure points is defined
-        if 'points' not in locals():
+        if "points" not in locals():
             points = 500
             logger.warning("points variable not set, using default: %d", points)
-        
+
         try:
             self._setDatapointCount(points)
         except Exception:

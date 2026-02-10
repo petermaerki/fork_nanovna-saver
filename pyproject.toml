@@ -118,7 +118,7 @@ pythonpath = [
 
 [tool.ruff]
 line-length = 80
-target-version = 'py311'
+target-version = 'py313'
 fix = true
 show-fixes = true
 unsafe-fixes = false
@@ -142,6 +142,7 @@ select = [
 ]
 ignore = [
     'PLR2004',
+    'E501'.
     'N802',
     'N806',
     'N813',

@@ -58,6 +58,7 @@ def get_device() -> str:
             logger.info(f"Found device at {port.device} (VID:PID {port.vid:04x}:{port.pid:04x})")
             return port.device
     
+    return "blabla"
     raise RuntimeError(f"No device found with VID:PID {idVendor:04x}:{idProduct:04x}")
 
 

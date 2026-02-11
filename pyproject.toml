@@ -32,6 +32,7 @@ dependencies=[
   'PySide6~=6.10.0',
   'qasync>=0.27.1',
   'mpremote',
+  'servo-sts3215 @ git+https://github.com/petermaerki/2026_antenna_servo_controller_git@main#subdirectory=servo_sts3215',
 ]
 
 [dependency-groups]

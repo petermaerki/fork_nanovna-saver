@@ -2,7 +2,6 @@ import logging
 import math
 import pathlib
 import socket
-import time
 from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -16,7 +15,7 @@ from ..RFTools import Datapoint
 from . import peter_widgets, util_mpremote
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +107,7 @@ class PeterAntennaControl(Control):
         self._layout.addWidget(widget)
         return widget
 
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
         line = QtWidgets.QFrame()
@@ -124,7 +123,9 @@ class PeterAntennaControl(Control):
         ).checkbox
 
         self.tx_inhibit_switch_display = self.add_row(
-            peter_widgets.ValueWidget(label="TX inhibited by switch", value="--")
+            peter_widgets.ValueWidget(
+                label="TX inhibited by switch", value="--"
+            )
         ).value
 
         if True:
@@ -153,12 +154,40 @@ class PeterAntennaControl(Control):
             font = self.motor_status.font()
             font.setPointSize(11)
             self.motor_status.setFont(font)
-            self.add_row_old(QtWidgets.QLabel("Motor status"), self.motor_status)
+            self.add_row_old(
+                QtWidgets.QLabel("Motor status"), self.motor_status
+            )
             # The 'Set Values' input was intentionally disabled/commented out.
             # self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
             # self.add_row_old(
             #     QtWidgets.QLabel("Set Values"), self.button_set_values
             # )
+
+        #### NEW
+        self.add_row(peter_widgets.SeparatorWidget())
+
+        # Tune heading checkbox
+        self.heading_checkbox = self.add_row(
+            peter_widgets.CheckboxWidget("Tune heading checkbox")
+        ).checkbox
+        # Tune heading target textfeld, button set
+        self.heading_target = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Tune heading target", value="0", unit="deg"
+            )
+        )
+        # Tune heading current textfeld
+        self.heading_current = self.add_row(
+            peter_widgets.ValueWidget(label="Tune heading current", value="0")
+        )
+        # Tune heading servo_h textfeld, button set
+        self.heading_servo = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Tune heading servo_h", value="0", unit="turns"
+            )
+        )
+
+        self.add_row(peter_widgets.SeparatorWidget())
 
         self.checkbox_auto_get_f = self.add_row(
             peter_widgets.CheckboxWidget("Auto get frequency")
@@ -172,7 +201,9 @@ class PeterAntennaControl(Control):
 
             self.tx_inhibit_timer = QtCore.QTimer(self)
             self.tx_inhibit_timer.setInterval(1000)
-            self.tx_inhibit_timer.timeout.connect(self._update_tx_inhibit_switch)
+            self.tx_inhibit_timer.timeout.connect(
+                self._update_tx_inhibit_switch
+            )
 
             self.checkbox_auto_get_f.checkStateChanged.connect(
                 self.on_auto_get_frequency_toggle
@@ -181,7 +212,9 @@ class PeterAntennaControl(Control):
             self.checkbox_auto_get_f.setChecked(True)
 
         self.input_swr_offset_Hz = self.add_row(
-            peter_widgets.DoubleSpinBoxWidget(label="Set offset", value=1500, unit="Hz")
+            peter_widgets.DoubleSpinBoxWidget(
+                label="Set offset", value=1500, unit="Hz"
+            )
         ).entry
 
         self.input_set_Hz = self.add_row(
@@ -189,6 +222,62 @@ class PeterAntennaControl(Control):
                 label="Set swr min", value=7.074e6, unit="Hz"
             )
         ).entry
+
+        # Frequency enable checkbox
+        self.frequency_checkbox = self.add_row(
+            peter_widgets.CheckboxWidget("Frequency enable")
+        ).checkbox
+        # Frequency Offset textfeld mit button set
+        self.frequency_offset = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Frequency Offset (DOPPELT)", value="0", unit="Hz"
+            )
+        )
+        # Frequency auto get from TX checkbox
+        self.frequency_auto_get = self.add_row(
+            peter_widgets.CheckboxWidget("Frequency auto get from TX (DOPPELT)")
+        ).checkbox
+        # Frequency TX textfeld mit button set
+        self.frequency_tx = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Frequency TX", value="0", unit="Hz"
+            )
+        )
+        # Frequency target textfeld
+        self.frequency_target = self.add_row(
+            peter_widgets.ValueWidget(label="Frequency target", value="0")
+        )
+        # Frequency servo_f textfeld button set
+        self.frequency_servo_f = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Frequency servo_f", value="0", unit="turns"
+            )
+        )
+
+        self.add_row(peter_widgets.SeparatorWidget())
+        # Impedance enable checkbox
+        self.impedance_checkbox = self.add_row(
+            peter_widgets.CheckboxWidget("Impedance enable")
+        ).checkbox
+        # Impedance target textfeld mit button set
+        self.impedance_target = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Impedance target", value="0", unit="Ohm"
+            )
+        )
+        # Impedance current textfeld
+        self.impedance_current = self.add_row(
+            peter_widgets.ValueWidget(label="Impedance current", value="0")
+        )
+        # Impedance servo_z textfeld button set
+        self.impedance_servo = self.add_row(
+            peter_widgets.PushButtonWidget(
+                label="Impedance servo_z", value="0", unit="turns"
+            )
+        )
+
+        self.add_row(peter_widgets.SeparatorWidget())
+        #### NEW
 
         self.delta_display = self.add_row(
             peter_widgets.ValueWidget(label="Δ kHz (SWR min)", value="--")
@@ -209,7 +298,11 @@ class PeterAntennaControl(Control):
 
         self.power_spin = self.add_row(
             peter_widgets.PowerspinWidget(
-                label="Power 5...100", value=5, min_value=5, max_value=100, unit="W"
+                label="Power 5...100",
+                value=5,
+                min_value=5,
+                max_value=100,
+                unit="W",
             )
         ).power_spin
 
@@ -259,7 +352,9 @@ class PeterAntennaControl(Control):
 
         # Connect frequency input field to update safety calculations
         try:
-            self.input_set_Hz.textChanged.connect(self._update_safety_calculation)
+            self.input_set_Hz.textChanged.connect(
+                self._update_safety_calculation
+            )
         except Exception:
             logger.exception("Failed to connect frequency input signal at init")
 
@@ -363,7 +458,9 @@ class PeterAntennaControl(Control):
                 if not self.app.serial_control.is_vna_connected():
                     self.app.serial_control.connect_device()
             except Exception:
-                logger.exception("Failed to auto-connect serial port on VNA enable")
+                logger.exception(
+                    "Failed to auto-connect serial port on VNA enable"
+                )
         else:
             # When VNA is disabled, also uncheck tune automatic
             self.checkbox_tune.setChecked(False)
@@ -390,10 +487,14 @@ class PeterAntennaControl(Control):
             # map 5..100 -> 0.05..1.0
             scaled = watts / 100.0
             scaled_str = f"{scaled:.2f}".rstrip("0").rstrip(".")
-            logger.debug("Setting RF power: %s W -> %s (socket)", watts, scaled_str)
+            logger.debug(
+                "Setting RF power: %s W -> %s (socket)", watts, scaled_str
+            )
             # Send command over the same localhost:4532 socket used by _auto_get_frequency
             try:
-                with socket.create_connection(("localhost", 4532), timeout=1) as s:
+                with socket.create_connection(
+                    ("localhost", 4532), timeout=1
+                ) as s:
                     # send rigctl-style command over socket; server accepts newline-terminated commands
                     cmd = f"L RFPOWER {scaled_str}\n"
                     s.sendall(cmd.encode("ascii"))
@@ -403,7 +504,9 @@ class PeterAntennaControl(Control):
                         resp = s.recv(1024).strip()
                         if resp:
                             try:
-                                resp_text = resp.decode("utf-8", errors="replace")
+                                resp_text = resp.decode(
+                                    "utf-8", errors="replace"
+                                )
                             except Exception:
                                 resp_text = repr(resp)
                             logger.warning("RFPOWER response: %s", resp_text)
@@ -412,7 +515,9 @@ class PeterAntennaControl(Control):
                     except socket.timeout:
                         logger.warning("RFPOWER: no response (timeout)")
                     except Exception as e:
-                        logger.warning("RFPOWER: reading response failed: %s", e)
+                        logger.warning(
+                            "RFPOWER: reading response failed: %s", e
+                        )
             except Exception as e:
                 logger.warning("Failed to send RFPOWER over socket: %s", e)
         except Exception:
@@ -438,19 +543,27 @@ class PeterAntennaControl(Control):
 
             # Update display fields with values from loop calculation
             # Cap Voltage from loop (not feedline)
-            self.cap_voltage_display.setText(f"{results['cap_voltage_volts']:.0f} V")
+            self.cap_voltage_display.setText(
+                f"{results['cap_voltage_volts']:.0f} V"
+            )
 
             # Loop Current
-            self.loop_current_display.setText(f"{results['loop_current_amps']} A")
+            self.loop_current_display.setText(
+                f"{results['loop_current_amps']} A"
+            )
 
             # H-Limit IGW
             self.h_limit_display.setText(f"{results['h_limit_igw_am']:.3f} A/m")
 
             # H-Limit OMEN
-            self.h_limit_omen_display.setText(f"{results['h_limit_omen_am']:.3f} A/m")
+            self.h_limit_omen_display.setText(
+                f"{results['h_limit_omen_am']:.3f} A/m"
+            )
 
             # Safety Distance IGW
-            self.safety_distance_display.setText(f"{results['min_distance_igw_m']} m")
+            self.safety_distance_display.setText(
+                f"{results['min_distance_igw_m']} m"
+            )
 
             # Safety Distance OMEN
             self.safety_distance_omen_display.setText(
@@ -458,10 +571,14 @@ class PeterAntennaControl(Control):
             )
 
             # Radiated Power
-            self.radiated_power_display.setText(f"{results['p_radiated_watts']:.2f} W")
+            self.radiated_power_display.setText(
+                f"{results['p_radiated_watts']:.2f} W"
+            )
 
             # Efficiency
-            self.efficiency_display.setText(f"{results['efficiency_percent']:.1f} %")
+            self.efficiency_display.setText(
+                f"{results['efficiency_percent']:.1f} %"
+            )
 
             logger.debug(
                 "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_IGW=%s A/m, dist_IGW=%s m, H_OMEN=%s A/m, dist_OMEN=%s m",
@@ -512,7 +629,9 @@ class PeterAntennaControl(Control):
                 try:
                     freq_hz = int(data)
                 except ValueError:
-                    logger.warning("Auto-get frequency: received non-integer: %r", data)
+                    logger.warning(
+                        "Auto-get frequency: received non-integer: %r", data
+                    )
                     return
                 # Apply SWR offset to received frequency
                 try:
@@ -542,7 +661,9 @@ class PeterAntennaControl(Control):
                 self._set_app_background(inhibited=False)
                 return
             value = int(result.strip())
-            self.tx_inhibit_switch_display.setText("YES" if value == 1 else "NO")
+            self.tx_inhibit_switch_display.setText(
+                "YES" if value == 1 else "NO"
+            )
             self._set_app_background(inhibited=(value == 1))
         except Exception as e:
             logger.debug("TX inhibit switch read failed: %s", e)
@@ -554,7 +675,9 @@ class PeterAntennaControl(Control):
             return
         if inhibited:
             palette = QtGui.QPalette(self._default_app_palette)
-            palette.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor("#CCFFCC"))
+            palette.setColor(
+                QtGui.QPalette.ColorRole.Window, QtGui.QColor("#CCFFCC")
+            )
             self.app.setAutoFillBackground(True)
             self.app.setPalette(palette)
             self._app_bg_inhibit_active = True
@@ -702,15 +825,21 @@ class PeterAntennaControl(Control):
             try:
                 self._update_delta_display()
             except Exception:
-                logger.exception("Failed to update delta display after sweep finish")
+                logger.exception(
+                    "Failed to update delta display after sweep finish"
+                )
             try:
                 self._update_q_display()
             except Exception:
-                logger.exception("Failed to update Q display after sweep finish")
+                logger.exception(
+                    "Failed to update Q display after sweep finish"
+                )
             try:
                 self._update_swrmin_display()
             except Exception:
-                logger.exception("Failed to update SWR min display after sweep finish")
+                logger.exception(
+                    "Failed to update SWR min display after sweep finish"
+                )
             try:
                 self._update_impedance_display()
             except Exception:
@@ -791,7 +920,8 @@ class PeterAntennaControl(Control):
                     for i in range(len(first_deriv) - 1):
                         delta_deriv = first_deriv[i + 1] - first_deriv[i]
                         delta_freq = (
-                            (freqs[i + 2] - freqs[i + 1]) + (freqs[i + 1] - freqs[i])
+                            (freqs[i + 2] - freqs[i + 1])
+                            + (freqs[i + 1] - freqs[i])
                         ) / 2
                         if delta_freq != 0:
                             # Absolute value in °/MHz²
@@ -1054,7 +1184,9 @@ class PeterAntennaControl(Control):
         try:
             set_f_swr_min_Hz = float(self.input_set_Hz.text())
         except (ValueError, AttributeError) as e:
-            logger.warning("find_sweep_start_stop: Invalid set frequency: %s", e)
+            logger.warning(
+                "find_sweep_start_stop: Invalid set frequency: %s", e
+            )
             set_f_swr_min_Hz = 7.074e6  # default fallback
 
         # Check if we have at least SWR min frequency
@@ -1069,7 +1201,9 @@ class PeterAntennaControl(Control):
                 or abs(f_swr_p2_64_h_Hz - f_swr_min_Hz) > 500e3
             ):
                 use_fixed_zoom = True
-                logger.debug("2.64 markers >500 kHz from SWR min, using ±1 MHz zoom")
+                logger.debug(
+                    "2.64 markers >500 kHz from SWR min, using ±1 MHz zoom"
+                )
 
             if use_fixed_zoom:
                 # Use fixed ±1 MHz zoom around set frequency
@@ -1077,8 +1211,12 @@ class PeterAntennaControl(Control):
             else:
                 # Use 2.64 markers for zoom calculation
                 distance_f = abs(set_f_swr_min_Hz - f_swr_min_Hz)
-                distance_f = max(abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f)
-                distance_f = max(abs(f_swr_p2_64_h_Hz - set_f_swr_min_Hz), distance_f)
+                distance_f = max(
+                    abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f
+                )
+                distance_f = max(
+                    abs(f_swr_p2_64_h_Hz - set_f_swr_min_Hz), distance_f
+                )
 
             sweep_stop_Hz = set_f_swr_min_Hz + distance_f * SWEEP_RANGE_OVERLAP
             sweep_stop_Hz = min(F_USEFUL_MAX_Hz, sweep_stop_Hz)
@@ -1173,7 +1311,9 @@ class PeterAntennaControl(Control):
                     dir_str = "up" if direction_up else "down"
                     dur_str = f"{duration_s:.2f}".rstrip("0").rstrip(".")
                     if getattr(self, "_tune_iteration", 0) == 0:
-                        self._set_motor_status(f"pulse {dir_str} {dur_str}s (preview)")
+                        self._set_motor_status(
+                            f"pulse {dir_str} {dur_str}s (preview)"
+                        )
                         print(f"pulse: {duration_s=} (preview)")
                     else:
                         self._set_motor_status(f"pulse {dir_str} {dur_str}s")

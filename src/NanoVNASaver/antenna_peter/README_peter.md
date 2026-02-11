@@ -1,8 +1,9 @@
 
 
 # Gui draft
-Tune checkbox
-VNA enable, TX inhibit checkbox
+DONE Tune checkbox
+DONE VNA enable, TX inhibit checkbox
+
 Tune heading checkbox
 Tune heading target textfeld, button set
 Tune heading current textfeld
@@ -17,7 +18,7 @@ Frequency servo_f textfeld button set
 
 Impedance enable checkbox
 Impedance target textfeld mit button set
-Impedance target current textfeld
+Impedance current textfeld
 Impedance servo_z textfeld button set
 
 # Servo Ansteuerung

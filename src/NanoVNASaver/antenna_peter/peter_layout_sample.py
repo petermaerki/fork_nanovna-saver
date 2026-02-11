@@ -23,16 +23,26 @@ class LayoutSample(QtWidgets.QMainWindow):
         mainframe = QtWidgets.QWidget()
         self._layout = QtWidgets.QVBoxLayout(mainframe)
 
-        row1 = self.add_row(peter_widgets.DoubleSpinBoxWidget(label= "Label",value= 42.0, unit="V"))
+        row1 = self.add_row(
+            peter_widgets.DoubleSpinBoxWidget(
+                label="Label", value=42.0, unit="V"
+            )
+        )
 
         self.add_row(peter_widgets.SeparatorWidget())
 
         row2 = self.add_row(
-            peter_widgets.PushButtonWidget(label="Samibrot",value= "5",unit= "kg")
+            peter_widgets.PushButtonWidget(
+                label="Samibrot", f_value="5", unit="kg"
+            )
         )
 
-        row3 =self.add_row(peter_widgets.CheckboxWidget(label="Tune automatic"))
-        row4 =self.add_row(peter_widgets.ValueWidget(label="RSSI", value="5 dbm"))
+        row3 = self.add_row(
+            peter_widgets.CheckboxWidget(label="Tune automatic")
+        )
+        row4 = self.add_row(
+            peter_widgets.ValueWidget(label="RSSI", value="5 dbm")
+        )
 
         return mainframe
 

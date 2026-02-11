@@ -1,12 +1,13 @@
 import logging
-from typing import TypeVar
+import typing
+from collections import abc
 
 from PySide6 import QtCore, QtWidgets
 
 logger = logging.getLogger(__name__)
 
-QWidgetLeftT = TypeVar("QWidgetLeftT", bound=QtWidgets.QWidget)
-QWidgetRightT = TypeVar("QWidgetRightT", bound=QtWidgets.QWidget)
+QWidgetLeftT = typing.TypeVar("QWidgetLeftT", bound=QtWidgets.QWidget)
+QWidgetRightT = typing.TypeVar("QWidgetRightT", bound=QtWidgets.QWidget)
 
 SPACING = 4
 CONTENTS_MARGINS = QtCore.QMargins(0, 0, 0, 0)
@@ -177,23 +178,29 @@ class PushButtonWidget(QtWidgets.QWidget):
     def __init__(
         self,
         label: str,
-        value: str,
+        f_value: float,
         unit: str,
+        cb_set: abc.Callable[[float], None] | None = None,
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        assert isinstance(f_value, float)
+
+        self.cb_set = cb_set
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(CONTENTS_MARGINS)
         layout.setSpacing(SPACING)
 
+        self.f_value = f_value
         self.label = QtWidgets.QLabel(label)
-        self.value = QtWidgets.QLabel(value)
+        self.value = QtWidgets.QLabel("")
         self.unit = QtWidgets.QLabel(unit)
         self.button = QtWidgets.QPushButton("set")
         self.label.setOpenExternalLinks(True)
 
         self.value.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
 
         self.button.setSizePolicy(
@@ -207,6 +214,17 @@ class PushButtonWidget(QtWidgets.QWidget):
         layout.addWidget(self.value, 10)
         layout.addWidget(self.unit)
         layout.addWidget(self.button)
+
+        self._set_value(f_value)
+
+    def _set_value(self, value: float) -> None:
+        assert isinstance(value, float)
+        self.value.setText(f"{value:.3f}")
+        if self.cb_set is not None:
+            try:
+                self.cb_set(value)
+            except Exception:
+                logger.exception(f"Failed to set {self.label} to {value}")
 
     def _open_value_dialog(self) -> None:
         dialog = QtWidgets.QDialog(self)
@@ -237,7 +255,7 @@ class PushButtonWidget(QtWidgets.QWidget):
         layout.addWidget(buttons)
 
         if dialog.exec() == QtWidgets.QDialog.Accepted:
-            self.value.setText(f"{new_value.value():.3f}")
+            self._set_value(new_value.value())
 
     @staticmethod
     def _parse_value(text: str) -> float:

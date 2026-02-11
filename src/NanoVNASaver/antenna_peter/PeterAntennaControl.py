@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
+from sts3215_ctl.servo_ctl import ServoConfig, ServoCtl
+from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
 from ..Controls.SweepControl import FrequencyInputWidget
@@ -93,6 +95,8 @@ FILENAME_MICROPYTHON_INITIALIZATION = (
     DIRECTORY_OF_THIS_FILE / "micropython" / "initialization.py"
 )
 MICROPYTHON_MAIN = FILENAME_MICROPYTHON_INITIALIZATION.read_text()
+DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
+DIRECTORY_LOGS.mkdir(exist_ok=True)
 
 
 class PeterAntennaControl(Control):
@@ -109,6 +113,13 @@ class PeterAntennaControl(Control):
 
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
+
+        self.servo_config_f = ServoConfig(
+            filename_persist=DIRECTORY_OF_THIS_FILE
+            / "tmp_sts3215_servo_f.json",
+            directory_logs=DIRECTORY_LOGS,
+        )
+        self.servo_ctl_f = ServoCtl(config=self.servo_config_f)
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
@@ -173,7 +184,7 @@ class PeterAntennaControl(Control):
         # Tune heading target textfeld, button set
         self.heading_target = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Tune heading target", value="0", unit="deg"
+                label="Tune heading target", f_value=0.0, unit="deg"
             )
         )
         # Tune heading current textfeld
@@ -183,7 +194,7 @@ class PeterAntennaControl(Control):
         # Tune heading servo_h textfeld, button set
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Tune heading servo_h", value="0", unit="turns"
+                label="Tune heading servo_h", f_value=0.0, unit="turns"
             )
         )
 
@@ -230,7 +241,7 @@ class PeterAntennaControl(Control):
         # Frequency Offset textfeld mit button set
         self.frequency_offset = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency Offset (DOPPELT)", value="0", unit="Hz"
+                label="Frequency Offset (DOPPELT)", f_value=0.0, unit="Hz"
             )
         )
         # Frequency auto get from TX checkbox
@@ -240,19 +251,23 @@ class PeterAntennaControl(Control):
         # Frequency TX textfeld mit button set
         self.frequency_tx = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency TX", value="0", unit="Hz"
+                label="Frequency TX", f_value=0.0, unit="Hz"
             )
         )
         # Frequency target textfeld
         self.frequency_target = self.add_row(
             peter_widgets.ValueWidget(label="Frequency target", value="0")
         )
+
         # Frequency servo_f textfeld button set
         self.frequency_servo_f = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency servo_f", value="0", unit="turns"
+                label="Frequency servo_f",
+                f_value=self._frequency_get_servo_f(),
+                unit="turns",
+                cb_set=self._frequency_set_servo_f,
             )
-        )
+        ).value
 
         self.add_row(peter_widgets.SeparatorWidget())
         # Impedance enable checkbox
@@ -262,7 +277,7 @@ class PeterAntennaControl(Control):
         # Impedance target textfeld mit button set
         self.impedance_target = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Impedance target", value="0", unit="Ohm"
+                label="Impedance target", f_value=0.0, unit="Ohm"
             )
         )
         # Impedance current textfeld
@@ -272,7 +287,7 @@ class PeterAntennaControl(Control):
         # Impedance servo_z textfeld button set
         self.impedance_servo = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Impedance servo_z", value="0", unit="turns"
+                label="Impedance servo_z", f_value=0.0, unit="turns"
             )
         )
 
@@ -1352,3 +1367,20 @@ class PeterAntennaControl(Control):
             self._setDatapointCount(points)
         except Exception:
             logger.exception("Failed to set datapoint count")
+
+    def _frequency_set_servo_f(self, target_ta: float) -> None:
+        require_homeing = False
+        try:
+            self.servo_ctl_f.move_ta(target_ta=target_ta)
+        except calculator.ExceptionRequireHoming as e:
+            logger.warning(e)
+            require_homeing = True
+        if require_homeing:
+            self.servo_ctl_f.homing()
+            self.servo_ctl_f.move_ta(target_ta=target_ta)
+
+    def _frequency_get_servo_f(self) -> float:
+        try:
+            return self.servo_ctl_f.config.get_persisist().present_ta
+        except calculator.ExceptionRequireHoming:
+            return 0.1

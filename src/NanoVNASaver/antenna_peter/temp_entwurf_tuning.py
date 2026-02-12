@@ -51,3 +51,5 @@ PRESET_POSITIONS: list[BandPreset] = [
     BandPreset(12, 24_915_000, None, None, None),
     BandPreset(10, 28_074_000, None, None, None),
 ]
+
+

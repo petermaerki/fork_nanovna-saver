@@ -225,6 +225,7 @@ class PushButtonWidget(QtWidgets.QWidget):
                 self.cb_set(value)
             except Exception:
                 logger.exception(f"Failed to set {self.label} to {value}")
+                raise
 
     def _open_value_dialog(self) -> None:
         dialog = QtWidgets.QDialog(self)

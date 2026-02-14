@@ -2,6 +2,10 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"name": "servo_sts3215",
+			"path": "../2026_antenna_servo_controller_git/servo_sts3215"
 		}
 	],
 	"settings": {}

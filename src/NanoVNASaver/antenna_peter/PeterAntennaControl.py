@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
-from sts3215_ctl.servo_ctl import ServoConfig, ServoCtl
+from sts3215_ctl.servo_ctl import Servo, ServoPortConfig
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
@@ -114,12 +114,21 @@ class PeterAntennaControl(Control):
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
-        self.servo_config_f = ServoConfig(
+        port_config = ServoPortConfig(directory_logs=DIRECTORY_LOGS)
+        self.servo_ctl_f = Servo(
+            port_config=port_config,
+            scs_id=2,
             filename_persist=DIRECTORY_OF_THIS_FILE
-            / "tmp_sts3215_servo_f.json",
-            directory_logs=DIRECTORY_LOGS,
+                / "tmp_sts3215_servo_f.json",
         )
-        self.servo_ctl_f = ServoCtl(config=self.servo_config_f)
+        self.servo_ctl_h = Servo(
+            port_config=port_config,
+            scs_id=4
+        )
+        self.servo_ctl_z = Servo(
+            port_config=port_config,
+            scs_id=3
+        )
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
@@ -1381,6 +1390,6 @@ class PeterAntennaControl(Control):
 
     def _frequency_get_servo_f(self) -> float:
         try:
-            return self.servo_ctl_f.config.get_persisist().present_ta
+            return self.servo_ctl_f.get_persisist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1

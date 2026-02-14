@@ -122,6 +122,14 @@ class PeterAntennaControl(Control):
             device=self.mp_device,
             directory_logs=DIRECTORY_LOGS,
         )
+        # This will copy the files and reset the rasperry pi pico
+        port_config.init()
+        # This will power the servos
+        self._mp_exec(
+            label_full="pico_initilization",
+            cmd=MICROPYTHON_MAIN,
+        )
+        # time.sleep(1.0)
         if ENABLE_STS3215:
             self.servo_ctl_f = Servo(
                 port_config=port_config,
@@ -132,10 +140,6 @@ class PeterAntennaControl(Control):
             self.servo_ctl_h = Servo(port_config=port_config, scs_id=4)
             self.servo_ctl_z = Servo(port_config=port_config, scs_id=3)
 
-        self._mp_exec(
-            label_full="pico_initilization",
-            cmd=MICROPYTHON_MAIN,
-        )
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
@@ -210,7 +214,10 @@ class PeterAntennaControl(Control):
         # Tune heading servo_h textfeld, button set
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Tune heading servo_h", f_value=0.0, unit="turns"
+                label="Tune heading servo_h",
+                f_value=0.0,
+                unit="turns",
+                cb_set=self._heading_set_servo_h,
             )
         )
 
@@ -1380,6 +1387,11 @@ class PeterAntennaControl(Control):
         if require_homeing:
             self.servo_ctl_f.homing()
             self.servo_ctl_f.move_ta(target_ta=target_ta)
+
+    def _heading_set_servo_h(self, target_ta: float) -> None:
+        if not ENABLE_STS3215:
+            return
+        self.servo_ctl_h.move_ewp(ewp=int(target_ta / 16000.0))
 
     def _frequency_get_servo_f(self) -> float:
         try:

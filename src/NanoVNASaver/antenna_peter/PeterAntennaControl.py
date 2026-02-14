@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
+from sts3215_ctl import util_mpremote
 from sts3215_ctl.servo_ctl import Servo, ServoPortConfig
 from sts3215_micropython.sts3215_portable import calculator
 
@@ -14,7 +15,7 @@ from ..Controls.SweepControl import FrequencyInputWidget
 from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
-from . import peter_widgets, util_mpremote
+from . import peter_widgets
 
 if TYPE_CHECKING:
     from ..NanoVNASaver import NanoVNASaver
@@ -98,6 +99,8 @@ MICROPYTHON_MAIN = FILENAME_MICROPYTHON_INITIALIZATION.read_text()
 DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
 
+ENABLE_STS3215 = True
+
 
 class PeterAntennaControl(Control):
     def add_row(self, widget: QWidgetT) -> QWidgetT:
@@ -114,20 +117,24 @@ class PeterAntennaControl(Control):
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
-        port_config = ServoPortConfig(directory_logs=DIRECTORY_LOGS)
-        self.servo_ctl_f = Servo(
-            port_config=port_config,
-            scs_id=2,
-            filename_persist=DIRECTORY_OF_THIS_FILE
+        self.mp_device = util_mpremote.get_device()
+        port_config = ServoPortConfig(
+            device=self.mp_device,
+            directory_logs=DIRECTORY_LOGS,
+        )
+        if ENABLE_STS3215:
+            self.servo_ctl_f = Servo(
+                port_config=port_config,
+                scs_id=2,
+                filename_persist=DIRECTORY_OF_THIS_FILE
                 / "tmp_sts3215_servo_f.json",
-        )
-        self.servo_ctl_h = Servo(
-            port_config=port_config,
-            scs_id=4
-        )
-        self.servo_ctl_z = Servo(
-            port_config=port_config,
-            scs_id=3
+            )
+            self.servo_ctl_h = Servo(port_config=port_config, scs_id=4)
+            self.servo_ctl_z = Servo(port_config=port_config, scs_id=3)
+
+        self._mp_exec(
+            label_full="pico_initilization",
+            cmd=MICROPYTHON_MAIN,
         )
 
         line = QtWidgets.QFrame()
@@ -396,8 +403,6 @@ class PeterAntennaControl(Control):
         self.checkbox_up.checkStateChanged.connect(self.on_up)
         self.checkbox_down.checkStateChanged.connect(self.on_down)
         self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
-        self.mp_device = util_mpremote.get_device()
-        util_mpremote.mp_exec(device=self.mp_device, cmd=MICROPYTHON_MAIN)
         self._default_app_palette = QtGui.QPalette(self.app.palette())
         self._app_bg_inhibit_active = False
         self._update_tx_inhibit_switch()
@@ -435,9 +440,7 @@ class PeterAntennaControl(Control):
 
             self.app.sweep_start()
         else:
-            util_mpremote.mp_exec(
-                device=self.mp_device, cmd="run(direction_up=True, on=False)"
-            )
+            self._pico_run(direction_up=True, on=False)
             # When tune is disabled, also disable VNA enable
             if self.checkbox_vna_enable.isChecked():
                 logger.debug("Tune disabled: auto-disabling VNA")
@@ -472,8 +475,9 @@ class PeterAntennaControl(Control):
 
     def on_vna_enable(self):
         checked = self.checkbox_vna_enable.isChecked()
-        util_mpremote.mp_exec(
-            device=self.mp_device, cmd=f"vna_enable(enable={int(checked)})"
+        self._mp_exec(
+            label_full="pico_vna_enable",
+            cmd=f"vna_enable(enable={int(checked)})",
         )
         # If the user enabled VNA, also try to connect the serial port control
         # (do nothing if already connected)
@@ -677,22 +681,24 @@ class PeterAntennaControl(Control):
 
     def _update_tx_inhibit_switch(self):
         try:
-            result = util_mpremote.mp_exec_output(
-                device=self.mp_device, cmd="print(int(get_tx_inhibit_switch()))"
+            stdout = self._mp_exec(
+                label_full="pico_get_tx_inhibit_switch",
+                cmd="get_tx_inhibit_switch()",
             )
-            if result is None:
-                self.tx_inhibit_switch_display.setText("--")
-                self._set_app_background(inhibited=False)
-                return
-            value = int(result.strip())
+            tx_inhibit_switch = calculator.parse_value_int(
+                stdout=stdout,
+                label="tx_inhibit_switch",
+            )
+
             self.tx_inhibit_switch_display.setText(
-                "YES" if value == 1 else "NO"
+                "YES" if tx_inhibit_switch == 1 else "NO"
             )
-            self._set_app_background(inhibited=(value == 1))
+            self._set_app_background(inhibited=(tx_inhibit_switch == 1))
         except Exception as e:
             logger.debug("TX inhibit switch read failed: %s", e)
             self.tx_inhibit_switch_display.setText("--")
             self._set_app_background(inhibited=False)
+            raise
 
     def _set_app_background(self, inhibited: bool) -> None:
         if inhibited == self._app_bg_inhibit_active:
@@ -712,27 +718,19 @@ class PeterAntennaControl(Control):
     def on_up(self):
         checked = self.checkbox_up.isChecked()
         if checked:
-            util_mpremote.mp_exec(
-                device=self.mp_device, cmd="run(direction_up=True, on=True)"
-            )
+            self._pico_run(direction_up=True, on=True)
             self._set_motor_status("motor run f up")
         else:
-            util_mpremote.mp_exec(
-                device=self.mp_device, cmd="run(direction_up=True, on=False)"
-            )
+            self._pico_run(direction_up=True, on=False)
             self._set_motor_status("stop")
 
     def on_down(self):
         checked = self.checkbox_down.isChecked()
         if checked:
-            util_mpremote.mp_exec(
-                device=self.mp_device, cmd="run(direction_up=False, on=True)"
-            )
+            self._pico_run(direction_up=False, on=True)
             self._set_motor_status("motor run f down")
         else:
-            util_mpremote.mp_exec(
-                device=self.mp_device, cmd="run(direction_up=False, on=False)"
-            )
+            self._pico_run(direction_up=False, on=False)
             self._set_motor_status("stop")
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
@@ -887,10 +885,7 @@ class PeterAntennaControl(Control):
             logger.exception("Critical error in sweepFinished_peter_antenna")
             # Ensure motor is stopped on any error
             try:
-                util_mpremote.mp_exec(
-                    device=self.mp_device,
-                    cmd="run(direction_up=True, on=False)",
-                )
+                self._pico_run(direction_up=True, on=False)
                 self._set_motor_status("stop (error)")
             except Exception:
                 logger.exception("Failed to stop motor after error")
@@ -1341,17 +1336,16 @@ class PeterAntennaControl(Control):
                         print(f"pulse: {duration_s=} (preview)")
                     else:
                         self._set_motor_status(f"pulse {dir_str} {dur_str}s")
-                        util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+                        self._mp_exec(label_full="pico_pulse", cmd=cmd)
                         points = points_pulse
                 else:
                     # Large deviation: continuous run
-                    cmd = f"run(direction_up={direction_up}, on=True)"
                     dir_str = "up" if direction_up else "down"
                     if getattr(self, "_tune_iteration", 0) == 0:
                         self._set_motor_status(f"motor run {dir_str} (preview)")
                     else:
                         self._set_motor_status(f"motor run {dir_str}")
-                        util_mpremote.mp_exec(device=self.mp_device, cmd=cmd)
+                        self._pico_run(direction_up=direction_up, on=True)
             else:
                 should_stop = True
         else:
@@ -1360,10 +1354,7 @@ class PeterAntennaControl(Control):
         # Always send explicit stop command when needed
         if should_stop:
             if getattr(self, "_tune_iteration", 0) > 0:
-                util_mpremote.mp_exec(
-                    device=self.mp_device,
-                    cmd="run(direction_up=True, on=False)",
-                )
+                self._pico_run(direction_up=True, on=False)
             if not hasattr(self, "_motor_status_already_set"):
                 self._set_motor_status("stop")
 
@@ -1378,6 +1369,8 @@ class PeterAntennaControl(Control):
             logger.exception("Failed to set datapoint count")
 
     def _frequency_set_servo_f(self, target_ta: float) -> None:
+        if not ENABLE_STS3215:
+            return
         require_homeing = False
         try:
             self.servo_ctl_f.move_ta(target_ta=target_ta)
@@ -1390,6 +1383,34 @@ class PeterAntennaControl(Control):
 
     def _frequency_get_servo_f(self) -> float:
         try:
+            if not ENABLE_STS3215:
+                return 42.0
             return self.servo_ctl_f.get_persisist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1
+
+    def _mp_exec(self, label_full: str, cmd: str) -> str:
+        assert isinstance(label_full, str)
+        assert isinstance(cmd, str)
+
+        process = util_mpremote.mp_exec(
+            device=self.mp_device,
+            cmd=cmd,
+            logfilename=ServoPortConfig.get_logfilename(
+                directory_logs=DIRECTORY_LOGS,
+                label_full=label_full,
+            ),
+        )
+        _msg = calculator.parse_value_str(
+            stdout=process.stdout,
+            label="exec: OK",
+        )
+        return process.stdout
+
+    def _pico_run(self, direction_up: bool, on: bool) -> None:
+        assert isinstance(direction_up, bool)
+        assert isinstance(on, bool)
+        self._mp_exec(
+            label_full="pico_run",
+            cmd=f"run(direction_up={direction_up}, on={on})",
+        )

@@ -12,6 +12,10 @@ motor_out_pin = Pin("GPIO6", Pin.OUT, value=0)
 TX_INH_out_pin = Pin("GPIO15", Pin.OUT, value=0)
 TX_INH_switch_input_pin = Pin("GPIO14", Pin.IN)
 
+power_servo_magnetometer_out_pin = Pin("GPIO7", Pin.OUT, value=0)
+power_servo_magnetometer_out_pin.value(1)
+
+OK_STRING ="BEGIN[[exec: OK=]]END"
 
 #K2_ATTENUATION_out_pin.value(1)
 #K3_VNA_out_pin.value(1)
@@ -29,28 +33,29 @@ if not TX_GND_input_pin: # radio moechte senden
 
 '''
 
-
-
 def pulse(direction_up:bool, duration_s: float) -> None:
     K5_FREQ_UP_center_minus_out_pin.value(direction_up)
     motor_out_pin.value(1)
     time.sleep(duration_s)
     motor_out_pin.value(0)
+    print(OK_STRING)
 
 def run(direction_up: bool, on: bool) -> None:
     K5_FREQ_UP_center_minus_out_pin.value(direction_up)
     motor_out_pin.value(on)
+    print(OK_STRING)
 
-def get_tx_aktiv():
+def get_tx_aktiv()->int:
     return not TX_GND_input_pin.value()
 
 def get_tx_inhibit_switch() -> bool:
-    return TX_INH_switch_input_pin.value() == 1
+    print(f"BEGIN[[tx_inhibit_switch={TX_INH_switch_input_pin.value()}]]END")
+    print(OK_STRING)
 
-def set_tx_sperren(sperren: bool):
+def set_tx_sperren(sperren: bool)->None:
     TX_INH_out_pin(sperren)
 
-def vna_enable(enable: bool):
+def vna_enable(enable: bool)->None:
     if enable:
         set_tx_sperren(sperren=True)
         time.sleep(0.3)
@@ -61,7 +66,11 @@ def vna_enable(enable: bool):
         K3_VNA_out_pin.value(False)
         time.sleep(0.01)
         set_tx_sperren(sperren=False)
+    print(OK_STRING)
 
 def reference_50_ohm(enable:bool):
     K4_50_OHM_out_pin.value(enable)
     K3_VNA_out_pin.value(not enable)
+
+
+print("BEGIN[[exec: OK=]]END")

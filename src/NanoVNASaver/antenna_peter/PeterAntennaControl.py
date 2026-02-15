@@ -141,12 +141,12 @@ class PeterAntennaControl(Control):
             self.servo_ctl_z = Servo(
                 port_config=port_config,
                 scs_id=3,
-                torque_limit=300,
+                torque_limit=100,
             )
             self.servo_ctl_h = Servo(
                 port_config=port_config,
                 scs_id=4,
-                torque_limit=300,
+                torque_limit=100,
             )
 
         line = QtWidgets.QFrame()
@@ -1391,7 +1391,10 @@ class PeterAntennaControl(Control):
             return
         require_homeing = False
         try:
-            self.servo_ctl_f.move_ta(target_ta=target_ta)
+            tartet_ta_max = 37.0 # mechanical Limit of Capacitor
+            target_ta_min = 0.05 # near to homing position
+            _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
+            self.servo_ctl_f.move_ta(target_ta=_target_ta)
         except calculator.ExceptionRequireHoming as e:
             logger.warning(e)
             require_homeing = True
@@ -1402,15 +1405,19 @@ class PeterAntennaControl(Control):
     def _heading_set_servo_h(self, target_ta: float) -> None:
         if not ENABLE_STS3215:
             return
-        ewp = int(target_ta)
-        ewp = min(3000, max(1000, ewp))
+        tartet_ta_max = 0.25
+        target_ta_min = -0.25
+        _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
+        ewp = int(_target_ta*4096)+2048
         self.servo_ctl_h.move_ewp(ewp=ewp)
 
     def _impedance_set_servo_z(self, target_ta: float) -> None:
         if not ENABLE_STS3215:
             return
-        ewp = int(target_ta)
-        ewp = min(3000, max(1000, ewp))
+        tartet_ta_max = 0.25
+        target_ta_min = -0.25
+        _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
+        ewp = int(_target_ta*4096)+2048
         self.servo_ctl_z.move_ewp(ewp=ewp)
 
     def _frequency_get_servo_f(self) -> float:

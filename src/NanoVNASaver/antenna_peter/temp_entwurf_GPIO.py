@@ -17,44 +17,44 @@ import time
 #K3_VNA_out_pin.value(1)
 
 
-led_on_out_pin = Pin("GPIO6", Pin.OUT, value=0)
-red_not_green_out_pin = Pin("GPIO8", Pin.OUT, value=0)
+# led_on_out_pin = Pin("GPIO6", Pin.OUT, value=0)
+# red_not_green_out_pin = Pin("GPIO8", Pin.OUT, value=0)
 
 
-uart_tx_out_pin = Pin("GPIO16", Pin.OUT, value=0)
-uart_rx_in_pin = Pin("GPIO17", Pin.IN)
+# uart_tx_out_pin = Pin("GPIO16", Pin.OUT, value=0)
+# uart_rx_in_pin = Pin("GPIO17", Pin.IN)
 
-uart_tx_out_pin.value(0)
-
-
-led_off_timer = Timer()
+# uart_tx_out_pin.value(0)
 
 
-red_not_green_out_pin.value(0)
+# led_off_timer = Timer()
 
 
-def _turn_led_off(timer):
-	led_on_out_pin.value(0)
+# red_not_green_out_pin.value(0)
 
 
-def start_led_rot_timer():
-	led_on_out_pin.value(1)
-	red_not_green_out_pin.value(1)
-	led_off_timer.init(mode=Timer.ONE_SHOT, period=5000, callback=_turn_led_off)
-
-def start_led_gruen_timer():
-	led_on_out_pin.value(1)
-	red_not_green_out_pin.value(0)
-	led_off_timer.init(mode=Timer.ONE_SHOT, period=5000, callback=_turn_led_off)
+# def _turn_led_off(timer):
+# 	led_on_out_pin.value(0)
 
 
-# start_led_rot_timer()
-start_led_gruen_timer()
+# def start_led_rot_timer():
+# 	led_on_out_pin.value(1)
+# 	red_not_green_out_pin.value(1)
+# 	led_off_timer.init(mode=Timer.ONE_SHOT, period=5000, callback=_turn_led_off)
+
+# def start_led_gruen_timer():
+# 	led_on_out_pin.value(1)
+# 	red_not_green_out_pin.value(0)
+# 	led_off_timer.init(mode=Timer.ONE_SHOT, period=5000, callback=_turn_led_off)
+
+
+# # start_led_rot_timer()
+# start_led_gruen_timer()
 
 power_servo_magnetometer_out_pin = Pin("GPIO7", Pin.OUT, value=0)
 power_servo_magnetometer_out_pin.value(1)
 
 
 
-while True:
-    time.sleep(1)
+# while True:
+#     time.sleep(1)

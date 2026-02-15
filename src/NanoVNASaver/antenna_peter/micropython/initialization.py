@@ -8,7 +8,7 @@ K2_ATTENUATION_out_pin = Pin("GPIO11", Pin.OUT, value=0)
 K3_VNA_out_pin = Pin("GPIO10", Pin.OUT, value=0)
 K4_50_OHM_out_pin = Pin("GPIO9", Pin.OUT, value=0)
 K5_FREQ_UP_center_minus_out_pin = Pin("GPIO8", Pin.OUT, value=0)
-motor_out_pin = Pin("GPIO6", Pin.OUT, value=0)
+led_enable_pin_out = Pin("GPIO6", Pin.OUT, value=1)
 TX_INH_out_pin = Pin("GPIO15", Pin.OUT, value=0)
 TX_INH_switch_input_pin = Pin("GPIO14", Pin.IN)
 
@@ -33,17 +33,17 @@ if not TX_GND_input_pin: # radio moechte senden
 
 '''
 
-def pulse(direction_up:bool, duration_s: float) -> None:
-    K5_FREQ_UP_center_minus_out_pin.value(direction_up)
-    motor_out_pin.value(1)
-    time.sleep(duration_s)
-    motor_out_pin.value(0)
-    print(OK_STRING)
+# def pulse(direction_up:bool, duration_s: float) -> None:
+#     K5_FREQ_UP_center_minus_out_pin.value(direction_up)
+#     led_enable_pin_out.value(1)
+#     time.sleep(duration_s)
+#     led_enable_pin_out.value(0)
+#     print(OK_STRING)
 
-def run(direction_up: bool, on: bool) -> None:
-    K5_FREQ_UP_center_minus_out_pin.value(direction_up)
-    motor_out_pin.value(on)
-    print(OK_STRING)
+# def run(direction_up: bool, on: bool) -> None:
+#     K5_FREQ_UP_center_minus_out_pin.value(direction_up)
+#     led_enable_pin_out.value(on)
+#     print(OK_STRING)
 
 def get_tx_aktiv()->int:
     return not TX_GND_input_pin.value()

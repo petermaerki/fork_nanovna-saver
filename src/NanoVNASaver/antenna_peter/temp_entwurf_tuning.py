@@ -40,16 +40,16 @@ class BandPreset:
 
 
 PRESET_POSITIONS: list[BandPreset] = [
-    BandPreset(160, 1_840_000, None, None, None),
-    BandPreset(80, 3_573_000, None, None, None),
-    BandPreset(60, 5_357_000, None, None, None),
-    BandPreset(40, 7_074_000, None, None, None),
-    BandPreset(30, 10_136_000, None, None, None),
-    BandPreset(20, 14_074_000, None, None, None),
-    BandPreset(17, 18_100_000, None, None, None),
-    BandPreset(15, 21_074_000, None, None, None),
-    BandPreset(12, 24_915_000, None, None, None),
-    BandPreset(10, 28_074_000, None, None, None),
+    BandPreset(band_m=160, ft8_hz=1_840_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=80, ft8_hz=3_573_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=60, ft8_hz=5_357_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=40, ft8_hz=7_074_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=30, ft8_hz=10_136_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=20, ft8_hz=14_074_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=17, ft8_hz=18_100_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=15, ft8_hz=21_074_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=12, ft8_hz=24_915_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
+    BandPreset(band_m=10, ft8_hz=28_074_000, servo_f_t=None, servo_f_slope_hz_t=None, servo_z_t=None),
 ]
 
 

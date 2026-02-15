@@ -134,12 +134,20 @@ class PeterAntennaControl(Control):
             self.servo_ctl_f = Servo(
                 port_config=port_config,
                 scs_id=2,
+                torque_limit=300,
                 filename_persist=DIRECTORY_OF_THIS_FILE
                 / "tmp_sts3215_servo_f.json",
             )
-            self.servo_ctl_h = Servo(port_config=port_config, scs_id=4)
-            self.servo_ctl_z = Servo(port_config=port_config, scs_id=3)
-
+            self.servo_ctl_z = Servo(
+                port_config=port_config,
+                scs_id=3,
+                torque_limit=300,
+            )
+            self.servo_ctl_h = Servo(
+                port_config=port_config,
+                scs_id=4,
+                torque_limit=300,
+            )
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
@@ -310,7 +318,10 @@ class PeterAntennaControl(Control):
         # Impedance servo_z textfeld button set
         self.impedance_servo = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Impedance servo_z", f_value=0.0, unit="turns"
+                label="Impedance servo_z",
+                f_value=0.0,
+                unit="turns",
+                cb_set=self._impedance_set_servo_z,
             )
         )
 
@@ -1391,7 +1402,16 @@ class PeterAntennaControl(Control):
     def _heading_set_servo_h(self, target_ta: float) -> None:
         if not ENABLE_STS3215:
             return
-        self.servo_ctl_h.move_ewp(ewp=int(target_ta / 16000.0))
+        ewp = int(target_ta)
+        ewp = min(3000, max(1000, ewp))
+        self.servo_ctl_h.move_ewp(ewp=ewp)
+
+    def _impedance_set_servo_z(self, target_ta: float) -> None:
+        if not ENABLE_STS3215:
+            return
+        ewp = int(target_ta)
+        ewp = min(3000, max(1000, ewp))
+        self.servo_ctl_z.move_ewp(ewp=ewp)
 
     def _frequency_get_servo_f(self) -> float:
         try:

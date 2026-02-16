@@ -66,7 +66,7 @@ class Servos:
         self.servo_ctl_h = Servo(
             port_config=port_config,
             scs_id=4,
-            torque_limit=100,
+            torque_limit=150,
             goal_speed=100,
             acceleration=1,
             position_p_gain=10,
@@ -232,6 +232,7 @@ class PeterAntennaControl(Control):
         self.heading_checkbox = self.add_row(
             peter_widgets.CheckboxWidget("Tune heading checkbox")
         ).checkbox
+        self.heading_checkbox.setChecked(True)
         # Tune heading target textfeld, button set
         self.heading_target = self.add_row(
             peter_widgets.PushButtonWidget(
@@ -1478,7 +1479,7 @@ class PeterAntennaControl(Control):
             statemachine_tuner.HEADING_TARGET_TA_MAX,
             max(statemachine_tuner.HEADING_TARGET_TA_MIN, target_ta),
         )
-        ewp = int(_target_ta * 4096) + 2048
+        ewp = int(-_target_ta * 4096) + 2048
         self.servos.servo_ctl_h.move_ewp(ewp=ewp)
 
     def _impedance_set_servo_z(self, target_ta: float) -> None:

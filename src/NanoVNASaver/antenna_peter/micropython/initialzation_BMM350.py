@@ -108,7 +108,7 @@ class BMM350:
                 "cross_z_y": 0.0,
             },
         }
-        # self.init_sensor()
+        #self.init_sensor()
 
     def _write_reg(self, reg, value):
         self.i2c.writeto_mem(self.address, reg, bytes([value]))
@@ -401,16 +401,31 @@ class BMM350:
         return cr_ax_comp_x, cr_ax_comp_y, cr_ax_comp_z, out_data[3]
 
     def read_data(self):
-        x, y, z, _temp = self._get_compensated_data()
+        sample_count = 1
+        x_sum = 0.0
+        y_sum = 0.0
+        z_sum = 0.0
+
+        for _ in range(sample_count):
+            x_i, y_i, z_i, _temp = self._get_compensated_data()
+            x_sum += x_i
+            y_sum += y_i
+            z_sum += z_i
+            time.sleep(0.05)
+
+        x = x_sum / sample_count
+        y = y_sum / sample_count
+        z = z_sum / sample_count
+
+        # USER-OFFSET erst nach dem Mittelwert abziehen
         x -= USER_OFFSET_X
         y -= USER_OFFSET_Y
         z -= USER_OFFSET_Z
 
         # Berechnung Betrag |B| und Heading
         b_total = math.sqrt(x**2 + y**2 + z**2)
-        heading = math.degrees(math.atan2(y, x))
-        if heading < 0:
-            heading += 360.0
+        heading = - math.degrees(math.atan2(y, x)) + 360.0 + 90.0
+        heading = heading % 360.0
 
         return x, y, z, b_total, heading
 

@@ -219,6 +219,7 @@ class PushButtonWidget(QtWidgets.QWidget):
 
     def _set_value(self, value: float) -> None:
         assert isinstance(value, float)
+        self.f_value = value
         self.value.setText(f"{value:.3f}")
         if self.cb_set is not None:
             try:

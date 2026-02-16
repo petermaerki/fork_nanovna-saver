@@ -334,8 +334,8 @@ class BMM350:
         
         # Berechnung Betrag |B| und Heading
         b_total = math.sqrt(x**2 + y**2 + z**2)
-        heading = math.degrees(math.atan2(y, x))
-        if heading < 0: heading += 360.0
+        heading = - math.degrees(math.atan2(y, x)) + 360.0 + 90.0
+        heading = heading % 360.0
         
         return x, y, z, b_total, heading
 

@@ -1,6 +1,5 @@
 '''Entwurf tuning neu'''
 
-
 while enabled_heading:
         measure_heading()
         if heading is inside tolerance:
@@ -10,11 +9,11 @@ while enabled_heading:
 if bandwechsel:
     servo_f(position= preset_f_position_band)
     servo_z(position = preset_impedance_position_band)
-    wait_on_servo()
+    #wait_on_servo()
 
 iteration = 0
 while True:
-    measure_s11_vna()
+    measure_s11_vna(band_range)
     f_in_tolerance = is_f_in_tolerance()
     z_in_tolerance = is_z_in_tolerance()
     if (not f_enabled or f_in_tolerance) and (not z_enabled or z_in_tolerance) and iteration > 0:
@@ -23,7 +22,7 @@ while True:
         servo_f(position = calculate_new_f_position())
     if z_enabled:
         servo_z(position = calculate_new_z_position())
-    wait_on_servo()
+    #wait_on_servo()
     iteration += 1
 
 

@@ -1,4 +1,4 @@
-from machine import Pin
+from machine import Pin, I2C
 import time
 
 pin_led = Pin("LED", Pin.OUT, value=0)
@@ -13,6 +13,11 @@ TX_INH_out_pin = Pin("GPIO15", Pin.OUT, value=0)
 TX_INH_switch_input_pin = Pin("GPIO14", Pin.IN)
 
 power_servo_magnetometer_out_pin = Pin("GPIO7", Pin.OUT, value=0)
+
+
+i2c = I2C(1, sda=Pin("GPIO18"), scl=Pin("GPIO19"), freq=10000)
+bmm350 = BMM350(i2c)
+
 
 OK_STRING = "BEGIN[[exec: OK=]]END"
 
@@ -65,6 +70,12 @@ def vna_enable(enable: bool) -> None:
         K2_ATTENUATION_out_pin.value(True)
         K3_VNA_out_pin.value(True)
         power_servo_magnetometer_out_pin.value(True)
+        time.sleep(1.5)  # 0.8s is ok
+        bmm350.init_sensor()
+        chip_id, rev_id, err_reg = bmm350.read_chip_info()
+        print(
+            f"BMM350 chip_id=0x{chip_id:02X}, rev=0x{rev_id:02X}, err=0x{err_reg:02X}"
+        )
     else:
         power_servo_magnetometer_out_pin.value(False)
         K2_ATTENUATION_out_pin.value(False)
@@ -78,6 +89,15 @@ def vna_enable(enable: bool) -> None:
 def reference_50_ohm(enable: bool):
     K4_50_OHM_out_pin.value(enable)
     K3_VNA_out_pin.value(not enable)
+
+
+def get_bmm():
+    x, y, z, b, h = bmm350.read_data()
+    print(
+        f"X:{x:6.2f} µT Y:{y:6.2f} µT Z:{z:6.2f} µT | |B|:{b:6.2f} µT | Heading:{h:5.1f}°"
+    )
+    print(f"BEGIN[[heading_deg={h:5.1f}]]END")
+    print(OK_STRING)
 
 
 print("BEGIN[[exec: OK=]]END")

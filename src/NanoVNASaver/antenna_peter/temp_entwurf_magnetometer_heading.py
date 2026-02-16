@@ -1,6 +1,5 @@
 from machine import I2C, Pin
 import time
-import struct
 import math
 
 SDA_PIN = "GPIO18"

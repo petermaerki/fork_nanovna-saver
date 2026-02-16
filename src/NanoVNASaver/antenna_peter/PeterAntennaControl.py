@@ -17,6 +17,7 @@ from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
 from . import peter_widgets
+from .statemachine_tuner import StatemachineTuner
 
 if TYPE_CHECKING:
     from ..NanoVNASaver import NanoVNASaver
@@ -26,19 +27,34 @@ logger = logging.getLogger(__name__)
 QWidgetT = TypeVar("QWidgetT", bound=QtWidgets.QWidget)
 
 
+# Frequency limits for magnetic loop antenna
+F_USEFUL_MIN_Hz = 1.0e6
+F_USEFUL_MAX_Hz = 30.0e6
+
+DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
+DIRECTORY_MICROPYTHON =     DIRECTORY_OF_THIS_FILE / "micropython" 
+assert DIRECTORY_MICROPYTHON.is_dir()
+DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
+DIRECTORY_LOGS.mkdir(exist_ok=True)
+
+ENABLE_STS3215 = True
+ENABLE_STS3215_SERVO_F = False
+
+
 class Servos:
     def __init__(self, port_config: ServoPortConfig) -> None:
-        self.servo_ctl_f = Servo(
-            port_config=port_config,
-            scs_id=2,
-            torque_limit=300,
-            goal_speed=1000,
-            acceleration=300,
-            position_p_gain=10,
-            position_i_gain=2,
-            filename_persist=DIRECTORY_OF_THIS_FILE
-            / "tmp_sts3215_servo_f.json",
-        )
+        if ENABLE_STS3215_SERVO_F:
+            self.servo_ctl_f = Servo(
+                port_config=port_config,
+                scs_id=2,
+                torque_limit=300,
+                goal_speed=1000,
+                acceleration=300,
+                position_p_gain=10,
+                position_i_gain=2,
+                filename_persist=DIRECTORY_OF_THIS_FILE
+                / "tmp_sts3215_servo_f.json",
+            )
         self.servo_ctl_z = Servo(
             port_config=port_config,
             scs_id=3,
@@ -121,21 +137,6 @@ def calculate_safety_distance(
     }
 
 
-# Frequency limits for magnetic loop antenna
-F_USEFUL_MIN_Hz = 1.0e6
-F_USEFUL_MAX_Hz = 30.0e6
-
-DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
-FILENAME_MICROPYTHON_INITIALIZATION = (
-    DIRECTORY_OF_THIS_FILE / "micropython" / "initialization.py"
-)
-MICROPYTHON_MAIN = FILENAME_MICROPYTHON_INITIALIZATION.read_text()
-DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
-DIRECTORY_LOGS.mkdir(exist_ok=True)
-
-ENABLE_STS3215 = True
-
-
 class PeterAntennaControl(Control):
     def add_row(self, widget: QWidgetT) -> QWidgetT:
         self._layout.addWidget(widget)
@@ -151,6 +152,9 @@ class PeterAntennaControl(Control):
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
+        self.statemachine_tuner = StatemachineTuner()
+        self.statemachine_tuner_timer = QtCore.QTimer(self)
+
         self.mp_device = util_mpremote.get_device()
         self.port_config = ServoPortConfig(
             device=self.mp_device,
@@ -159,10 +163,13 @@ class PeterAntennaControl(Control):
         # This will copy the files and reset the rasperry pi pico
         self.port_config.init()
         # This will power the servos
-        self._mp_exec(
-            label_full="pico_initilization",
-            cmd=MICROPYTHON_MAIN,
-        )
+        for file_py in ("initialzation_BMM350.py",  "initialization.py"):
+            filename =  DIRECTORY_MICROPYTHON/file_py
+            python_code =filename.read_text()
+            self._mp_exec(
+                label_full=f"pico_initilization_{filename.stem}",
+                cmd=python_code,
+            )
         # time.sleep(1.0)
         self.servos: Servos | None = None
 
@@ -445,6 +452,13 @@ class PeterAntennaControl(Control):
         self._enable_widgets(
             state_vna_enabled=self.checkbox_vna_enable.isChecked()
         )
+        self.statemachine_tuner_timer.setInterval(1000)  # 1 seconds
+
+        def tune():
+            self.statemachine_tuner.tune(self)
+
+        self.statemachine_tuner_timer.timeout.connect(tune)
+        self.statemachine_tuner_timer.start()
 
     def on_tune(self, checked: QtCore.Qt.CheckState) -> None:
         """
@@ -540,7 +554,6 @@ class PeterAntennaControl(Control):
             )
             if state_vna_enabled:
                 if ENABLE_STS3215:
-                    time.sleep(1.5)  # 0.8s is ok
                     self.servos = Servos(port_config=self.port_config)
             else:
                 self.servos = None
@@ -1444,6 +1457,8 @@ class PeterAntennaControl(Control):
     def _frequency_set_servo_f(self, target_ta: float) -> None:
         if self.servos is None:
             return
+        if ENABLE_STS3215_SERVO_F:
+            return
         require_homeing = False
         try:
             tartet_ta_max = 37.0  # mechanical Limit of Capacitor
@@ -1479,6 +1494,8 @@ class PeterAntennaControl(Control):
         try:
             if self.servos is None:
                 return 42.0
+            if ENABLE_STS3215_SERVO_F:
+                return
             return self.servos.servo_ctl_f.get_persisist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1

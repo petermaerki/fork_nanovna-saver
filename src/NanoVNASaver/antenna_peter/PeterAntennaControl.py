@@ -137,6 +137,7 @@ class PeterAntennaControl(Control):
                 torque_limit=300,
                 goal_speed=1000,
                 acceleration=1000,
+                position_i_gain=2,
                 filename_persist=DIRECTORY_OF_THIS_FILE
                 / "tmp_sts3215_servo_f.json",
             )
@@ -146,6 +147,7 @@ class PeterAntennaControl(Control):
                 torque_limit=100,
                 goal_speed=1000,
                 acceleration=1,
+                position_i_gain=2,
             )
             self.servo_ctl_h = Servo(
                 port_config=port_config,
@@ -153,6 +155,7 @@ class PeterAntennaControl(Control):
                 torque_limit=100,
                 goal_speed=100,
                 acceleration=1,
+                position_i_gain=2,
             )
 
         line = QtWidgets.QFrame()

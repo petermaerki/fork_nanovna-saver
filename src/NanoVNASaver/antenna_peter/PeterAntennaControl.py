@@ -136,7 +136,8 @@ class PeterAntennaControl(Control):
                 scs_id=2,
                 torque_limit=300,
                 goal_speed=1000,
-                acceleration=1000,
+                acceleration=300,
+                position_p_gain=10,
                 position_i_gain=2,
                 filename_persist=DIRECTORY_OF_THIS_FILE
                 / "tmp_sts3215_servo_f.json",
@@ -147,6 +148,7 @@ class PeterAntennaControl(Control):
                 torque_limit=100,
                 goal_speed=1000,
                 acceleration=1,
+                position_p_gain=10,
                 position_i_gain=2,
             )
             self.servo_ctl_h = Servo(
@@ -155,6 +157,7 @@ class PeterAntennaControl(Control):
                 torque_limit=100,
                 goal_speed=100,
                 acceleration=1,
+                position_p_gain=10,
                 position_i_gain=2,
             )
 

@@ -135,6 +135,8 @@ class PeterAntennaControl(Control):
                 port_config=port_config,
                 scs_id=2,
                 torque_limit=300,
+                goal_speed=1000,
+                acceleration=1000,
                 filename_persist=DIRECTORY_OF_THIS_FILE
                 / "tmp_sts3215_servo_f.json",
             )
@@ -142,11 +144,15 @@ class PeterAntennaControl(Control):
                 port_config=port_config,
                 scs_id=3,
                 torque_limit=100,
+                goal_speed=1000,
+                acceleration=1,
             )
             self.servo_ctl_h = Servo(
                 port_config=port_config,
                 scs_id=4,
                 torque_limit=100,
+                goal_speed=100,
+                acceleration=1,
             )
 
         line = QtWidgets.QFrame()

@@ -30,26 +30,36 @@ Impedance servo_z textfeld button set
 
 ```mermaid
 stateDiagram-v2
-	[*] --> tx_enable
-	tx_enable: RED tx_enable - Switch TX inhibit_tx is off or send relay closd
-	inhibit_tx: GREEN inhibit_tx
+	[*] --> enable_tx
+	enable_tx: 
+	inhibit_tx: 
 
-    tx_enable --> inhibit_tx: pico gpio
-    inhibit_tx --> tx_enable: pico gpio
+    enable_tx --> inhibit_tx: checkbox
+    inhibit_tx --> enable_tx: checkbox
 ```
 
+* enable_tx
 
-GREEN `inhibit_tx` substate
+  * inhibit_tx=False,VNAenable=False, servo_power=True.
+
+* inhibit_tx
+
+  * inhibit_tx=True,VNAenable=True, servo_power=False.
+
+
 
 ```mermaid
 stateDiagram-v2
-	tuning: tuning - Fancy logic for heading frequency and impedance
-    idle: idle - We might need to tune
+	tuning: tuning - inhibit_tx=True. Fancy logic for heading frequency and impedance
+    idle: idle - inhibit_tx=False. We might need to tune
     idle --> tuning: User checks 'auto'
     tuning --> idle: error
     tuning --> idle: tuninig ok
     tuning --> idle: User unchecks 'auto'
 ```
+
+* idle entry action: State `enable_tx`
+* tuning entry action: State `inhibit_tx`
 
 # servo
 

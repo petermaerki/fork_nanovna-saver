@@ -2,6 +2,7 @@ import logging
 import math
 import pathlib
 import socket
+import time
 from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -23,6 +24,39 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 QWidgetT = TypeVar("QWidgetT", bound=QtWidgets.QWidget)
+
+
+class Servos:
+    def __init__(self, port_config: ServoPortConfig) -> None:
+        self.servo_ctl_f = Servo(
+            port_config=port_config,
+            scs_id=2,
+            torque_limit=300,
+            goal_speed=1000,
+            acceleration=300,
+            position_p_gain=10,
+            position_i_gain=2,
+            filename_persist=DIRECTORY_OF_THIS_FILE
+            / "tmp_sts3215_servo_f.json",
+        )
+        self.servo_ctl_z = Servo(
+            port_config=port_config,
+            scs_id=3,
+            torque_limit=100,
+            goal_speed=1000,
+            acceleration=1,
+            position_p_gain=10,
+            position_i_gain=2,
+        )
+        self.servo_ctl_h = Servo(
+            port_config=port_config,
+            scs_id=4,
+            torque_limit=100,
+            goal_speed=100,
+            acceleration=1,
+            position_p_gain=10,
+            position_i_gain=2,
+        )
 
 
 def calculate_safety_distance(
@@ -118,48 +152,19 @@ class PeterAntennaControl(Control):
         super().__init__(app, "Peter Antenna control")
 
         self.mp_device = util_mpremote.get_device()
-        port_config = ServoPortConfig(
+        self.port_config = ServoPortConfig(
             device=self.mp_device,
             directory_logs=DIRECTORY_LOGS,
         )
         # This will copy the files and reset the rasperry pi pico
-        port_config.init()
+        self.port_config.init()
         # This will power the servos
         self._mp_exec(
             label_full="pico_initilization",
             cmd=MICROPYTHON_MAIN,
         )
         # time.sleep(1.0)
-        if ENABLE_STS3215:
-            self.servo_ctl_f = Servo(
-                port_config=port_config,
-                scs_id=2,
-                torque_limit=300,
-                goal_speed=1000,
-                acceleration=300,
-                position_p_gain=10,
-                position_i_gain=2,
-                filename_persist=DIRECTORY_OF_THIS_FILE
-                / "tmp_sts3215_servo_f.json",
-            )
-            self.servo_ctl_z = Servo(
-                port_config=port_config,
-                scs_id=3,
-                torque_limit=100,
-                goal_speed=1000,
-                acceleration=1,
-                position_p_gain=10,
-                position_i_gain=2,
-            )
-            self.servo_ctl_h = Servo(
-                port_config=port_config,
-                scs_id=4,
-                torque_limit=100,
-                goal_speed=100,
-                acceleration=1,
-                position_p_gain=10,
-                position_i_gain=2,
-            )
+        self.servos: Servos | None = None
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
@@ -253,11 +258,11 @@ class PeterAntennaControl(Control):
             self.auto_get_timer.setInterval(2000)  # 2 seconds
             self.auto_get_timer.timeout.connect(self._auto_get_frequency)
 
-            self.tx_inhibit_timer = QtCore.QTimer(self)
-            self.tx_inhibit_timer.setInterval(1000)
-            self.tx_inhibit_timer.timeout.connect(
-                self._update_tx_inhibit_switch
-            )
+            # self.tx_inhibit_timer = QtCore.QTimer(self)
+            # self.tx_inhibit_timer.setInterval(1000)
+            # self.tx_inhibit_timer.timeout.connect(
+            #     self._update_tx_inhibit_switch
+            # )
 
             self.checkbox_auto_get_f.checkStateChanged.connect(
                 self.on_auto_get_frequency_toggle
@@ -310,7 +315,7 @@ class PeterAntennaControl(Control):
                 unit="turns",
                 cb_set=self._frequency_set_servo_f,
             )
-        ).value
+        )
 
         self.add_row(peter_widgets.SeparatorWidget())
         # Impedance enable checkbox
@@ -434,9 +439,10 @@ class PeterAntennaControl(Control):
         self.checkbox_down.checkStateChanged.connect(self.on_down)
         self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
         self._default_app_palette = QtGui.QPalette(self.app.palette())
-        self._app_bg_inhibit_active = False
-        self._update_tx_inhibit_switch()
-        self.tx_inhibit_timer.start()
+        # self._app_bg_inhibit_active = False
+        # self._update_tx_inhibit_switch()
+        # self.tx_inhibit_timer.start()
+        self._enable_widgets()
 
     def on_tune(self):
         checked = self.checkbox_tune.isChecked()
@@ -503,27 +509,44 @@ class PeterAntennaControl(Control):
             # sweep_stop.setText(f"200kHz")
             # self.app.sweep_start()
 
-    def on_vna_enable(self):
-        checked = self.checkbox_vna_enable.isChecked()
-        self._mp_exec(
-            label_full="pico_vna_enable",
-            cmd=f"vna_enable(enable={int(checked)})",
-        )
-        # If the user enabled VNA, also try to connect the serial port control
-        # (do nothing if already connected)
-        if checked:
-            try:
-                if not self.app.serial_control.is_vna_connected():
-                    self.app.serial_control.connect_device()
-            except Exception:
-                logger.exception(
-                    "Failed to auto-connect serial port on VNA enable"
-                )
-        else:
-            # When VNA is disabled, also uncheck tune automatic
-            self.checkbox_tune.setChecked(False)
+    def on_vna_enable(self, checked: QtCore.Qt.CheckState) -> None:
+        """
+        Statemachine "VNA Enable".
+        This is the entry action.
+        """
+        assert isinstance(checked,QtCore.Qt.CheckState)
+        try:
+            vna_enabled = checked.value  # self.checkbox_vna_enable.isChecked()
+            # The following code will ALSO power the servos
+            self._mp_exec(
+                label_full="pico_vna_enable",
+                cmd=f"vna_enable(enable={int(vna_enabled)})",
+            )
+            if vna_enabled:
+                if ENABLE_STS3215:
+                    time.sleep(1.5) # 0.8s is ok
+                    self.servos = Servos(port_config=self.port_config)
+            else:
+                self.servos = None
 
-        # Note: power spin is connected at init; no further action needed here
+            self._enable_widgets()
+            # If the user enabled VNA, also try to connect the serial port control
+            # (do nothing if already connected)
+            # if checked:
+            #     try:
+            #         if not self.app.serial_control.is_vna_connected():
+            #             self.app.serial_control.connect_device()
+            #     except Exception:
+            #         logger.exception(
+            #             "Failed to auto-connect serial port on VNA enable"
+            #         )
+            # else:
+            #     # When VNA is disabled, also uncheck tune automatic
+            #     self.checkbox_tune.setChecked(False)
+
+            # Note: power spin is connected at init; no further action needed here
+        except Exception:
+            logger.exception("on_vna_enable")
 
     def on_power_changed(self):
         """Handle changes to the Power W spinbox.
@@ -709,41 +732,41 @@ class PeterAntennaControl(Control):
         except Exception as e:
             logger.warning("Auto-get frequency failed: %s", e)
 
-    def _update_tx_inhibit_switch(self):
-        try:
-            stdout = self._mp_exec(
-                label_full="pico_get_tx_inhibit_switch",
-                cmd="get_tx_inhibit_switch()",
-            )
-            tx_inhibit_switch = calculator.parse_value_int(
-                stdout=stdout,
-                label="tx_inhibit_switch",
-            )
+    # def _update_tx_inhibit_switch_obsolete(self):
+    #     try:
+    #         stdout = self._mp_exec(
+    #             label_full="pico_get_tx_inhibit_switch",
+    #             cmd="get_tx_inhibit_switch()",
+    #         )
+    #         tx_inhibit_switch = calculator.parse_value_int(
+    #             stdout=stdout,
+    #             label="tx_inhibit_switch",
+    #         )
 
-            self.tx_inhibit_switch_display.setText(
-                "YES" if tx_inhibit_switch == 1 else "NO"
-            )
-            self._set_app_background(inhibited=(tx_inhibit_switch == 1))
-        except Exception as e:
-            logger.debug("TX inhibit switch read failed: %s", e)
-            self.tx_inhibit_switch_display.setText("--")
-            self._set_app_background(inhibited=False)
-            raise
+    #         self.tx_inhibit_switch_display.setText(
+    #             "YES" if tx_inhibit_switch == 1 else "NO"
+    #         )
+    #         self._set_app_background(inhibited=(tx_inhibit_switch == 1))
+    #     except Exception as e:
+    #         logger.debug("TX inhibit switch read failed: %s", e)
+    #         self.tx_inhibit_switch_display.setText("--")
+    #         self._set_app_background(inhibited=False)
+    #         raise
 
-    def _set_app_background(self, inhibited: bool) -> None:
-        if inhibited == self._app_bg_inhibit_active:
-            return
-        if inhibited:
-            palette = QtGui.QPalette(self._default_app_palette)
-            palette.setColor(
-                QtGui.QPalette.ColorRole.Window, QtGui.QColor("#CCFFCC")
-            )
-            self.app.setAutoFillBackground(True)
-            self.app.setPalette(palette)
-            self._app_bg_inhibit_active = True
-        else:
-            self.app.setPalette(self._default_app_palette)
-            self._app_bg_inhibit_active = False
+    # def _set_app_background(self, inhibited: bool) -> None:
+    #     if inhibited == self._app_bg_inhibit_active:
+    #         return
+    #     if inhibited:
+    #         palette = QtGui.QPalette(self._default_app_palette)
+    #         palette.setColor(
+    #             QtGui.QPalette.ColorRole.Window, QtGui.QColor("#CCFFCC")
+    #         )
+    #         self.app.setAutoFillBackground(True)
+    #         self.app.setPalette(palette)
+    #         self._app_bg_inhibit_active = True
+    #     else:
+    #         self.app.setPalette(self._default_app_palette)
+    #         self._app_bg_inhibit_active = False
 
     def on_up(self):
         checked = self.checkbox_up.isChecked()
@@ -1399,44 +1422,44 @@ class PeterAntennaControl(Control):
             logger.exception("Failed to set datapoint count")
 
     def _frequency_set_servo_f(self, target_ta: float) -> None:
-        if not ENABLE_STS3215:
+        if self.servos is None:
             return
         require_homeing = False
         try:
-            tartet_ta_max = 37.0 # mechanical Limit of Capacitor
-            target_ta_min = 0.05 # near to homing position
+            tartet_ta_max = 37.0  # mechanical Limit of Capacitor
+            target_ta_min = 0.05  # near to homing position
             _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
-            self.servo_ctl_f.move_ta(target_ta=_target_ta)
+            self.servos.servo_ctl_f.move_ta(target_ta=_target_ta)
         except calculator.ExceptionRequireHoming as e:
             logger.warning(e)
             require_homeing = True
         if require_homeing:
-            self.servo_ctl_f.homing()
-            self.servo_ctl_f.move_ta(target_ta=target_ta)
+            self.servos.servo_ctl_f.homing()
+            self.servos.servo_ctl_f.move_ta(target_ta=target_ta)
 
     def _heading_set_servo_h(self, target_ta: float) -> None:
-        if not ENABLE_STS3215:
+        if self.servos is None:
             return
         tartet_ta_max = 0.25
         target_ta_min = -0.25
         _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
-        ewp = int(_target_ta*4096)+2048
-        self.servo_ctl_h.move_ewp(ewp=ewp)
+        ewp = int(_target_ta * 4096) + 2048
+        self.servos.servo_ctl_h.move_ewp(ewp=ewp)
 
     def _impedance_set_servo_z(self, target_ta: float) -> None:
-        if not ENABLE_STS3215:
+        if self.servos is None:
             return
         tartet_ta_max = 0.25
         target_ta_min = -0.25
         _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
-        ewp = int(_target_ta*4096)+2048
-        self.servo_ctl_z.move_ewp(ewp=ewp)
+        ewp = int(_target_ta * 4096) + 2048
+        self.servos.servo_ctl_z.move_ewp(ewp=ewp)
 
     def _frequency_get_servo_f(self) -> float:
         try:
-            if not ENABLE_STS3215:
+            if self.servos is None:
                 return 42.0
-            return self.servo_ctl_f.get_persisist().present_ta
+            return self.servos.servo_ctl_f.get_persisist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1
 
@@ -1465,3 +1488,9 @@ class PeterAntennaControl(Control):
             label_full="pico_run",
             cmd=f"run(direction_up={direction_up}, on={on})",
         )
+
+    def _enable_widgets(self) -> None:
+        vna_enabled = self.checkbox_vna_enable.isChecked()
+        self.heading_servo.setEnabled(vna_enabled)
+        self.frequency_servo_f.setEnabled(vna_enabled)
+        self.impedance_servo.setEnabled(vna_enabled)

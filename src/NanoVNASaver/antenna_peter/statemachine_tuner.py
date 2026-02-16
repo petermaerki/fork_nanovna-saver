@@ -4,10 +4,14 @@ from typing import TYPE_CHECKING
 
 from sts3215_micropython.sts3215_portable import calculator
 
+from . import util_heading_calculator
+
 if TYPE_CHECKING:
     from .PeterAntennaControl import PeterAntennaControl
 logger = logging.getLogger(__name__)
 
+HEADING_TARGET_TA_MAX = 0.25
+HEADING_TARGET_TA_MIN = -0.25
 
 class StatemachineTuner:
     def __init__(self) -> None:
@@ -32,20 +36,8 @@ class StatemachineTuner:
         exception. Something bad happened.
         """
 
-        stdout = ctl._mp_exec(
-            label_full="get_bmm",
-            cmd="get_bmm()",
-        )
-        heading_deg = calculator.parse_value_float(
-            stdout=stdout,
-            label="heading_deg",
-        )
-        logger.info(f"{heading_deg=}")
-        ctl.heading_current.value.setText(f"{heading_deg:0.1f} deg")
-
-
-        if ctl.heading_checkbox.isChecked():
-            
+        heading_tuned = self._tune_heading(ctl=ctl)
+        return heading_tuned
 
         duration_s = time.monotonic() - self.last_s
         logger.info(f"tune {duration_s} s")
@@ -89,3 +81,34 @@ class StatemachineTuner:
         self.last_s = time.monotonic()
         return tune_success
         """
+
+    def _tune_heading(self, ctl: PeterAntennaControl) -> bool:
+        if not ctl.heading_checkbox.isChecked():
+            return True
+
+        stdout = ctl._mp_exec(
+            label_full="get_bmm",
+            cmd="get_bmm()",
+        )
+        heading_deg = calculator.parse_value_float(
+            stdout=stdout,
+            label="heading_deg",
+        )
+        logger.info(f"{heading_deg=}")
+        ctl.heading_current.value.setText(f"{heading_deg:0.1f} deg")
+        heading_target_deg = ctl.heading_target.f_value
+        error_deg = abs(heading_target_deg - heading_deg)
+        if error_deg < 5.0:
+            logger.info("_tune_heading() OK")
+            return True
+        servo_targed_t =  util_heading_calculator.servo_targed_t(
+            servo_t_actual=ctl.heading_servo.f_value,
+            heading_actual_deg=heading_deg,
+            heading_target_deg=heading_target_deg,
+            servo_min_t=HEADING_TARGET_TA_MIN,
+            servo_max_t=HEADING_TARGET_TA_MAX,
+            debug=False,
+        )
+        logger.info(f"_tune_heading(): heading_servo {heading_target_deg=}. {ctl.heading_servo.f_value:0.1f}->{servo_targed_t:0.1f} ta")
+        ctl.heading_servo._set_value(servo_targed_t)
+        return False

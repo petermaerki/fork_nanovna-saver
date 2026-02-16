@@ -16,8 +16,7 @@ from ..Controls.SweepControl import FrequencyInputWidget
 from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
-from . import peter_widgets
-from .statemachine_tuner import StatemachineTuner
+from . import peter_widgets, statemachine_tuner
 
 if TYPE_CHECKING:
     from ..NanoVNASaver import NanoVNASaver
@@ -32,7 +31,7 @@ F_USEFUL_MIN_Hz = 1.0e6
 F_USEFUL_MAX_Hz = 30.0e6
 
 DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
-DIRECTORY_MICROPYTHON =     DIRECTORY_OF_THIS_FILE / "micropython" 
+DIRECTORY_MICROPYTHON = DIRECTORY_OF_THIS_FILE / "micropython"
 assert DIRECTORY_MICROPYTHON.is_dir()
 DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
@@ -152,7 +151,7 @@ class PeterAntennaControl(Control):
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
-        self.statemachine_tuner = StatemachineTuner()
+        self.statemachine_tuner = statemachine_tuner.StatemachineTuner()
         self.statemachine_tuner_timer = QtCore.QTimer(self)
 
         self.mp_device = util_mpremote.get_device()
@@ -163,9 +162,9 @@ class PeterAntennaControl(Control):
         # This will copy the files and reset the rasperry pi pico
         self.port_config.init()
         # This will power the servos
-        for file_py in ("initialzation_BMM350.py",  "initialization.py"):
-            filename =  DIRECTORY_MICROPYTHON/file_py
-            python_code =filename.read_text()
+        for file_py in ("initialzation_BMM350.py", "initialization.py"):
+            filename = DIRECTORY_MICROPYTHON / file_py
+            python_code = filename.read_text()
             self._mp_exec(
                 label_full=f"pico_initilization_{filename.stem}",
                 cmd=python_code,
@@ -1475,9 +1474,10 @@ class PeterAntennaControl(Control):
     def _heading_set_servo_h(self, target_ta: float) -> None:
         if self.servos is None:
             return
-        tartet_ta_max = 0.25
-        target_ta_min = -0.25
-        _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
+        _target_ta = min(
+            statemachine_tuner.HEADING_TARGET_TA_MAX,
+            max(statemachine_tuner.HEADING_TARGET_TA_MIN, target_ta),
+        )
         ewp = int(_target_ta * 4096) + 2048
         self.servos.servo_ctl_h.move_ewp(ewp=ewp)
 

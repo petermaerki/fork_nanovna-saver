@@ -190,7 +190,7 @@ class PeterAntennaControl(Control):
             self.checkbox_down = QtWidgets.QCheckBox()
 
             # Tune iteration counter (internal; display removed)
-            self._tune_iteration = 0
+            # self._tune_iteration_obsolete = 0
             # Store calculated Q factor for safety calculations
             self._q_factor = 500.0  # default value
 
@@ -442,23 +442,31 @@ class PeterAntennaControl(Control):
         # self._app_bg_inhibit_active = False
         # self._update_tx_inhibit_switch()
         # self.tx_inhibit_timer.start()
-        self._enable_widgets()
+        self._enable_widgets(
+            state_vna_enabled=self.checkbox_vna_enable.isChecked()
+        )
 
-    def on_tune(self):
-        checked = self.checkbox_tune.isChecked()
-        if checked:
+    def on_tune(self, checked: QtCore.Qt.CheckState) -> None:
+        """
+        Statemachine "Tuning".
+        This is the entry action.
+        """
+        assert isinstance(checked, QtCore.Qt.CheckState)
+        state_tuning = checked.value  #  self.checkbox_tune.isChecked()
+        self.checkbox_vna_enable.setChecked(state_tuning)
+        if state_tuning:
             # Auto-enable VNA if not already enabled
-            if not self.checkbox_vna_enable.isChecked():
-                logger.debug("Tune enabled: auto-enabling VNA")
-                self.checkbox_vna_enable.setChecked(True)
+            # if not self.checkbox_vna_enable.isChecked():
+            #     logger.debug("Tune enabled: auto-enabling VNA")
+            #     self.checkbox_vna_enable.setChecked(True)
 
             # reset tune iteration counter on initial enable; first sweep is a dry-run
-            self._tune_iteration = 0
+            # self._tune_iteration_obsolete = 0
             # Send current power setting to FT-991 when tuning is enabled
-            try:
-                self.on_power_changed()
-            except Exception:
-                logger.exception("Failed to send initial power on tune enable")
+            # try:
+            #     self.on_power_changed()
+            # except Exception:
+            #     logger.exception("Failed to send initial power on tune enable")
             # self.on_button_set_values()
             if False:
                 sweep_stop = self.app.sweep_control.inputs["Stop"]
@@ -469,42 +477,48 @@ class PeterAntennaControl(Control):
                     assert isinstance(sweep_start, FrequencyInputWidget)
                     sweep_start.setText(f"{F_USEFUL_MIN_Hz:0.0f}Hz")
 
-            self._setStartStopFrequencyFloat("Start", 1e6)
-            self._setStartStopFrequencyFloat("Stop", 30e6)
-            self._setDatapointCount(1000)  # initial bei overview
-            self.app.sweep.set_logarithmic(True)
+            # self._setStartStopFrequencyFloat("Start", 1e6)
+            # self._setStartStopFrequencyFloat("Stop", 30e6)
+            # self._setDatapointCount(1000)  # initial bei overview
+            # self.app.sweep.set_logarithmic(True)
 
-            self.app.sweep_start()
+            # self.app.sweep_start()
         else:
-            self._pico_run(direction_up=True, on=False)
+            # self._pico_run(direction_up=True, on=False)
             # When tune is disabled, also disable VNA enable
-            if self.checkbox_vna_enable.isChecked():
-                logger.debug("Tune disabled: auto-disabling VNA")
-                self.checkbox_vna_enable.setChecked(False)
-            self._set_motor_status("stop")
+            # if self.checkbox_vna_enable.isChecked():
+            #     logger.debug("Tune disabled: auto-disabling VNA")
+            #     self.checkbox_vna_enable.setChecked(False)
+            # self._set_motor_status_obsolete("stop")
             # clear internal tune iteration counter when tuning disabled
-            self._tune_iteration = 0
-            # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
-            try:
-                # Restore a harmless sweep on low frequencies and start it so the
-                # VNA runs there (this keeps the device quiet on other bands).
-                # Update the UI fields so behavior is visible and consistent.
-                self._setStartStopFrequencyFloat("Start", 100e3)
-                self._setStartStopFrequencyFloat("Stop", 200e3)
-                # use a small number of points for quick harmless sweep
-                self._setDatapointCount(201)
-                self.app.sweep.set_logarithmic(False)
-                # mark/apply suppression of display updates while this
-                # harmless sweep runs so the visible graph is not overwritten
-                self.app._suppress_display_updates = True
-                self.app._harmless_sweep_active = True
-                # start the harmless sweep so the VNA actually runs at low freq
-                self.app.sweep_start()
-                logger.debug(
-                    "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"
-                )
-            except Exception:
-                logger.exception("Failed to set harmless sweep on tune disable")
+            # self._tune_iteration_obsolete = 0
+            def run_vna_on_frequency_which_does_not_harm():
+                # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
+                try:
+                    # Restore a harmless sweep on low frequencies and start it so the
+                    # VNA runs there (this keeps the device quiet on other bands).
+                    # Update the UI fields so behavior is visible and consistent.
+                    self._setStartStopFrequencyFloat("Start", 100e3)
+                    self._setStartStopFrequencyFloat("Stop", 200e3)
+                    # use a small number of points for quick harmless sweep
+                    self._setDatapointCount(201)
+                    self.app.sweep.set_logarithmic(False)
+                    # mark/apply suppression of display updates while this
+                    # harmless sweep runs so the visible graph is not overwritten
+                    self.app._suppress_display_updates = True
+                    self.app._harmless_sweep_active = True
+                    # start the harmless sweep so the VNA actually runs at low freq
+                    self.app.sweep_start()
+                    logger.debug(
+                        "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"
+                    )
+                except Exception:
+                    logger.exception(
+                        "Failed to set harmless sweep on tune disable"
+                    )
+
+            run_vna_on_frequency_which_does_not_harm()
+
             # sweep_start.setText(f"100kHz") # todo: disable sweep completely
             # sweep_stop.setText(f"200kHz")
             # self.app.sweep_start()
@@ -514,22 +528,24 @@ class PeterAntennaControl(Control):
         Statemachine "VNA Enable".
         This is the entry action.
         """
-        assert isinstance(checked,QtCore.Qt.CheckState)
+        assert isinstance(checked, QtCore.Qt.CheckState)
         try:
-            vna_enabled = checked.value  # self.checkbox_vna_enable.isChecked()
+            state_vna_enabled = (
+                checked.value
+            )  # self.checkbox_vna_enable.isChecked()
             # The following code will ALSO power the servos
             self._mp_exec(
                 label_full="pico_vna_enable",
-                cmd=f"vna_enable(enable={int(vna_enabled)})",
+                cmd=f"vna_enable(enable={int(state_vna_enabled)})",
             )
-            if vna_enabled:
+            if state_vna_enabled:
                 if ENABLE_STS3215:
-                    time.sleep(1.5) # 0.8s is ok
+                    time.sleep(1.5)  # 0.8s is ok
                     self.servos = Servos(port_config=self.port_config)
             else:
                 self.servos = None
 
-            self._enable_widgets()
+            self._enable_widgets(state_vna_enabled=state_vna_enabled)
             # If the user enabled VNA, also try to connect the serial port control
             # (do nothing if already connected)
             # if checked:
@@ -772,19 +788,19 @@ class PeterAntennaControl(Control):
         checked = self.checkbox_up.isChecked()
         if checked:
             self._pico_run(direction_up=True, on=True)
-            self._set_motor_status("motor run f up")
+            self._set_motor_status_obsolete("motor run f up")
         else:
             self._pico_run(direction_up=True, on=False)
-            self._set_motor_status("stop")
+            self._set_motor_status_obsolete("stop")
 
     def on_down(self):
         checked = self.checkbox_down.isChecked()
         if checked:
             self._pico_run(direction_up=False, on=True)
-            self._set_motor_status("motor run f down")
+            self._set_motor_status_obsolete("motor run f down")
         else:
             self._pico_run(direction_up=False, on=False)
-            self._set_motor_status("stop")
+            self._set_motor_status_obsolete("stop")
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")
@@ -931,7 +947,7 @@ class PeterAntennaControl(Control):
             # increment tune iteration counter if tuning is still enabled
             try:
                 if self.checkbox_tune.isChecked():
-                    self._tune_iteration += 1
+                    self._tune_iteration_obsolete += 1
             except Exception:
                 logger.exception("Failed to increment tune iteration counter")
         except Exception:
@@ -939,7 +955,7 @@ class PeterAntennaControl(Control):
             # Ensure motor is stopped on any error
             try:
                 self._pico_run(direction_up=True, on=False)
-                self._set_motor_status("stop (error)")
+                self._set_motor_status_obsolete("stop (error)")
             except Exception:
                 logger.exception("Failed to stop motor after error")
 
@@ -1221,7 +1237,7 @@ class PeterAntennaControl(Control):
             logger.exception("Failed to update impedance display")
             self.impedance_display.setText("--")
 
-    def _set_motor_status(self, status: str):
+    def _set_motor_status_obsolete(self, status: str):
         """Set the motor status label safely."""
         try:
             self.motor_status.setText(status)
@@ -1250,7 +1266,7 @@ class PeterAntennaControl(Control):
             self._setStartStopFrequencyFloat("Start", F_USEFUL_MIN_Hz)
             self._setStartStopFrequencyFloat("Stop", F_USEFUL_MAX_Hz)
             self._setDatapointCount(500)
-            self._set_motor_status("stop (no data)")
+            self._set_motor_status_obsolete("stop (no data)")
             return
 
         try:
@@ -1383,21 +1399,25 @@ class PeterAntennaControl(Control):
                     dir_str = "up" if direction_up else "down"
                     dur_str = f"{duration_s:.2f}".rstrip("0").rstrip(".")
                     if getattr(self, "_tune_iteration", 0) == 0:
-                        self._set_motor_status(
+                        self._set_motor_status_obsolete(
                             f"pulse {dir_str} {dur_str}s (preview)"
                         )
                         print(f"pulse: {duration_s=} (preview)")
                     else:
-                        self._set_motor_status(f"pulse {dir_str} {dur_str}s")
+                        self._set_motor_status_obsolete(
+                            f"pulse {dir_str} {dur_str}s"
+                        )
                         self._mp_exec(label_full="pico_pulse", cmd=cmd)
                         points = points_pulse
                 else:
                     # Large deviation: continuous run
                     dir_str = "up" if direction_up else "down"
                     if getattr(self, "_tune_iteration", 0) == 0:
-                        self._set_motor_status(f"motor run {dir_str} (preview)")
+                        self._set_motor_status_obsolete(
+                            f"motor run {dir_str} (preview)"
+                        )
                     else:
-                        self._set_motor_status(f"motor run {dir_str}")
+                        self._set_motor_status_obsolete(f"motor run {dir_str}")
                         self._pico_run(direction_up=direction_up, on=True)
             else:
                 should_stop = True
@@ -1409,7 +1429,7 @@ class PeterAntennaControl(Control):
             if getattr(self, "_tune_iteration", 0) > 0:
                 self._pico_run(direction_up=True, on=False)
             if not hasattr(self, "_motor_status_already_set"):
-                self._set_motor_status("stop")
+                self._set_motor_status_obsolete("stop")
 
         # Safety check: ensure points is defined
         if "points" not in locals():
@@ -1489,8 +1509,8 @@ class PeterAntennaControl(Control):
             cmd=f"run(direction_up={direction_up}, on={on})",
         )
 
-    def _enable_widgets(self) -> None:
-        vna_enabled = self.checkbox_vna_enable.isChecked()
-        self.heading_servo.setEnabled(vna_enabled)
-        self.frequency_servo_f.setEnabled(vna_enabled)
-        self.impedance_servo.setEnabled(vna_enabled)
+    def _enable_widgets(self, state_vna_enabled: bool) -> None:
+        # state_vna_enabled = self.checkbox_vna_enable.isChecked()
+        self.heading_servo.setEnabled(state_vna_enabled)
+        self.frequency_servo_f.setEnabled(state_vna_enabled)
+        self.impedance_servo.setEnabled(state_vna_enabled)

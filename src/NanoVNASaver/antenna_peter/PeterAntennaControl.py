@@ -268,16 +268,12 @@ class PeterAntennaControl(Control):
         self.frequency_auto_get = self.add_row(
             peter_widgets.CheckboxWidget("Frequency auto get from TX")
         ).checkbox
-        self.auto_get_timer = QtCore.QTimer(self)
-        self.auto_get_timer.setInterval(2000)
-        self.auto_get_timer.timeout.connect(self._auto_get_frequency)
-        self.frequency_auto_get.checkStateChanged.connect(
-            self.on_auto_get_frequency_toggle
-        )
 
         self.frequency_tx = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency TX", f_value=0.0, unit="Hz"
+                label="Frequency TX",
+                f_value=42.0,
+                unit="Hz",
             )
         )
         self.frequency_target = self.add_row(
@@ -390,20 +386,6 @@ class PeterAntennaControl(Control):
         except Exception:
             logger.exception("Failed to connect power spin signal at init")
 
-        # Connect frequency input field to update safety calculations
-        try:
-            self.input_set_Hz.textChanged.connect(
-                self._update_safety_calculation
-            )
-        except Exception:
-            logger.exception("Failed to connect frequency input signal at init")
-
-        # Perform initial safety calculation
-        try:
-            self._update_safety_calculation()
-        except Exception:
-            logger.exception("Failed to perform initial safety calculation")
-
         self.layout.addRow(self._layout)
 
         # 'Set Values' signal connection commented out because the input is disabled
@@ -426,6 +408,13 @@ class PeterAntennaControl(Control):
 
         self.statemachine_tuner_timer.timeout.connect(tune)
         self.statemachine_tuner_timer.start()
+
+        self.rigctl_read_tx_timer = QtCore.QTimer(self)
+        self.rigctl_read_tx_timer.setInterval(2000)
+        self.rigctl_read_tx_timer.timeout.connect(
+            self._rigctl_read_tx_frequency
+        )
+        self.rigctl_read_tx_timer.start()
 
     def on_tune(self, checked: QtCore.Qt.CheckState) -> None:
         """
@@ -549,9 +538,6 @@ class PeterAntennaControl(Control):
         rigctl: `rigctl -m 2 -r localhost:4532 L RFPOWER <scaled>`.
         Also update safety calculation displays.
         """
-        # Always update safety calculations first, regardless of any errors
-        self._update_safety_calculation()
-
         try:
             watts = int(self.power_spin.value())
             # enforce allowed range 5..100 (defensive clamp)
@@ -598,15 +584,11 @@ class PeterAntennaControl(Control):
         except Exception:
             logger.exception("Failed to prepare RFPOWER command")
 
-    def _update_safety_calculation(self):
+    def _update_safety_calculation(self, freq_hz: float):
         """Update safety calculation fields based on current settings."""
         try:
-            # Get values from UI; use reasonable defaults if missing
-            try:
-                set_f_hz = float(self.input_set_Hz.text())
-                f_mhz = set_f_hz / 1e6
-            except Exception:
-                f_mhz = 14.150  # default 40m band
+            set_f_hz = freq_hz
+            f_mhz = set_f_hz / 1e6
 
             watts = int(self.power_spin.value())
 
@@ -614,7 +596,11 @@ class PeterAntennaControl(Control):
             q_factor = self._q_factor
 
             # Calculate safety parameters
-            results = calculate_safety_distance(f_mhz, watts, q_factor)
+            results = calculate_safety_distance(
+                f_mhz=f_mhz,
+                p_watt=watts,
+                q_factor=q_factor,
+            )
 
             # Update display fields with values from loop calculation
             # Cap Voltage from loop (not feedline)
@@ -677,23 +663,18 @@ class PeterAntennaControl(Control):
             self.radiated_power_display.setText("--")
             self.efficiency_display.setText("--")
 
-    def on_auto_get_frequency_toggle(self):
-        """Start/stop the automatic frequency polling based on checkbox state."""
-        if self.frequency_auto_get.isChecked():
-            logger.debug("Starting auto frequency fetch timer (1s)")
-            # do an immediate fetch, then rely on timer for subsequent updates
-            self._auto_get_frequency()
-            self.auto_get_timer.start()
-        else:
-            logger.debug("Stopping auto frequency fetch timer")
-            self.auto_get_timer.stop()
+    # def on_auto_get_frequency_toggle(self):
+    #     """Start/stop the automatic frequency polling based on checkbox state."""
+    #     if self.frequency_auto_get.isChecked():
+    #         logger.debug("Starting auto frequency fetch timer (1s)")
+    #         # do an immediate fetch, then rely on timer for subsequent updates
+    #         self._auto_get_frequency()
+    #         self.auto_get_timer.start()
+    #     else:
+    #         logger.debug("Stopping auto frequency fetch timer")
+    #         self.auto_get_timer.stop()
 
-    def _auto_get_frequency(self):
-        """Fetch frequency from localhost socket and set it to the SWR input field.
-
-        The expected protocol: connect to localhost:4532, send 'f\n', receive an
-        integer frequency in Hz (as bytes). Any errors are logged and ignored.
-        """
+    def _get_frequency_from_tx(self) -> int:
         try:
             with socket.create_connection(
                 (RIGCTL_HOSTNAME, RIGCTL_PORT), timeout=1
@@ -702,25 +683,36 @@ class PeterAntennaControl(Control):
                 data = s.recv(1024).strip()
                 if not data:
                     logger.warning("Auto-get frequency: no data received")
-                    return
+                    return 42
                 try:
-                    freq_hz = int(data)
+                    return int(data)
                 except ValueError:
                     logger.warning(
                         "Auto-get frequency: received non-integer: %r", data
                     )
-                    return
-                # Apply SWR offset to received frequency
-                self.frequency_tx._set_value(float(freq_hz))
-                offset_hz = self.frequency_offset.f_value
-                freq_hz_with_offset = freq_hz + offset_hz
-
-                self.frequency_target.value.setText(
-                    f"{freq_hz_with_offset:0.0f} Hz"
-                )
-
+                    return 42
         except Exception:
             logger.exception("Auto-get frequency failed")
+            return 42
+
+    def _rigctl_read_tx_frequency(self):
+        """Fetch frequency from localhost socket and set it to the SWR input field.
+
+        The expected protocol: connect to localhost:4532, send 'f\n', receive an
+        integer frequency in Hz (as bytes). Any errors are logged and ignored.
+        """
+        if self.frequency_auto_get.isChecked():
+            freq_hz = float(self._get_frequency_from_tx())
+            self.frequency_tx._set_value(freq_hz)
+        else:
+            freq_hz = self.frequency_tx.f_value
+        offset_hz = self.frequency_offset.f_value
+        freq_hz_with_offset = freq_hz + offset_hz
+
+        self.frequency_target.value.setText(f"{freq_hz_with_offset:0.0f} Hz")
+
+        # update safety calculations
+        self._update_safety_calculation(freq_hz=freq_hz)
 
     # def _update_tx_inhibit_switch_obsolete(self):
     #     try:
@@ -910,13 +902,6 @@ class PeterAntennaControl(Control):
             except Exception:
                 logger.exception(
                     "Failed to update impedance display after sweep finish"
-                )
-            # Update safety calculation when Q is recalculated
-            try:
-                self._update_safety_calculation()
-            except Exception:
-                logger.exception(
-                    "Failed to update safety calculation after sweep finish"
                 )
             # increment tune iteration counter if tuning is still enabled
             try:

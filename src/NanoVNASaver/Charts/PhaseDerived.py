@@ -118,8 +118,10 @@ class PhaseDerivedChart(PhaseChart):
                     if abs(angle) < 0.001 or abs(angle) > 1000:
                         anglestr = f"{angle:.2e}"
                     else:
-                        digits = max(0, min(6, math.floor(6 - math.log10(abs(angle)))))
-                        anglestr = f"{angle:.{digits}f}".rstrip('0').rstrip('.')
+                        digits = max(
+                            0, min(6, math.floor(6 - math.log10(abs(angle))))
+                        )
+                        anglestr = f"{angle:.{digits}f}".rstrip("0").rstrip(".")
                 else:
                     anglestr = "0"
                 qp.drawText(3, y + 3, f"{anglestr}°/MHz")
@@ -138,11 +140,11 @@ class PhaseDerivedChart(PhaseChart):
         if abs(maxAngle) < 0.001 or abs(maxAngle) > 1000:
             max_str = f"{maxAngle:.2e}°/MHz"
         else:
-            max_str = f"{maxAngle:.6f}".rstrip('0').rstrip('.') + "°/MHz"
+            max_str = f"{maxAngle:.6f}".rstrip("0").rstrip(".") + "°/MHz"
         if abs(minAngle) < 0.001 or abs(minAngle) > 1000:
             min_str = f"{minAngle:.2e}°/MHz"
         else:
-            min_str = f"{minAngle:.6f}".rstrip('0').rstrip('.') + "°/MHz"
+            min_str = f"{minAngle:.6f}".rstrip("0").rstrip(".") + "°/MHz"
         qp.drawText(3, self.topMargin + 5, max_str)
         qp.drawText(3, self.dim.height + self.topMargin, min_str)
 

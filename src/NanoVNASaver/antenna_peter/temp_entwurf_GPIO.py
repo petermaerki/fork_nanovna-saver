@@ -13,8 +13,8 @@ import time
 # TX_INH_switch_input_pin = Pin("GPIO14", Pin.IN)
 
 
-#K2_ATTENUATION_out_pin.value(1)
-#K3_VNA_out_pin.value(1)
+# K2_ATTENUATION_out_pin.value(1)
+# K3_VNA_out_pin.value(1)
 
 
 # led_on_out_pin = Pin("GPIO6", Pin.OUT, value=0)
@@ -53,7 +53,6 @@ import time
 
 power_servo_magnetometer_out_pin = Pin("GPIO7", Pin.OUT, value=0)
 power_servo_magnetometer_out_pin.value(1)
-
 
 
 # while True:

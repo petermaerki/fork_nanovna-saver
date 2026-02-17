@@ -159,7 +159,8 @@ class NanoVNASaver(QWidget):
         scrollarea.setWidgetResizable(True)
         # Set initial window size but allow unlimited resizing
         self.resize(app_config.gui.window_width, app_config.gui.window_height)
-        self.setMinimumHeight(1100)  # Increased to ensure both S11 charts are visible
+        # Increased to ensure both S11 charts are visible
+        self.setMinimumHeight(1100)
         scrollarea.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,

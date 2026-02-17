@@ -222,7 +222,7 @@ class PushButtonWidget(QtWidgets.QWidget):
         value_choosen = value
         if self.cb_set is not None:
             try:
-                value_choosen =self.cb_set(value)
+                value_choosen = self.cb_set(value)
             except Exception:
                 logger.exception(f"Failed to set {self.label} to {value}")
                 raise

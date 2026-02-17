@@ -175,7 +175,8 @@ class NanoVNA_V2(VNA):
             except IndexError:
                 logger.warning(
                     "freq_index %d out of range (sweepdata len=%d)",
-                    freq_index, len(self._sweepdata)
+                    freq_index,
+                    len(self._sweepdata),
                 )
 
         logger.debug("Freq index to: %i", freq_index)

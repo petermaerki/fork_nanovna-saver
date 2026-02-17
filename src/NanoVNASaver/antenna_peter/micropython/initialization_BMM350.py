@@ -108,7 +108,7 @@ class BMM350:
                 "cross_z_y": 0.0,
             },
         }
-        #self.init_sensor()
+        # self.init_sensor()
 
     def _write_reg(self, reg, value):
         self.i2c.writeto_mem(self.address, reg, bytes([value]))
@@ -412,7 +412,7 @@ class BMM350:
                 raise ValueError(f"get_bmm(): Timeout after {duration_ms}ms")
             time.sleep(0.01)
 
-    def read_data(self, sample_count:int = 1):
+    def read_data(self, sample_count: int = 1):
         x_sum = 0.0
         y_sum = 0.0
         z_sum = 0.0
@@ -436,9 +436,10 @@ class BMM350:
 
         # Berechnung Betrag |B| und Heading
         b_total = math.sqrt(x**2 + y**2 + z**2)
-        heading = - math.degrees(math.atan2(y, x)) + 360.0 + 90.0
+        heading = -math.degrees(math.atan2(y, x)) + 360.0 + 90.0
         heading = heading % 360.0
 
         return x, y, z, b_total, heading
+
 
 print("BEGIN[[exec: OK=]]END")

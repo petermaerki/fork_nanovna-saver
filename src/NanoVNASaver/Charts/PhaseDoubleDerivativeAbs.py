@@ -66,8 +66,7 @@ class PhaseDoubleDerivativeAbsChart(PhaseChart):
             for i in range(len(first_deriv) - 1):
                 delta_deriv = first_deriv[i + 1] - first_deriv[i]
                 delta_freq = (
-                    (freqs[i + 2] - freqs[i + 1]) +
-                    (freqs[i + 1] - freqs[i])
+                    (freqs[i + 2] - freqs[i + 1]) + (freqs[i + 1] - freqs[i])
                 ) / 2
                 if delta_freq != 0:
                     # Convert to °/MHz² and take absolute value
@@ -98,8 +97,8 @@ class PhaseDoubleDerivativeAbsChart(PhaseChart):
             for i in range(len(first_deriv_ref) - 1):
                 delta_deriv = first_deriv_ref[i + 1] - first_deriv_ref[i]
                 delta_freq = (
-                    (freqs_ref[i + 2] - freqs_ref[i + 1]) +
-                    (freqs_ref[i + 1] - freqs_ref[i])
+                    (freqs_ref[i + 2] - freqs_ref[i + 1])
+                    + (freqs_ref[i + 1] - freqs_ref[i])
                 ) / 2
                 if delta_freq != 0:
                     second_deriv = abs((delta_deriv / delta_freq) * 1e12)
@@ -145,16 +144,13 @@ class PhaseDoubleDerivativeAbsChart(PhaseChart):
                         digits = max(
                             0, min(6, math.floor(6 - math.log10(abs(angle))))
                         )
-                        anglestr = (
-                            f"{angle:.{digits}f}".rstrip('0').rstrip('.')
-                        )
+                        anglestr = f"{angle:.{digits}f}".rstrip("0").rstrip(".")
                 else:
                     anglestr = "0"
                 qp.drawText(3, y + 3, f"{anglestr}°/MHz²")
                 qp.setPen(Chart.color.foreground)
                 qp.drawLine(
-                    self.leftMargin - 5, y,
-                    self.leftMargin + self.dim.width, y
+                    self.leftMargin - 5, y, self.leftMargin + self.dim.width, y
                 )
         qp.drawLine(
             self.leftMargin - 5,
@@ -167,15 +163,11 @@ class PhaseDoubleDerivativeAbsChart(PhaseChart):
         if abs(maxAngle) < 0.001 or abs(maxAngle) > 1000:
             max_str = f"{maxAngle:.2e}°/MHz²"
         else:
-            max_str = (
-                f"{maxAngle:.6f}".rstrip('0').rstrip('.') + "°/MHz²"
-            )
+            max_str = f"{maxAngle:.6f}".rstrip("0").rstrip(".") + "°/MHz²"
         if abs(minAngle) < 0.001 or abs(minAngle) > 1000:
             min_str = f"{minAngle:.2e}°/MHz²"
         else:
-            min_str = (
-                f"{minAngle:.6f}".rstrip('0').rstrip('.') + "°/MHz²"
-            )
+            min_str = f"{minAngle:.6f}".rstrip("0").rstrip(".") + "°/MHz²"
         qp.drawText(3, self.topMargin + 5, max_str)
         qp.drawText(3, self.dim.height + self.topMargin, min_str)
 

@@ -10,9 +10,9 @@ power_servo_magnetometer_out_pin.value(1)
 
 # --- USER-OFFSETS (in µT) ---
 # Messung: Offset auf 0, zwei extremwerte messen, Mittelwert bilden und als USER_OFFSET verwenden
-USER_OFFSET_X = (41.4+(11.39))/2.0
-USER_OFFSET_Y = (-12.34+(-42.7))/2.0
-USER_OFFSET_Z = (-21.4+(11.0))/2.0
+USER_OFFSET_X = (41.4 + (11.39)) / 2.0
+USER_OFFSET_Y = (-12.34 + (-42.7)) / 2.0
+USER_OFFSET_Z = (-21.4 + (11.0)) / 2.0
 
 sda_num = int(SDA_PIN.replace("GPIO", ""))
 scl_num = int(SCL_PIN.replace("GPIO", ""))
@@ -88,18 +88,34 @@ BMM350_CROSS_Z_Y = 0x16
 BMM350_SENS_CORR_Y = 0.01
 BMM350_TCS_CORR_Z = 0.0001
 
+
 class BMM350:
     def __init__(self, i2c_bus, address=BMM350_I2C_ADDR):
         self.i2c = i2c_bus
         self.address = address
         self.otp_data = [0] * BMM350_OTP_DATA_LENGTH
         self.mag_comp = {
-            "dut_offset_coef": {"t_offs": 0.0, "offset_x": 0.0, "offset_y": 0.0, "offset_z": 0.0},
-            "dut_sensit_coef": {"t_sens": 0.0, "sens_x": 0.0, "sens_y": 0.0, "sens_z": 0.0},
+            "dut_offset_coef": {
+                "t_offs": 0.0,
+                "offset_x": 0.0,
+                "offset_y": 0.0,
+                "offset_z": 0.0,
+            },
+            "dut_sensit_coef": {
+                "t_sens": 0.0,
+                "sens_x": 0.0,
+                "sens_y": 0.0,
+                "sens_z": 0.0,
+            },
             "dut_tco": {"tco_x": 0.0, "tco_y": 0.0, "tco_z": 0.0},
             "dut_tcs": {"tcs_x": 0.0, "tcs_y": 0.0, "tcs_z": 0.0},
             "dut_t0": 0.0,
-            "cross_axis": {"cross_x_y": 0.0, "cross_y_x": 0.0, "cross_z_x": 0.0, "cross_z_y": 0.0},
+            "cross_axis": {
+                "cross_x_y": 0.0,
+                "cross_y_x": 0.0,
+                "cross_z_x": 0.0,
+                "cross_z_y": 0.0,
+            },
         }
         self.init_sensor()
 
@@ -107,7 +123,9 @@ class BMM350:
         self.i2c.writeto_mem(self.address, reg, bytes([value]))
 
     def _read_regs(self, reg, length):
-        data = self.i2c.readfrom_mem(self.address, reg, length + BMM350_DUMMY_BYTES)
+        data = self.i2c.readfrom_mem(
+            self.address, reg, length + BMM350_DUMMY_BYTES
+        )
         return data[BMM350_DUMMY_BYTES:]
 
     def _read_u8(self, reg):
@@ -148,7 +166,9 @@ class BMM350:
 
     def data_ready(self):
         int_status = self._read_u8(BMM350_REG_INT_STATUS)
-        drdy = (int_status & BMM350_DRDY_DATA_REG_MSK) >> BMM350_DRDY_DATA_REG_POS
+        drdy = (
+            int_status & BMM350_DRDY_DATA_REG_MSK
+        ) >> BMM350_DRDY_DATA_REG_POS
         return drdy == 1, int_status
 
     def _to_signed24(self, value):
@@ -196,52 +216,97 @@ class BMM350:
 
     def _update_mag_off_sens(self):
         off_x_lsb_msb = self.otp_data[BMM350_MAG_OFFSET_X] & 0x0FFF
-        off_y_lsb_msb = ((self.otp_data[BMM350_MAG_OFFSET_X] & 0xF000) >> 4) + (self.otp_data[BMM350_MAG_OFFSET_Y] & BMM350_LSB_MASK)
-        off_z_lsb_msb = (self.otp_data[BMM350_MAG_OFFSET_Y] & 0x0F00) + (self.otp_data[BMM350_MAG_OFFSET_Z] & BMM350_LSB_MASK)
+        off_y_lsb_msb = ((self.otp_data[BMM350_MAG_OFFSET_X] & 0xF000) >> 4) + (
+            self.otp_data[BMM350_MAG_OFFSET_Y] & BMM350_LSB_MASK
+        )
+        off_z_lsb_msb = (self.otp_data[BMM350_MAG_OFFSET_Y] & 0x0F00) + (
+            self.otp_data[BMM350_MAG_OFFSET_Z] & BMM350_LSB_MASK
+        )
         t_off = self.otp_data[BMM350_TEMP_OFF_SENS] & BMM350_LSB_MASK
 
-        self.mag_comp["dut_offset_coef"]["offset_x"] = self._fix_sign(off_x_lsb_msb, BMM350_SIGNED_12_BIT)
-        self.mag_comp["dut_offset_coef"]["offset_y"] = self._fix_sign(off_y_lsb_msb, BMM350_SIGNED_12_BIT)
-        self.mag_comp["dut_offset_coef"]["offset_z"] = self._fix_sign(off_z_lsb_msb, BMM350_SIGNED_12_BIT)
-        self.mag_comp["dut_offset_coef"]["t_offs"] = self._fix_sign(t_off, BMM350_SIGNED_8_BIT) / 5.0
+        self.mag_comp["dut_offset_coef"]["offset_x"] = self._fix_sign(
+            off_x_lsb_msb, BMM350_SIGNED_12_BIT
+        )
+        self.mag_comp["dut_offset_coef"]["offset_y"] = self._fix_sign(
+            off_y_lsb_msb, BMM350_SIGNED_12_BIT
+        )
+        self.mag_comp["dut_offset_coef"]["offset_z"] = self._fix_sign(
+            off_z_lsb_msb, BMM350_SIGNED_12_BIT
+        )
+        self.mag_comp["dut_offset_coef"]["t_offs"] = (
+            self._fix_sign(t_off, BMM350_SIGNED_8_BIT) / 5.0
+        )
 
         sens_x = (self.otp_data[BMM350_MAG_SENS_X] & BMM350_MSB_MASK) >> 8
-        sens_y = (self.otp_data[BMM350_MAG_SENS_Y] & BMM350_LSB_MASK)
+        sens_y = self.otp_data[BMM350_MAG_SENS_Y] & BMM350_LSB_MASK
         sens_z = (self.otp_data[BMM350_MAG_SENS_Z] & BMM350_MSB_MASK) >> 8
         t_sens = (self.otp_data[BMM350_TEMP_OFF_SENS] & BMM350_MSB_MASK) >> 8
 
-        self.mag_comp["dut_sensit_coef"]["sens_x"] = self._fix_sign(sens_x, BMM350_SIGNED_8_BIT) / 256.0
-        self.mag_comp["dut_sensit_coef"]["sens_y"] = (self._fix_sign(sens_y, BMM350_SIGNED_8_BIT) / 256.0) + BMM350_SENS_CORR_Y
-        self.mag_comp["dut_sensit_coef"]["sens_z"] = self._fix_sign(sens_z, BMM350_SIGNED_8_BIT) / 256.0
-        self.mag_comp["dut_sensit_coef"]["t_sens"] = self._fix_sign(t_sens, BMM350_SIGNED_8_BIT) / 512.0
+        self.mag_comp["dut_sensit_coef"]["sens_x"] = (
+            self._fix_sign(sens_x, BMM350_SIGNED_8_BIT) / 256.0
+        )
+        self.mag_comp["dut_sensit_coef"]["sens_y"] = (
+            self._fix_sign(sens_y, BMM350_SIGNED_8_BIT) / 256.0
+        ) + BMM350_SENS_CORR_Y
+        self.mag_comp["dut_sensit_coef"]["sens_z"] = (
+            self._fix_sign(sens_z, BMM350_SIGNED_8_BIT) / 256.0
+        )
+        self.mag_comp["dut_sensit_coef"]["t_sens"] = (
+            self._fix_sign(t_sens, BMM350_SIGNED_8_BIT) / 512.0
+        )
 
-        tco_x = (self.otp_data[BMM350_MAG_TCO_X] & BMM350_LSB_MASK)
-        tco_y = (self.otp_data[BMM350_MAG_TCO_Y] & BMM350_LSB_MASK)
-        tco_z = (self.otp_data[BMM350_MAG_TCO_Z] & BMM350_LSB_MASK)
+        tco_x = self.otp_data[BMM350_MAG_TCO_X] & BMM350_LSB_MASK
+        tco_y = self.otp_data[BMM350_MAG_TCO_Y] & BMM350_LSB_MASK
+        tco_z = self.otp_data[BMM350_MAG_TCO_Z] & BMM350_LSB_MASK
 
-        self.mag_comp["dut_tco"]["tco_x"] = self._fix_sign(tco_x, BMM350_SIGNED_8_BIT) / 32.0
-        self.mag_comp["dut_tco"]["tco_y"] = self._fix_sign(tco_y, BMM350_SIGNED_8_BIT) / 32.0
-        self.mag_comp["dut_tco"]["tco_z"] = self._fix_sign(tco_z, BMM350_SIGNED_8_BIT) / 32.0
+        self.mag_comp["dut_tco"]["tco_x"] = (
+            self._fix_sign(tco_x, BMM350_SIGNED_8_BIT) / 32.0
+        )
+        self.mag_comp["dut_tco"]["tco_y"] = (
+            self._fix_sign(tco_y, BMM350_SIGNED_8_BIT) / 32.0
+        )
+        self.mag_comp["dut_tco"]["tco_z"] = (
+            self._fix_sign(tco_z, BMM350_SIGNED_8_BIT) / 32.0
+        )
 
         tcs_x = (self.otp_data[BMM350_MAG_TCS_X] & BMM350_MSB_MASK) >> 8
         tcs_y = (self.otp_data[BMM350_MAG_TCS_Y] & BMM350_MSB_MASK) >> 8
         tcs_z = (self.otp_data[BMM350_MAG_TCS_Z] & BMM350_MSB_MASK) >> 8
 
-        self.mag_comp["dut_tcs"]["tcs_x"] = self._fix_sign(tcs_x, BMM350_SIGNED_8_BIT) / 16384.0
-        self.mag_comp["dut_tcs"]["tcs_y"] = self._fix_sign(tcs_y, BMM350_SIGNED_8_BIT) / 16384.0
-        self.mag_comp["dut_tcs"]["tcs_z"] = (self._fix_sign(tcs_z, BMM350_SIGNED_8_BIT) / 16384.0) - BMM350_TCS_CORR_Z
+        self.mag_comp["dut_tcs"]["tcs_x"] = (
+            self._fix_sign(tcs_x, BMM350_SIGNED_8_BIT) / 16384.0
+        )
+        self.mag_comp["dut_tcs"]["tcs_y"] = (
+            self._fix_sign(tcs_y, BMM350_SIGNED_8_BIT) / 16384.0
+        )
+        self.mag_comp["dut_tcs"]["tcs_z"] = (
+            self._fix_sign(tcs_z, BMM350_SIGNED_8_BIT) / 16384.0
+        ) - BMM350_TCS_CORR_Z
 
-        self.mag_comp["dut_t0"] = (self._fix_sign(self.otp_data[BMM350_MAG_DUT_T_0], BMM350_SIGNED_16_BIT) / 512.0) + 23.0
+        self.mag_comp["dut_t0"] = (
+            self._fix_sign(
+                self.otp_data[BMM350_MAG_DUT_T_0], BMM350_SIGNED_16_BIT
+            )
+            / 512.0
+        ) + 23.0
 
-        cross_x_y = (self.otp_data[BMM350_CROSS_X_Y] & BMM350_LSB_MASK)
+        cross_x_y = self.otp_data[BMM350_CROSS_X_Y] & BMM350_LSB_MASK
         cross_y_x = (self.otp_data[BMM350_CROSS_Y_X] & BMM350_MSB_MASK) >> 8
-        cross_z_x = (self.otp_data[BMM350_CROSS_Z_X] & BMM350_LSB_MASK)
+        cross_z_x = self.otp_data[BMM350_CROSS_Z_X] & BMM350_LSB_MASK
         cross_z_y = (self.otp_data[BMM350_CROSS_Z_Y] & BMM350_MSB_MASK) >> 8
 
-        self.mag_comp["cross_axis"]["cross_x_y"] = self._fix_sign(cross_x_y, BMM350_SIGNED_8_BIT) / 800.0
-        self.mag_comp["cross_axis"]["cross_y_x"] = self._fix_sign(cross_y_x, BMM350_SIGNED_8_BIT) / 800.0
-        self.mag_comp["cross_axis"]["cross_z_x"] = self._fix_sign(cross_z_x, BMM350_SIGNED_8_BIT) / 800.0
-        self.mag_comp["cross_axis"]["cross_z_y"] = self._fix_sign(cross_z_y, BMM350_SIGNED_8_BIT) / 800.0
+        self.mag_comp["cross_axis"]["cross_x_y"] = (
+            self._fix_sign(cross_x_y, BMM350_SIGNED_8_BIT) / 800.0
+        )
+        self.mag_comp["cross_axis"]["cross_y_x"] = (
+            self._fix_sign(cross_y_x, BMM350_SIGNED_8_BIT) / 800.0
+        )
+        self.mag_comp["cross_axis"]["cross_z_x"] = (
+            self._fix_sign(cross_z_x, BMM350_SIGNED_8_BIT) / 800.0
+        )
+        self.mag_comp["cross_axis"]["cross_z_y"] = (
+            self._fix_sign(cross_z_y, BMM350_SIGNED_8_BIT) / 800.0
+        )
 
     def _update_default_coefficients(self):
         bxy_sens = 14.55
@@ -253,9 +318,15 @@ class BMM350:
         lut_gain = 0.714607238769531
         power = 1000000.0 / 1048576.0
         lsb_to_ut_degc = [0.0, 0.0, 0.0, 0.0]
-        lsb_to_ut_degc[0] = power / (bxy_sens * ina_xy_gain_trgt * adc_gain * lut_gain)
-        lsb_to_ut_degc[1] = power / (bxy_sens * ina_xy_gain_trgt * adc_gain * lut_gain)
-        lsb_to_ut_degc[2] = power / (bz_sens * ina_z_gain_trgt * adc_gain * lut_gain)
+        lsb_to_ut_degc[0] = power / (
+            bxy_sens * ina_xy_gain_trgt * adc_gain * lut_gain
+        )
+        lsb_to_ut_degc[1] = power / (
+            bxy_sens * ina_xy_gain_trgt * adc_gain * lut_gain
+        )
+        lsb_to_ut_degc[2] = power / (
+            bz_sens * ina_z_gain_trgt * adc_gain * lut_gain
+        )
         lsb_to_ut_degc[3] = 1 / (temp_sens * adc_gain * lut_gain * 1048576)
         return lsb_to_ut_degc
 
@@ -285,7 +356,9 @@ class BMM350:
         elif out_data[3] < 0.0:
             out_data[3] = out_data[3] - (-1 * 25.49)
 
-        out_data[3] = (1 + self.mag_comp["dut_sensit_coef"]["t_sens"]) * out_data[3] + self.mag_comp["dut_offset_coef"]["t_offs"]
+        out_data[3] = (
+            1 + self.mag_comp["dut_sensit_coef"]["t_sens"]
+        ) * out_data[3] + self.mag_comp["dut_offset_coef"]["t_offs"]
 
         dut_offset_coef = [
             self.mag_comp["dut_offset_coef"]["offset_x"],
@@ -311,18 +384,28 @@ class BMM350:
         for idx in range(3):
             out_data[idx] *= 1 + dut_sensit_coef[idx]
             out_data[idx] += dut_offset_coef[idx]
-            out_data[idx] += dut_tco[idx] * (out_data[3] - self.mag_comp["dut_t0"])
-            out_data[idx] /= 1 + dut_tcs[idx] * (out_data[3] - self.mag_comp["dut_t0"])
+            out_data[idx] += dut_tco[idx] * (
+                out_data[3] - self.mag_comp["dut_t0"]
+            )
+            out_data[idx] /= 1 + dut_tcs[idx] * (
+                out_data[3] - self.mag_comp["dut_t0"]
+            )
 
         cross_x_y = self.mag_comp["cross_axis"]["cross_x_y"]
         cross_y_x = self.mag_comp["cross_axis"]["cross_y_x"]
         cross_z_x = self.mag_comp["cross_axis"]["cross_z_x"]
         cross_z_y = self.mag_comp["cross_axis"]["cross_z_y"]
 
-        cr_ax_comp_x = (out_data[0] - cross_x_y * out_data[1]) / (1 - cross_y_x * cross_x_y)
-        cr_ax_comp_y = (out_data[1] - cross_y_x * out_data[0]) / (1 - cross_y_x * cross_x_y)
-        cr_ax_comp_z = (out_data[2] + (out_data[0] * (cross_y_x * cross_z_y - cross_z_x) - out_data[1] *
-                         (cross_z_y - cross_x_y * cross_z_x)) / (1 - cross_y_x * cross_x_y))
+        cr_ax_comp_x = (out_data[0] - cross_x_y * out_data[1]) / (
+            1 - cross_y_x * cross_x_y
+        )
+        cr_ax_comp_y = (out_data[1] - cross_y_x * out_data[0]) / (
+            1 - cross_y_x * cross_x_y
+        )
+        cr_ax_comp_z = out_data[2] + (
+            out_data[0] * (cross_y_x * cross_z_y - cross_z_x)
+            - out_data[1] * (cross_z_y - cross_x_y * cross_z_x)
+        ) / (1 - cross_y_x * cross_x_y)
 
         return cr_ax_comp_x, cr_ax_comp_y, cr_ax_comp_z, out_data[3]
 
@@ -331,13 +414,14 @@ class BMM350:
         x -= USER_OFFSET_X
         y -= USER_OFFSET_Y
         z -= USER_OFFSET_Z
-        
+
         # Berechnung Betrag |B| und Heading
         b_total = math.sqrt(x**2 + y**2 + z**2)
-        heading = - math.degrees(math.atan2(y, x)) + 360.0 + 90.0
+        heading = -math.degrees(math.atan2(y, x)) + 360.0 + 90.0
         heading = heading % 360.0
-        
+
         return x, y, z, b_total, heading
+
 
 devices = i2c.scan()
 print("I2C scan:", [hex(addr) for addr in devices])
@@ -347,10 +431,14 @@ if BMM350_I2C_ADDR not in devices:
 sensor = BMM350(i2c)
 
 chip_id, rev_id, err_reg = sensor.read_chip_info()
-print(f"BMM350 chip_id=0x{chip_id:02X} (soll 0x{BMM350_CHIP_ID:02X} sein), rev=0x{rev_id:02X}, err=0x{err_reg:02X}")
+print(
+    f"BMM350 chip_id=0x{chip_id:02X} (soll 0x{BMM350_CHIP_ID:02X} sein), rev=0x{rev_id:02X}, err=0x{err_reg:02X}"
+)
 
 print(f"Monitoring BMM350 auf {SDA_PIN}/{SCL_PIN}...")
-print(f"User-Offset (uT): X={USER_OFFSET_X:.2f} Y={USER_OFFSET_Y:.2f} Z={USER_OFFSET_Z:.2f}")
+print(
+    f"User-Offset (uT): X={USER_OFFSET_X:.2f} Y={USER_OFFSET_Y:.2f} Z={USER_OFFSET_Z:.2f}"
+)
 
 while True:
     try:
@@ -360,8 +448,10 @@ while True:
             time.sleep(0.2)
             continue
         x, y, z, b, h = sensor.read_data()
-        print(f"X:{x:6.2f} µT Y:{y:6.2f} µT Z:{z:6.2f} µT | |B|:{b:6.2f} µT | Heading:{h:5.1f}° | INT_STATUS:0x{int_status:02X}")
+        print(
+            f"X:{x:6.2f} µT Y:{y:6.2f} µT Z:{z:6.2f} µT | |B|:{b:6.2f} µT | Heading:{h:5.1f}° | INT_STATUS:0x{int_status:02X}"
+        )
     except Exception as e:
         print(f"Fehler: {e}")
-    
+
     time.sleep(01.0)

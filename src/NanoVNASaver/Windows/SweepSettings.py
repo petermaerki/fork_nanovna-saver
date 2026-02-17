@@ -183,7 +183,7 @@ class SweepSettingsWindow(QtWidgets.QWidget):
         self.band_list.setMinimumHeight(20)
         self.band_list.setModel(self.app.bands)
         # pylint: disable=unnecessary-lambda
-        self.band_list.currentIndexChanged.connect(lambda: self.update_band())
+        self.band_list.currentIndexChanged.connect(self.update_band)
         layout.addRow("Select band", self.band_list)
 
         sweep_pad_layout.addWidget(QtWidgets.QLabel("Pad band limits:"))

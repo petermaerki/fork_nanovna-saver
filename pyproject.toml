@@ -126,7 +126,8 @@ unsafe-fixes = false
 # TODO use https://docs.astral.sh/ruff/configuration/#config-file-discovery for test and UI generated files
 extend-exclude = [
   "**/ui/*.py",
-  "src/tools/setuptools_wrapper.py"
+  "src/tools/setuptools_wrapper.py",
+  "src/NanoVNASaver/antenna_peter/temp_*.py"
 ]
 
 [tool.ruff.lint]
@@ -155,7 +156,11 @@ ignore = [
     'C901',
     'PLR0915',
     'PLR0911',
-    'PLR0912'
+    'PLR0912',
+    'PLR0913',
+    'I001',
+    'E722',
+    'N803',
 ]
 
 [tool.ruff.lint.mccabe]

@@ -152,10 +152,10 @@ class CalibrationWindow(QtWidgets.QWidget):
         file_layout = QtWidgets.QFormLayout(file_box)
         btn_save_file = QtWidgets.QPushButton("Save calibration")
         btn_save_file.setMinimumHeight(20)
-        btn_save_file.clicked.connect(lambda: self.saveCalibration())
+        btn_save_file.clicked.connect(self.saveCalibration)
         btn_load_file = QtWidgets.QPushButton("Load calibration")
         btn_load_file.setMinimumHeight(20)
-        btn_load_file.clicked.connect(lambda: self.loadCalibration())
+        btn_load_file.clicked.connect(self.loadCalibration)
 
         save_load_layout = QtWidgets.QHBoxLayout()
         save_load_layout.addWidget(btn_save_file)

@@ -1,6 +1,7 @@
-from machine import I2C, Pin
-import time
 import math
+import time
+
+from machine import I2C, Pin
 
 SDA_PIN = "GPIO18"
 SCL_PIN = "GPIO19"

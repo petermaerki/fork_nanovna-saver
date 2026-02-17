@@ -38,7 +38,7 @@ class Properties(NamedTuple):
     logarithmic: bool = False
 
 
-class Sweep:
+class Sweep:  # noqa: PLW1641
     def __init__(
         self,
         start: int = 3600000,

@@ -1,7 +1,5 @@
-from machine import I2C, Pin
-import time
 import math
-
+import time
 
 # --- USER-OFFSETS (in µT) ---
 # Messung: Offset auf 0, zwei extremwerte messen, Mittelwert bilden und als USER_OFFSET verwenden
@@ -403,7 +401,7 @@ class BMM350:
     def wait_for_new_data(self):
         start_ms = time.ticks_ms()
         while True:
-            drdy, int_status = self.data_ready()
+            drdy, _int_status = self.data_ready()
             duration_ms = time.ticks_diff(time.ticks_ms(), start_ms)
             if drdy:
                 # print(f"DRDY={drdy} (INT_STATUS=0x{int_status:02X}, {duration_ms}ms)")

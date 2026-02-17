@@ -3,7 +3,6 @@ import logging
 import math
 import pathlib
 import socket
-import time
 import typing
 from typing import TYPE_CHECKING, TypeVar
 
@@ -105,10 +104,10 @@ def calculate_safety_distance(
     r_meters_omen = ((i_loop * area) / (2 * math.pi * h_limit_omen)) ** (1 / 3)
 
     # Calculate radiation resistance and efficiency for small loop antenna
-    # R_rad = 31171 × (A/λ²)² Ω  (for circular loop)
+    # R_rad = 31171 x (A/λ²)² Ω  (for circular loop)
     # R_loss = 2πfL / Q
     # η = R_rad / (R_rad + R_loss)
-    # P_radiated = P_input × η
+    # P_radiated = P_input x η
     c = 299792458  # speed of light m/s
     wavelength = c / f_hz
 
@@ -1165,7 +1164,7 @@ class PeterAntennaControl(Control):
 
         The three marker points form a circle in the Smith chart.
         Check if the center of the Smith chart (50 Ω, Gamma=0) is inside the circle:
-        - If inside: overcoupled → R = 50 Ω × SWR_min
+        - If inside: overcoupled → R = 50 Ω x SWR_min
         - If outside: undercoupled → R = 50 Ω / SWR_min
         """
         try:

@@ -1,5 +1,4 @@
-from machine import Pin, Timer
-import time
+from machine import Pin
 
 # pin_led = Pin("LED", Pin.OUT, value=0)
 # TX_GND_input_pin = Pin("GPIO21", Pin.IN)

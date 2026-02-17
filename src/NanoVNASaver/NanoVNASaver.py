@@ -26,6 +26,7 @@ from PySide6.QtCore import QObject
 from PySide6.QtWidgets import QWidget
 
 from .About import VERSION
+from .antenna_peter.PeterAntennaControl import PeterAntennaControl
 from .Calibration import Calibration
 from .Charts import (
     CapacitanceChart,
@@ -40,8 +41,8 @@ from .Charts import (
     PermeabilityChart,
     PhaseChart,
     PhaseDerivedChart,
-    PhaseDoubleDerivedChart,
     PhaseDoubleDerivativeAbsChart,
+    PhaseDoubleDerivedChart,
     PolarChart,
     QualityFactorChart,
     RealImaginaryMuChart,
@@ -57,7 +58,6 @@ from .Charts.Chart import Chart
 from .Controls.MarkerControl import MarkerControl
 from .Controls.SerialControl import SerialControl
 from .Controls.SweepControl import SweepControl
-from .antenna_peter.PeterAntennaControl import PeterAntennaControl
 from .Defaults import APP_SETTINGS, AppSettings, get_app_config
 from .Formatting import format_frequency, format_gain, format_vswr
 from .Hardware.Hardware import Interface

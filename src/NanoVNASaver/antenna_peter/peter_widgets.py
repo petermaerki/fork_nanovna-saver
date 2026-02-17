@@ -28,24 +28,22 @@ class FormLayoutWidget[QWidgetLeftT, QWidgetRightT](QtWidgets.QWidget):
         if isinstance(left, QtWidgets.QWidget):
             layout.addWidget(left)
             self.right_widget = left
+        elif isinstance(left, QtWidgets.QHBoxLayout):
+            self.right_widget = QtWidgets.QWidget()
+            self.right_widget.setLayout(left)
+            layout.addWidget(self.right_widget)
         else:
-            if isinstance(left, QtWidgets.QHBoxLayout):
-                self.right_widget = QtWidgets.QWidget()
-                self.right_widget.setLayout(left)
-                layout.addWidget(self.right_widget)
-            else:
-                logger.warning(f"Not a widget left: {left}")
+            logger.warning(f"Not a widget left: {left}")
 
         if isinstance(right, QtWidgets.QWidget):
             layout.addWidget(right)
             self.right_widet = right
+        elif isinstance(right, QtWidgets.QHBoxLayout):
+            self.right_widget = QtWidgets.QWidget()
+            self.right_widget.setLayout(right)
+            layout.addWidget(self.right_widget)
         else:
-            if isinstance(right, QtWidgets.QHBoxLayout):
-                self.right_widget = QtWidgets.QWidget()
-                self.right_widget.setLayout(right)
-                layout.addWidget(self.right_widget)
-            else:
-                logger.warning(f"Not a widget right: {right}")
+            logger.warning(f"Not a widget right: {right}")
 
 
 class SeparatorWidget(QtWidgets.QFrame):

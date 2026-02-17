@@ -1,5 +1,6 @@
-from machine import Pin, I2C
 import time
+
+from machine import I2C, Pin
 
 pin_led = Pin("LED", Pin.OUT, value=0)
 TX_GND_input_pin = Pin("GPIO21", Pin.IN)
@@ -16,7 +17,7 @@ power_servo_magnetometer_out_pin = Pin("GPIO7", Pin.OUT, value=0)
 
 
 i2c = I2C(1, sda=Pin("GPIO18"), scl=Pin("GPIO19"), freq=10000)
-bmm350 = BMM350(i2c)
+bmm350 = BMM350(i2c)  # noqa: F821
 
 
 OK_STRING = "BEGIN[[exec: OK=]]END"
@@ -29,7 +30,7 @@ OK_STRING = "BEGIN[[exec: OK=]]END"
 
 falls attenuation (ckeckbox) sendeleistung reduzieren beim senden
 if not TX_GND_input_pin: # radio moechte senden
-    
+
     K2_ATTENUATION_out_pin.value(True)
     time.sleep(0.01)
     TX_INH_out_pin.value(False) # TX sperre aufheben

@@ -11,8 +11,8 @@ Das Servo kann eine Position von servo_min_t bis servo_max_t gemessen in Turns a
 Ein kleiner Turn-Wert bedeutet eine kleinere Himmelsrichtung.
 Die aktuelle Himmelsrichtung wird gemessen: heading_actual_deg.
 Die Ziel-Himmelsrichtung ist: heading_target_deg.
-Die Funktion servo_targed_t soll die Servo-Position zurückgeben, 
-die eingestellt werden muss, damit die aktuelle Himmelsrichtung der Ziel-Himmelsrichtung 
+Die Funktion servo_targed_t soll die Servo-Position zurückgeben,
+die eingestellt werden muss, damit die aktuelle Himmelsrichtung der Ziel-Himmelsrichtung
 entspricht. Die Funktion soll eine lineare Interpolation verwenden, um die Servo-Position
 zu berechnen.
 
@@ -131,7 +131,7 @@ def servo_targed_t(
         sys.stdout.flush()
 
     if debug:
-        fig, ax = plt.subplots(figsize=(6, 4))
+        _fig, ax = plt.subplots(figsize=(6, 4))
         y_min_line = heading_from_t(servo_min_t)
         y_max_line = heading_from_t(servo_max_t)
         ax.plot(

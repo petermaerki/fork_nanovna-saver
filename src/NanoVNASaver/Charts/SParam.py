@@ -93,7 +93,7 @@ class SParameterChart(FrequencyChart):
             )
             if val > minValue and val != maxValue:
                 qp.setPen(QtGui.QPen(Chart.color.text))
-                qp.drawText(3, y + 4, str(round(val, 2)))
+                qp.drawText(3, y + 4, str(round(val, 2)))  # noqa: RUF057
         qp.setPen(QtGui.QPen(Chart.color.foreground))
         qp.drawLine(
             self.leftMargin - 5,

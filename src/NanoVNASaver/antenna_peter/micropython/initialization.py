@@ -91,13 +91,14 @@ def reference_50_ohm(enable: bool):
     K3_VNA_out_pin.value(not enable)
 
 
-def get_bmm():
-    x, y, z, b, h = bmm350.read_data()
+def get_bmm(sample_count: int = 2):
+    start_ms = time.ticks_ms()
+    x, y, z, b, h = bmm350.read_data(sample_count=sample_count)
+    duration_ms = time.ticks_diff(time.ticks_ms(), start_ms)
     print(
-        f"X:{x:6.2f} µT Y:{y:6.2f} µT Z:{z:6.2f} µT | |B|:{b:6.2f} µT | Heading:{h:5.1f}°"
+        f"X:{x:6.2f} µT Y:{y:6.2f} µT Z:{z:6.2f} µT | |B|:{b:6.2f} µT | Heading:{h:5.1f}° | sample_count={sample_count} {duration_ms}ms"
     )
     print(f"BEGIN[[heading_deg={h:5.1f}]]END")
     print(OK_STRING)
-
 
 print("BEGIN[[exec: OK=]]END")

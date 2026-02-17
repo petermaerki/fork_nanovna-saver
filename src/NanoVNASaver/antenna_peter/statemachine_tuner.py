@@ -1,5 +1,4 @@
 import logging
-import math
 import time
 from typing import TYPE_CHECKING
 
@@ -18,19 +17,6 @@ HEADING_TARGET_TA_MIN = -0.3
 def _angular_error_deg(target_deg: float, actual_deg: float) -> float:
     delta = (target_deg - actual_deg + 90.0) % 180.0 - 90.0
     return abs(delta)
-
-
-def _circular_mean_deg(samples_deg: list[float]) -> float:
-    if not samples_deg:
-        return 0.0
-    sum_sin = 0.0
-    sum_cos = 0.0
-    for angle_deg in samples_deg:
-        angle_rad = math.radians(angle_deg)
-        sum_sin += math.sin(angle_rad)
-        sum_cos += math.cos(angle_rad)
-    mean_rad = math.atan2(sum_sin, sum_cos)
-    return (math.degrees(mean_rad) + 360.0) % 360.0
 
 
 class StatemachineTuner:
@@ -105,34 +91,32 @@ class StatemachineTuner:
     def _tune_heading(self, ctl: PeterAntennaControl) -> bool:
         if not ctl.heading_checkbox.isChecked():
             return True
-        average_count = 3
-        heading_samples_deg: list[float] = []
-        for _ in range(average_count):
-            stdout = ctl._mp_exec(
-                label_full="get_bmm",
-                cmd="get_bmm()",
-            )
-            measured_heading_deg = calculator.parse_value_float(
-                stdout=stdout,
-                label="heading_deg",
-            )
-            logger.info(f"{measured_heading_deg=}")
-            heading_samples_deg.append(measured_heading_deg)
-        actual_heading_deg = _circular_mean_deg(heading_samples_deg)
-        ctl.heading_current.value.setText(f"{actual_heading_deg:0.1f} deg")
+
+        sample_count = 2
+        stdout = ctl._mp_exec(
+            label_full="get_bmm",
+            cmd=f"get_bmm(sample_count={sample_count})",
+        )
+        measured_heading_deg = calculator.parse_value_float(
+            stdout=stdout,
+            label="heading_deg",
+        )
+        logger.info(f"{measured_heading_deg=}")
+
+        ctl.heading_current.value.setText(f"{measured_heading_deg:0.1f} deg")
         heading_target_deg = ctl.heading_target.f_value
         error_deg = _angular_error_deg(
             target_deg=heading_target_deg,
-            actual_deg=actual_heading_deg,
+            actual_deg=measured_heading_deg,
         )
         if error_deg < 3.0:
             logger.info(
-                f"_tune_heading() {heading_target_deg=} {actual_heading_deg=} {error_deg=} OK"
+                f"_tune_heading() {heading_target_deg=} {measured_heading_deg=} {error_deg=} OK"
             )
             return True
         servo_targed_t = util_heading_calculator.servo_targed_t(
             servo_t_actual=ctl.heading_servo.f_value,
-            heading_actual_deg=actual_heading_deg,
+            heading_actual_deg=measured_heading_deg,
             heading_target_deg=heading_target_deg,
             servo_min_t=HEADING_TARGET_TA_MIN,
             servo_max_t=HEADING_TARGET_TA_MAX,

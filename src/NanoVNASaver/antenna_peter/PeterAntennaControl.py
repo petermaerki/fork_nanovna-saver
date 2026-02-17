@@ -162,7 +162,7 @@ class PeterAntennaControl(Control):
         # This will copy the files and reset the rasperry pi pico
         self.port_config.init()
         # This will power the servos
-        for file_py in ("initialzation_BMM350.py", "initialization.py"):
+        for file_py in ("initialization_BMM350.py", "initialization.py"):
             filename = DIRECTORY_MICROPYTHON / file_py
             python_code = filename.read_text()
             self._mp_exec(

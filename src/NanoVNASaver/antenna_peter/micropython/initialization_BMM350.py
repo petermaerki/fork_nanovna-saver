@@ -400,13 +400,25 @@ class BMM350:
 
         return cr_ax_comp_x, cr_ax_comp_y, cr_ax_comp_z, out_data[3]
 
-    def read_data(self):
-        sample_count = 1
+    def wait_for_new_data(self):
+        start_ms = time.ticks_ms()
+        while True:
+            drdy, int_status = self.data_ready()
+            duration_ms = time.ticks_diff(time.ticks_ms(), start_ms)
+            if drdy:
+                # print(f"DRDY={drdy} (INT_STATUS=0x{int_status:02X}, {duration_ms}ms)")
+                return
+            if duration_ms > 500:
+                raise ValueError(f"get_bmm(): Timeout after {duration_ms}ms")
+            time.sleep(0.01)
+
+    def read_data(self, sample_count:int = 1):
         x_sum = 0.0
         y_sum = 0.0
         z_sum = 0.0
 
         for _ in range(sample_count):
+            self.wait_for_new_data()
             x_i, y_i, z_i, _temp = self._get_compensated_data()
             x_sum += x_i
             y_sum += y_i

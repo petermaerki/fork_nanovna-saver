@@ -52,3 +52,12 @@ PRESET_POSITIONS: list[BandPreset] = [
 ]
 
 
+'''
+servo_z kann sehr verschieden sein: draussen, daher gerne robust und universell
+servo_f kann ich steigung gut messen, wird immer etwa gleich sein
+
+from scipy import optimize
+
+
+
+'''

@@ -13,6 +13,9 @@ __pycache__/*
 .*.swp
 */.ipynb_checkpoints/*
 .DS_Store
+src/NanoVNASaver/antenna_peter/tmp_sts3215_servo_z_h.json
+src/NanoVNASaver/antenna_peter/util_persist.py
+
 
 # Project files
 .ropeproject
@@ -64,3 +67,4 @@ src/NanoVNASaver/Windows/ui/about.py
 NanoVNASaver.txt
 **/tmp_sts3215_servo_f_logs/*
 **/tmp_sts3215_servo_f.json
+

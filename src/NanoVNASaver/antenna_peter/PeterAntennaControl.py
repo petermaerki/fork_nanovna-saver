@@ -1,8 +1,10 @@
+import contextlib
 import logging
 import math
 import pathlib
 import socket
 import time
+import typing
 from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
@@ -16,7 +18,7 @@ from ..Controls.SweepControl import FrequencyInputWidget
 from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
-from . import peter_widgets, statemachine_tuner
+from . import peter_widgets, statemachine_tuner, util_persist
 
 if TYPE_CHECKING:
     from ..NanoVNASaver import NanoVNASaver
@@ -151,6 +153,9 @@ class PeterAntennaControl(Control):
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
+        with self._servo_position_persist() as p:
+            servo_position_persist = p
+
         self.statemachine_tuner = statemachine_tuner.StatemachineTuner()
         self.statemachine_tuner_timer = QtCore.QTimer(self)
 
@@ -247,7 +252,7 @@ class PeterAntennaControl(Control):
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Tune heading servo_h",
-                f_value=0.0,
+                f_value=servo_position_persist.servo_h_ta,
                 unit="turns",
                 cb_set=self._heading_set_servo_h,
             )
@@ -340,10 +345,10 @@ class PeterAntennaControl(Control):
             peter_widgets.ValueWidget(label="Impedance current", value="0")
         )
         # Impedance servo_z textfeld button set
-        self.impedance_servo = self.add_row(
+        self.impedance_servo_z = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Impedance servo_z",
-                f_value=0.0,
+                f_value=servo_position_persist.servo_z_ta,
                 unit="turns",
                 cb_set=self._impedance_set_servo_z,
             )
@@ -1482,6 +1487,9 @@ class PeterAntennaControl(Control):
         ewp = int(-_target_ta * 4096) + 2048
         self.servos.servo_ctl_h.move_ewp(ewp=ewp)
 
+        with self._servo_position_persist() as p:
+            p.servo_h_ta = _target_ta
+
     def _impedance_set_servo_z(self, target_ta: float) -> None:
         if self.servos is None:
             return
@@ -1491,13 +1499,16 @@ class PeterAntennaControl(Control):
         ewp = int(_target_ta * 4096) + 2048
         self.servos.servo_ctl_z.move_ewp(ewp=ewp)
 
+        with self._servo_position_persist() as p:
+            p.servo_z_ta = _target_ta
+
     def _frequency_get_servo_f(self) -> float:
         try:
             if self.servos is None:
                 return 42.0
             if ENABLE_STS3215_SERVO_F:
                 return
-            return self.servos.servo_ctl_f.get_persisist().present_ta
+            return self.servos.servo_ctl_f.get_persist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1
 
@@ -1531,4 +1542,21 @@ class PeterAntennaControl(Control):
         # state_vna_enabled = self.checkbox_vna_enable.isChecked()
         self.heading_servo.setEnabled(state_vna_enabled)
         self.frequency_servo_f.setEnabled(state_vna_enabled)
-        self.impedance_servo.setEnabled(state_vna_enabled)
+        self.impedance_servo_z.setEnabled(state_vna_enabled)
+
+    @contextlib.contextmanager
+    def _servo_position_persist(
+        self,
+    ) -> typing.Generator[util_persist.ServoPositionPersistent, None, None]:
+        """Context manager for loading and saving servo position persistently."""
+        filename = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_z_h.json"
+        persist = util_persist.ServoPositionPersistent.get_persist(
+            filename=filename
+        )
+        try:
+            yield persist
+        finally:
+            util_persist.ServoPositionPersistent.save(
+                filename=filename,
+                persist=persist,
+            )

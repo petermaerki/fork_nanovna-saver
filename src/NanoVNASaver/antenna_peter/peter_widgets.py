@@ -131,16 +131,24 @@ class ValueWidget(QtWidgets.QWidget):
     def __init__(
         self,
         label: str,
-        value: str,
+        unit: str,
+        f_value: float=0.0,
+        fmt: str="0.3f",
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        assert isinstance(label, str)
+        assert isinstance(f_value, float)
+        assert isinstance(unit, str)
+        assert isinstance(fmt, str)
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(CONTENTS_MARGINS)
         layout.setSpacing(SPACING)
 
+        self.unit = unit
+        self.fmt = fmt
         self.label = QtWidgets.QLabel(label)
-        self.value = QtWidgets.QLabel(value)
+        self.value = QtWidgets.QLabel()
         self.label.setOpenExternalLinks(True)
 
         self.value.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -152,6 +160,12 @@ class ValueWidget(QtWidgets.QWidget):
         layout.addWidget(self.label, 1)
         layout.addWidget(self.value)
 
+        self.set_value(f_value)
+
+    def set_value(self, value: float) -> None:
+        assert isinstance(value, float)
+        self.f_value = value
+        self.value.setText(f"{value:{self.fmt}} {self.unit}")
 
 class CheckboxWidget(QtWidgets.QWidget):
     def __init__(

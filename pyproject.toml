@@ -174,7 +174,6 @@ exclude = [
   "src/NanoVNASaver/antenna_peter/micropython/initialization.py",
   "src/NanoVNASaver/NanoVNASaver.py",
   "src/NanoVNASaver/Defaults.py",
-  "src/NanoVNASaver/antenna_peter/temp_entwurf_tuning.py",
   "src/NanoVNASaver/antenna_peter/temp_entwurf_GPIO.py",
   "src/NanoVNASaver/antenna_peter/temp_entwurf_magnetometer_heading.py",
   "src/NanoVNASaver/antenna_peter/temp_entwurf_tuning.py",

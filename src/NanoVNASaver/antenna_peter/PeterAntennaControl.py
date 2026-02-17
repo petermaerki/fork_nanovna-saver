@@ -147,7 +147,7 @@ class PeterAntennaControl(Control):
             )
         )
         self.heading_current = self.add_row(
-            peter_widgets.ValueWidget(label="Tune heading current", value="0")
+            peter_widgets.ValueWidget(label="Tune heading current", unit="deg",fmt="0.1f",)
         )
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
@@ -181,10 +181,10 @@ class PeterAntennaControl(Control):
             )
         )
         self.frequency_target = self.add_row(
-            peter_widgets.ValueWidget(label="Frequency target", value="0")
+            peter_widgets.ValueWidget(label="Frequency target", unit="Hz")
         )
         self.frequency_current = self.add_row(
-            peter_widgets.ValueWidget(label="Frequency current", value="0")
+            peter_widgets.ValueWidget(label="Frequency current", unit="Hz")
         )
 
         self.frequency_servo_f = self.add_row(
@@ -206,7 +206,7 @@ class PeterAntennaControl(Control):
             )
         )
         self.impedance_current = self.add_row(
-            peter_widgets.ValueWidget(label="Impedance current", value="0")
+            peter_widgets.ValueWidget(label="Impedance current", unit="Ohm")
         )
         self.impedance_servo_z = self.add_row(
             peter_widgets.PushButtonWidget(

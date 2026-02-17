@@ -49,7 +49,9 @@ class StatemachineTuner:
         return False: Requires more steps for tuning.
         exception. Something bad happened.
         """
-
+        self._tune_band_change(ctl=ctl)
+        return True
+    
         heading_tuned = self._tune_heading(ctl=ctl)
         return heading_tuned
 
@@ -111,7 +113,7 @@ class StatemachineTuner:
         )
         logger.info(f"{measured_heading_deg=}")
 
-        ctl.heading_current.value.setText(f"{measured_heading_deg:0.1f} deg")
+        ctl.heading_current.set_value()
         heading_target_deg = ctl.heading_target.f_value
         error_deg = _angular_error_deg(
             target_deg=heading_target_deg,

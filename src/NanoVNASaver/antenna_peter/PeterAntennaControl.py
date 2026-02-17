@@ -1,6 +1,5 @@
 import contextlib
 import logging
-import math
 import pathlib
 import socket
 import typing
@@ -18,6 +17,7 @@ from ..Hardware.VNA import VNA
 from ..Marker.Widget import Marker
 from ..RFTools import Datapoint
 from . import peter_widgets, statemachine_tuner, util_persist
+from .util_calculate_safety import calculate_safety_distance
 
 if TYPE_CHECKING:
     from ..NanoVNASaver import NanoVNASaver
@@ -76,68 +76,6 @@ class Servos:
             position_p_gain=10,
             position_i_gain=2,
         )
-
-
-def calculate_safety_distance(
-    f_mhz, p_watt, q_factor, loop_diameter_m=1.0, loop_area_m2=0.78
-):
-    """Calculates the minimum safety distance for a Magnetic Loop antenna based on H-field limits."""
-    f_hz = f_mhz * 1e6
-    radius = loop_diameter_m / 2
-    area = math.pi * (radius**2)
-    l_henry = 1.55e-6
-    i_loop = math.sqrt((p_watt * q_factor) / (2 * math.pi * f_hz * l_henry))
-
-    # Capacitor voltage at resonance: V_c = I_loop * X_L (X_L = X_C at resonance)
-    x_l = 2 * math.pi * f_hz * l_henry
-    v_cap = i_loop * x_l
-
-    # Immissionsgrenzwert IGW (public exposure limit)
-    if f_mhz < 1.0:
-        h_limit_igw = 1.6
-    elif 1.0 <= f_mhz <= 30.0:
-        h_limit_igw = 0.73 / f_mhz
-    else:
-        h_limit_igw = 0.16
-
-    # Anlagengrenzwert OMEN (installation limit) - 5x stricter than IGW
-    h_limit_omen = h_limit_igw / 5.0
-
-    r_meters_igw = ((i_loop * area) / (2 * math.pi * h_limit_igw)) ** (1 / 3)
-    r_meters_omen = ((i_loop * area) / (2 * math.pi * h_limit_omen)) ** (1 / 3)
-
-    # Calculate radiation resistance and efficiency for small loop antenna
-    # R_rad = 31171 x (A/λ²)² Ω  (for circular loop)
-    # R_loss = 2πfL / Q
-    # η = R_rad / (R_rad + R_loss)
-    # P_radiated = P_input x η
-    c = 299792458  # speed of light m/s
-    wavelength = c / f_hz
-
-    # Radiation resistance (small loop formula)
-    r_rad = 31171 * ((loop_area_m2 / (wavelength**2)) ** 2)
-
-    # Loss resistance from Q factor
-    omega_l = 2 * math.pi * f_hz * l_henry
-    r_loss = omega_l / q_factor
-
-    # Efficiency and radiated power
-    efficiency = (r_rad / (r_rad + r_loss)) * 100.0
-    p_radiated = p_watt * (r_rad / (r_rad + r_loss))
-
-    return {
-        "frequency_mhz": f_mhz,
-        "power_watts": p_watt,
-        "q_factor": q_factor,
-        "loop_current_amps": round(i_loop, 2),
-        "cap_voltage_volts": round(v_cap, 0),
-        "h_limit_igw_am": round(h_limit_igw, 4),
-        "h_limit_omen_am": round(h_limit_omen, 4),
-        "min_distance_igw_m": round(r_meters_igw, 2),
-        "min_distance_omen_m": round(r_meters_omen, 2),
-        "p_radiated_watts": round(p_radiated, 2),
-        "efficiency_percent": round(efficiency, 1),
-    }
 
 
 class PeterAntennaControl(Control):
@@ -315,23 +253,7 @@ class PeterAntennaControl(Control):
 
         self.add_row(peter_widgets.SeparatorWidget())
 
-        self.delta_display = self.add_row(
-            peter_widgets.ValueWidget(label="Δ kHz (SWR min)", value="--")
-        ).value
-
-        self.q_display = self.add_row(
-            peter_widgets.ValueWidget(label="Q (SWR 2.64)", value="--")
-        ).value
-        self.swrmin_display = self.add_row(
-            peter_widgets.ValueWidget(label="SWR min", value="--")
-        ).value
-        self.impedance_display = self.add_row(
-            peter_widgets.ValueWidget(label="R @ SWR min", value="--")
-        ).value
-        self.efficiency_display = self.add_row(
-            peter_widgets.ValueWidget(label="Efficiency η", value="--")
-        ).value
-
+        # New: single display for all safety info
         self.power_spin = self.add_row(
             peter_widgets.PowerspinWidget(
                 label="Power 5...100",
@@ -342,42 +264,37 @@ class PeterAntennaControl(Control):
             )
         ).power_spin
 
-        # Radiated power display (calculated from loop area, current, frequency)
-        self.radiated_power_display = self.add_row(
-            peter_widgets.ValueWidget(label="P radiated", value="--")
-        ).value
-
         self.add_row(peter_widgets.SeparatorWidget())
 
-        # Safety calculation fields (read-only display)
-        self.cap_voltage_display = self.add_row(
-            peter_widgets.ValueWidget(label="Cap Voltage", value="--")
-        ).value
-
-        self.loop_current_display = self.add_row(
-            peter_widgets.ValueWidget(label="Loop Current", value="--")
-        ).value
-
-        self.h_limit_display = self.add_row(
-            peter_widgets.ValueWidget(label="H_Limit (NISV/IGW)", value="--")
-        ).value
-
-        self.h_limit_omen_display = self.add_row(
-            peter_widgets.ValueWidget(label="H_Limit (OMEN)", value="--")
-        ).value
-
-        self.safety_distance_display = self.add_row(
-            peter_widgets.ValueWidget(label="Safety distance IGW", value="--")
-        ).value
-
-        self.safety_distance_omen_display = self.add_row(
-            peter_widgets.ValueWidget(
-                label="Safety distance <a href='https://github.com/petermaerki/fork_nanovna-saver/blob/antenna_tuner/src/NanoVNASaver/antenna_peter/SAFETY_INFO.md'>OMEN</a>",
-                value="--",
+        def safety_html_widget() -> QtWidgets.QTextBrowser:
+            widget = QtWidgets.QTextBrowser()
+            # Hide scrollbars
+            widget.setVerticalScrollBarPolicy(
+                QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
             )
-        ).value
+            widget.setHorizontalScrollBarPolicy(
+                QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            )
+            # Remove margins and set minimal padding
+            widget.setContentsMargins(0, 0, 0, 0)
+            widget.setStyleSheet(
+                "QTextBrowser { padding: 0; margin: 0; border: none; }"
+            )
+            # Make the widget expand vertically to fit all lines
+            widget.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.Preferred,
+                QtWidgets.QSizePolicy.Policy.Expanding,
+            )
+            widget.setFixedHeight(200)
+            # Enable external link clicks (default for QTextBrowser)
+            widget.setOpenExternalLinks(True)
+            widget.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextBrowserInteraction
+                | QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            return widget
 
-        self.add_row(peter_widgets.SeparatorWidget())
+        self.safety_info_html = self.add_row(safety_html_widget())
 
         # (power status label removed — FT-991 cannot be queried for power)
         # connect power control immediately so changes always send to rigctld
@@ -585,83 +502,21 @@ class PeterAntennaControl(Control):
             logger.exception("Failed to prepare RFPOWER command")
 
     def _update_safety_calculation(self, freq_hz: float):
-        """Update safety calculation fields based on current settings."""
+        """Update safety calculation display with a formatted string."""
         try:
             set_f_hz = freq_hz
             f_mhz = set_f_hz / 1e6
-
             watts = int(self.power_spin.value())
-
-            # Use stored Q factor from Q display (updated after sweep)
             q_factor = self._q_factor
-
-            # Calculate safety parameters
-            results = calculate_safety_distance(
+            info = calculate_safety_distance(
                 f_mhz=f_mhz,
                 p_watt=watts,
                 q_factor=q_factor,
             )
-
-            # Update display fields with values from loop calculation
-            # Cap Voltage from loop (not feedline)
-            self.cap_voltage_display.setText(
-                f"{results['cap_voltage_volts']:.0f} V"
-            )
-
-            # Loop Current
-            self.loop_current_display.setText(
-                f"{results['loop_current_amps']} A"
-            )
-
-            # H-Limit IGW
-            self.h_limit_display.setText(f"{results['h_limit_igw_am']:.3f} A/m")
-
-            # H-Limit OMEN
-            self.h_limit_omen_display.setText(
-                f"{results['h_limit_omen_am']:.3f} A/m"
-            )
-
-            # Safety Distance IGW
-            self.safety_distance_display.setText(
-                f"{results['min_distance_igw_m']} m"
-            )
-
-            # Safety Distance OMEN
-            self.safety_distance_omen_display.setText(
-                f"{results['min_distance_omen_m']} m"
-            )
-
-            # Radiated Power
-            self.radiated_power_display.setText(
-                f"{results['p_radiated_watts']:.2f} W"
-            )
-
-            # Efficiency
-            self.efficiency_display.setText(
-                f"{results['efficiency_percent']:.1f} %"
-            )
-
-            logger.debug(
-                "Safety calc: f=%s MHz, P=%s W, Q=%s, I=%s A, H_IGW=%s A/m, dist_IGW=%s m, H_OMEN=%s A/m, dist_OMEN=%s m",
-                f_mhz,
-                watts,
-                q_factor,
-                results["loop_current_amps"],
-                results["h_limit_igw_am"],
-                results["min_distance_igw_m"],
-                results["h_limit_omen_am"],
-                results["min_distance_omen_m"],
-            )
+            self.safety_info_html.setHtml(info)
         except Exception:
             logger.exception("Failed to update safety calculation")
-            self.cap_voltage_display.setText("--")
-            self.loop_current_display.setText("--")
-            self.h_limit_display.setText("--")
-            self.h_limit_omen_display.setText("--")
-            self.safety_distance_display.setText("--")
-            self.safety_distance_omen_display.setText("--")
-            self.radiated_power_display.setText("--")
-            self.efficiency_display.setText("--")
+            self.safety_info_html.setHtml("--")
 
     # def on_auto_get_frequency_toggle(self):
     #     """Start/stop the automatic frequency polling based on checkbox state."""

@@ -53,16 +53,19 @@ def calculate_safety_distance(
     p_radiated = p_watt * (r_rad / (r_rad + r_loss))
 
     lines = [
-        f"Frequency: {f_mhz:.3f} MHz",
-        f"Power: {p_watt:.1f} W",
-        f"Q Factor: {q_factor:.1f}",
-        f"Loop Current: {i_loop:.2f} A",
-        f"Cap Voltage: {v_cap:.0f} V",
+        f"Antenna Q Factor: {q_factor:.0f}",
+        f"Antenna SWR: todo",
+        f"Antenna Bandwith 3dB: todo kHz",
+        f"TX Frequency: {f_mhz:.3f} MHz",
+        f"TX Power Transmitter: {p_watt:.0f} W",
+        f"Antenna Efficiency: {efficiency:.1f} %",
+        f"Antenna P Radiated: {p_radiated:.2f} W",
+        f"Antenna Loop Current: {i_loop:.1f} A rms",
+        f"Antenna Cap Voltage: {v_cap:.0f} V rms",
         f"H-Limit IGW: {h_limit_igw:.3f} A/m",
+        f"<b>Safety Distance IGW: {r_meters_igw:.2f} m</b>",
         f"H-Limit OMEN: {h_limit_omen:.3f} A/m",
-        f"Safety Distance IGW: {r_meters_igw:.2f} m",
         f"Safety Distance <a href='https://github.com/petermaerki/fork_nanovna-saver/blob/antenna_tuner/src/NanoVNASaver/antenna_peter/SAFETY_INFO.md'>OMEN</a>: {r_meters_omen:.2f} m",
-        f"P Radiated: {p_radiated:.2f} W",
-        f"Efficiency: {efficiency:.1f} %",
+
     ]
     return "<br/>\n".join(lines)

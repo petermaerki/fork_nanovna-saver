@@ -129,46 +129,11 @@ class PeterAntennaControl(Control):
             peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
         ).checkbox
 
-        self.tx_inhibit_switch_display = self.add_row(
-            peter_widgets.ValueWidget(
-                label="TX inhibited by switch", value="--"
-            )
-        ).value
 
         if True:
             # OBSOLETE
-            self.checkbox_up = QtWidgets.QCheckBox()
-            self.checkbox_down = QtWidgets.QCheckBox()
-
-            # Tune iteration counter (internal; display removed)
-            # self._tune_iteration_obsolete = 0
-            # Store calculated Q factor for safety calculations
             self._q_factor = 500.0  # default value
 
-            # Manual F controls in one row
-            manual_f_layout = QtWidgets.QHBoxLayout()
-            manual_f_layout.addWidget(self.checkbox_up)
-            manual_f_layout.addWidget(QtWidgets.QLabel("up"))
-            manual_f_layout.addWidget(self.checkbox_down)
-            manual_f_layout.addWidget(QtWidgets.QLabel("down"))
-            manual_f_layout.addStretch()
-            self.add_row_old(QtWidgets.QLabel("Manual F"), manual_f_layout)
-
-            # motor status display (under the 'down' checkbox)
-            self.motor_status = QtWidgets.QLabel("stop")
-            # align the motor status to the right (consistent with other numeric fields)
-            self.motor_status.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-            font = self.motor_status.font()
-            font.setPointSize(11)
-            self.motor_status.setFont(font)
-            self.add_row_old(
-                QtWidgets.QLabel("Motor status"), self.motor_status
-            )
-            # The 'Set Values' input was intentionally disabled/commented out.
-            # self.button_set_values = QtWidgets.QPushButton("Set & Sweep")
-            # self.add_row_old(
-            #     QtWidgets.QLabel("Set Values"), self.button_set_values
-            # )
 
         self.add_row(peter_widgets.SeparatorWidget())
 
@@ -200,12 +165,13 @@ class PeterAntennaControl(Control):
         ).checkbox
         self.frequency_offset = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency Offset", f_value=0.0, unit="Hz"
+                label="Frequency Offset", f_value=1500.0, unit="Hz"
             )
         )
         self.frequency_auto_get = self.add_row(
             peter_widgets.CheckboxWidget("Frequency auto get from TX")
         ).checkbox
+        self.frequency_auto_get.setChecked(True)
 
         self.frequency_tx = self.add_row(
             peter_widgets.PushButtonWidget(
@@ -236,7 +202,7 @@ class PeterAntennaControl(Control):
         ).checkbox
         self.impedance_target = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Impedance target", f_value=0.0, unit="Ohm"
+                label="Impedance target", f_value=50.0, unit="Ohm"
             )
         )
         self.impedance_current = self.add_row(
@@ -256,7 +222,7 @@ class PeterAntennaControl(Control):
         # New: single display for all safety info
         self.power_spin = self.add_row(
             peter_widgets.PowerspinWidget(
-                label="Power 5...100",
+                label="Power transmitter 5...100",
                 value=5,
                 min_value=5,
                 max_value=100,
@@ -308,8 +274,8 @@ class PeterAntennaControl(Control):
         # 'Set Values' signal connection commented out because the input is disabled
         # self.button_set_values.pressed.connect(self.on_button_set_values)
         self.checkbox_tune.checkStateChanged.connect(self.on_tune)
-        self.checkbox_up.checkStateChanged.connect(self.on_up)
-        self.checkbox_down.checkStateChanged.connect(self.on_down)
+        # self.checkbox_up.checkStateChanged.connect(self.on_up)
+        # self.checkbox_down.checkStateChanged.connect(self.on_down)
         self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
         self._default_app_palette = QtGui.QPalette(self.app.palette())
         # self._app_bg_inhibit_active = False
@@ -566,44 +532,8 @@ class PeterAntennaControl(Control):
 
         self.frequency_target.value.setText(f"{freq_hz_with_offset:0.0f} Hz")
 
-        # update safety calculations
         self._update_safety_calculation(freq_hz=freq_hz)
 
-    # def _update_tx_inhibit_switch_obsolete(self):
-    #     try:
-    #         stdout = self._mp_exec(
-    #             label_full="pico_get_tx_inhibit_switch",
-    #             cmd="get_tx_inhibit_switch()",
-    #         )
-    #         tx_inhibit_switch = calculator.parse_value_int(
-    #             stdout=stdout,
-    #             label="tx_inhibit_switch",
-    #         )
-
-    #         self.tx_inhibit_switch_display.setText(
-    #             "YES" if tx_inhibit_switch == 1 else "NO"
-    #         )
-    #         self._set_app_background(inhibited=(tx_inhibit_switch == 1))
-    #     except Exception as e:
-    #         logger.debug("TX inhibit switch read failed: %s", e)
-    #         self.tx_inhibit_switch_display.setText("--")
-    #         self._set_app_background(inhibited=False)
-    #         raise
-
-    # def _set_app_background(self, inhibited: bool) -> None:
-    #     if inhibited == self._app_bg_inhibit_active:
-    #         return
-    #     if inhibited:
-    #         palette = QtGui.QPalette(self._default_app_palette)
-    #         palette.setColor(
-    #             QtGui.QPalette.ColorRole.Window, QtGui.QColor("#CCFFCC")
-    #         )
-    #         self.app.setAutoFillBackground(True)
-    #         self.app.setPalette(palette)
-    #         self._app_bg_inhibit_active = True
-    #     else:
-    #         self.app.setPalette(self._default_app_palette)
-    #         self._app_bg_inhibit_active = False
 
     def on_up(self):
         checked = self.checkbox_up.isChecked()

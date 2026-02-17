@@ -41,7 +41,7 @@ DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
 
 ENABLE_STS3215 = True
-ENABLE_STS3215_SERVO_F = False
+ENABLE_STS3215_SERVO_F = True
 
 
 class Servos:
@@ -93,6 +93,10 @@ class PeterAntennaControl(Control):
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
 
+        self.filename_servo_position_persist = (
+            DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_z_h.json"
+        )
+
         with self._servo_position_persist() as p:
             servo_position_persist = p
 
@@ -129,11 +133,9 @@ class PeterAntennaControl(Control):
             peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
         ).checkbox
 
-
         if True:
             # OBSOLETE
             self._q_factor = 500.0  # default value
-
 
         self.add_row(peter_widgets.SeparatorWidget())
 
@@ -147,7 +149,11 @@ class PeterAntennaControl(Control):
             )
         )
         self.heading_current = self.add_row(
-            peter_widgets.ValueWidget(label="Tune heading current", unit="deg",fmt="0.1f",)
+            peter_widgets.ValueWidget(
+                label="Tune heading current",
+                unit="deg",
+                fmt="0.1f",
+            )
         )
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
@@ -181,10 +187,14 @@ class PeterAntennaControl(Control):
             )
         )
         self.frequency_target = self.add_row(
-            peter_widgets.ValueWidget(label="Frequency target", unit="Hz")
+            peter_widgets.ValueWidget(
+                label="Frequency target", unit="Hz", fmt="0.0f"
+            )
         )
         self.frequency_current = self.add_row(
-            peter_widgets.ValueWidget(label="Frequency current", unit="Hz")
+            peter_widgets.ValueWidget(
+                label="Frequency current", unit="Hz", fmt="0.0f"
+            )
         )
 
         self.frequency_servo_f = self.add_row(
@@ -530,10 +540,9 @@ class PeterAntennaControl(Control):
         offset_hz = self.frequency_offset.f_value
         freq_hz_with_offset = freq_hz + offset_hz
 
-        self.frequency_target.value.setText(f"{freq_hz_with_offset:0.0f} Hz")
+        self.frequency_target.set_value(freq_hz_with_offset)
 
         self._update_safety_calculation(freq_hz=freq_hz)
-
 
     def on_up(self):
         checked = self.checkbox_up.isChecked()
@@ -1188,7 +1197,7 @@ class PeterAntennaControl(Control):
     def _frequency_set_servo_f(self, target_ta: float) -> float:
         if self.servos is None:
             return target_ta
-        if ENABLE_STS3215_SERVO_F:
+        if not ENABLE_STS3215_SERVO_F:
             return target_ta
         require_homeing = False
         try:
@@ -1278,19 +1287,22 @@ class PeterAntennaControl(Control):
         self.frequency_servo_f.setEnabled(state_vna_enabled)
         self.impedance_servo_z.setEnabled(state_vna_enabled)
 
+    @property
+    def _position_persist(self) -> util_persist.ServoPositionPersistent:
+        return util_persist.ServoPositionPersistent.get_persist(
+            filename=self.filename_servo_position_persist
+        )
+
     @contextlib.contextmanager
     def _servo_position_persist(
         self,
     ) -> typing.Generator[util_persist.ServoPositionPersistent, None, None]:
         """Context manager for loading and saving servo position persistently."""
-        filename = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_z_h.json"
-        persist = util_persist.ServoPositionPersistent.get_persist(
-            filename=filename
-        )
+        persist = self._position_persist
         try:
             yield persist
         finally:
             util_persist.ServoPositionPersistent.save(
-                filename=filename,
+                filename=self.filename_servo_position_persist,
                 persist=persist,
             )

@@ -54,8 +54,8 @@ def calculate_safety_distance(
 
     lines = [
         f"Antenna Q Factor: {q_factor:.0f}",
-        f"Antenna SWR: todo",
-        f"Antenna Bandwith 3dB: todo kHz",
+        "Antenna SWR: todo",
+        "Antenna Bandwith 3dB: todo kHz",
         f"TX Frequency: {f_mhz:.3f} MHz",
         f"TX Power Transmitter: {p_watt:.0f} W",
         f"Antenna Efficiency: {efficiency:.1f} %",
@@ -66,6 +66,5 @@ def calculate_safety_distance(
         f"<b>Safety Distance IGW: {r_meters_igw:.2f} m</b>",
         f"H-Limit OMEN: {h_limit_omen:.3f} A/m",
         f"Safety Distance <a href='https://github.com/petermaerki/fork_nanovna-saver/blob/antenna_tuner/src/NanoVNASaver/antenna_peter/SAFETY_INFO.md'>OMEN</a>: {r_meters_omen:.2f} m",
-
     ]
     return "<br/>\n".join(lines)

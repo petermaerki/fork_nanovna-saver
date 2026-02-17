@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING
 from sts3215_micropython.sts3215_portable import calculator
 
 from . import util_heading_calculator
+from .util_freq_band_preset import BANDS
 
 if TYPE_CHECKING:
     from .PeterAntennaControl import PeterAntennaControl
+
 logger = logging.getLogger(__name__)
 
 HEADING_TARGET_TA_MAX = 0.3
@@ -51,7 +53,7 @@ class StatemachineTuner:
         """
         self._tune_band_change(ctl=ctl)
         return True
-    
+
         heading_tuned = self._tune_heading(ctl=ctl)
         return heading_tuned
 
@@ -113,7 +115,7 @@ class StatemachineTuner:
         )
         logger.info(f"{measured_heading_deg=}")
 
-        ctl.heading_current.set_value()
+        # ctl.heading_current.set_value()
         heading_target_deg = ctl.heading_target.f_value
         error_deg = _angular_error_deg(
             target_deg=heading_target_deg,
@@ -136,4 +138,26 @@ class StatemachineTuner:
             f"_tune_heading(): heading_servo {heading_target_deg=}. {ctl.heading_servo.f_value:0.3f}->{servo_targed_t:0.3f} ta"
         )
         ctl.heading_servo.set_value(servo_targed_t)
+        return False
+
+    def _tune_band_change(self, ctl: PeterAntennaControl) -> bool:
+        persist = ctl._position_persist
+        persist_band = BANDS.get_band(freq_hz=persist.freq_antenna_hz)
+        target_band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
+        if persist_band.band_m == target_band.band_m:
+            return True
+        if not target_band.valid:
+            logger.warning(f"Invalid band: {target_band}")
+            return True
+        servo_f_ta = target_band.servo_f_start_ta(
+            target_hz=ctl.frequency_target.f_value
+        )
+        logger.info(
+            f"_tune_band_change: band changed go to preset values {servo_f_ta=} {target_band.servo_z_ta=}"
+        )
+        ctl.frequency_servo_f.set_value(servo_f_ta)
+        assert isinstance(target_band.servo_z_ta, float)
+        ctl.impedance_servo_z.set_value(target_band.servo_z_ta)
+        with ctl._servo_position_persist() as p:
+            p.freq_antenna_hz = ctl.frequency_target.f_value
         return False

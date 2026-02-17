@@ -10,8 +10,30 @@ class Band:
     measurement2: Measurement | None
     servo_z_ta: float | None
 
+    @property
+    def valid(self) -> bool:
+        return (
+            (self.measurement1 is not None)
+            and (self.measurement1 is not None)
+            and (self.servo_z_ta is not None)
+        )
+
     def freq_diff_hz(self, freq_hz: float) -> float:
         return abs(self.ft8_hz - freq_hz)
+
+    def servo_f_start_ta(self, target_hz: float) -> float:
+        assert isinstance(target_hz, float)
+        assert self.valid, self
+        # Interpolate or extrapolate using measurement1 and measurement2 if both are present
+        m1 = self.measurement1
+        m2 = self.measurement2
+        assert m1 is not None and m2 is not None, self
+        if m2.freq_hz == m1.freq_hz:
+            return m1.servo_f_ta
+        # Linear interpolation/extrapolation
+        return m1.servo_f_ta + (target_hz - m1.freq_hz) * (
+            m2.servo_f_ta - m1.servo_f_ta
+        ) / (m2.freq_hz - m1.freq_hz)
 
 
 class Bands(list[Band]):
@@ -64,14 +86,14 @@ BANDS: Bands = Bands(
             ft8_hz=7_074_000,
             measurement1=Measurement(7.0, 7_000_000),
             measurement2=Measurement(8.0, 8_000_000),
-            servo_z_ta=None,
+            servo_z_ta=-0.1,
         ),
         Band(
             band_m=30,
             ft8_hz=10_136_000,
             measurement1=Measurement(10.0, 10_000_000),
             measurement2=Measurement(11.0, 11_000_000),
-            servo_z_ta=None,
+            servo_z_ta=0.1,
         ),
         Band(
             band_m=20,

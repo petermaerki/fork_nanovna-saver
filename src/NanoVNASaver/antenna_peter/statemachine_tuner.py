@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 HEADING_TARGET_TA_MAX = 0.3
 HEADING_TARGET_TA_MIN = -0.3
 
+IMPEDANCE_TARGET_TA_MAX = 0.25
+IMPEDANCE_ARGET_TA_MIN = -0.25
+
+FREQUENCY_TARGET_TA_MAX = 37.0
+"mechanical Limit of Capacitor"
+FREQUENCY_TARGET_TA_MIN = 0.05
+"near to homing position"
+
 
 def _angular_error_deg(target_deg: float, actual_deg: float) -> float:
     delta = (target_deg - actual_deg + 90.0) % 180.0 - 90.0

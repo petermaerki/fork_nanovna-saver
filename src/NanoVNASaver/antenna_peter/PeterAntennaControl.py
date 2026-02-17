@@ -261,7 +261,7 @@ class PeterAntennaControl(Control):
         self.add_row(peter_widgets.SeparatorWidget())
 
         self.checkbox_auto_get_f = self.add_row(
-            peter_widgets.CheckboxWidget("Auto get frequency")
+            peter_widgets.CheckboxWidget("Auto get frequency (OBSOLETE)")
         ).checkbox
 
         if True:
@@ -284,19 +284,19 @@ class PeterAntennaControl(Control):
 
         self.input_swr_offset_Hz = self.add_row(
             peter_widgets.DoubleSpinBoxWidget(
-                label="Set offset", value=1500, unit="Hz"
+                label="Set offset (OBSOLETE)", value=1500, unit="Hz"
             )
         ).entry
 
         self.input_set_Hz = self.add_row(
             peter_widgets.DoubleSpinBoxWidget(
-                label="Set swr min", value=7.074e6, unit="Hz"
+                label="Set swr min(OBSOLETE)", value=7.074e6, unit="Hz"
             )
         ).entry
 
         # Frequency enable checkbox
         self.frequency_checkbox = self.add_row(
-            peter_widgets.CheckboxWidget("Frequency enable")
+            peter_widgets.CheckboxWidget("Tune Frequency enable")
         ).checkbox
         # Frequency Offset textfeld mit button set
         self.frequency_offset = self.add_row(
@@ -318,6 +318,10 @@ class PeterAntennaControl(Control):
         self.frequency_target = self.add_row(
             peter_widgets.ValueWidget(label="Frequency target", value="0")
         )
+        # Frequency current textfeld
+        self.frequency_target = self.add_row(
+            peter_widgets.ValueWidget(label="Frequency current", value="0")
+        )
 
         # Frequency servo_f textfeld button set
         self.frequency_servo_f = self.add_row(
@@ -332,7 +336,7 @@ class PeterAntennaControl(Control):
         self.add_row(peter_widgets.SeparatorWidget())
         # Impedance enable checkbox
         self.impedance_checkbox = self.add_row(
-            peter_widgets.CheckboxWidget("Impedance enable")
+            peter_widgets.CheckboxWidget("Tune Impedance enable")
         ).checkbox
         # Impedance target textfeld mit button set
         self.impedance_target = self.add_row(
@@ -1459,27 +1463,30 @@ class PeterAntennaControl(Control):
         except Exception:
             logger.exception("Failed to set datapoint count")
 
-    def _frequency_set_servo_f(self, target_ta: float) -> None:
+    def _frequency_set_servo_f(self, target_ta: float) -> float:
         if self.servos is None:
-            return
+            return target_ta
         if ENABLE_STS3215_SERVO_F:
-            return
+            return target_ta
         require_homeing = False
         try:
-            tartet_ta_max = 37.0  # mechanical Limit of Capacitor
-            target_ta_min = 0.05  # near to homing position
-            _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
+            _target_ta = min(
+                statemachine_tuner.FREQUENCY_TARGET_TA_MAX,
+                max(statemachine_tuner.FREQUENCY_TARGET_TA_MIN, target_ta),
+            )
             self.servos.servo_ctl_f.move_ta(target_ta=_target_ta)
         except calculator.ExceptionRequireHoming as e:
             logger.warning(e)
             require_homeing = True
         if require_homeing:
             self.servos.servo_ctl_f.homing()
-            self.servos.servo_ctl_f.move_ta(target_ta=target_ta)
+            self.servos.servo_ctl_f.move_ta(target_ta=_target_ta)
 
-    def _heading_set_servo_h(self, target_ta: float) -> None:
+        return _target_ta
+
+    def _heading_set_servo_h(self, target_ta: float) -> float:
         if self.servos is None:
-            return
+            return target_ta
         _target_ta = min(
             statemachine_tuner.HEADING_TARGET_TA_MAX,
             max(statemachine_tuner.HEADING_TARGET_TA_MIN, target_ta),
@@ -1490,17 +1497,22 @@ class PeterAntennaControl(Control):
         with self._servo_position_persist() as p:
             p.servo_h_ta = _target_ta
 
-    def _impedance_set_servo_z(self, target_ta: float) -> None:
+        return _target_ta
+
+    def _impedance_set_servo_z(self, target_ta: float) -> float:
         if self.servos is None:
-            return
-        tartet_ta_max = 0.25
-        target_ta_min = -0.25
-        _target_ta = min(tartet_ta_max, max(target_ta_min, target_ta))
+            return target_ta
+        _target_ta = min(
+            statemachine_tuner.IMPEDANCE_TARGET_TA_MAX,
+            max(statemachine_tuner.IMPEDANCE_ARGET_TA_MIN, target_ta),
+        )
         ewp = int(_target_ta * 4096) + 2048
         self.servos.servo_ctl_z.move_ewp(ewp=ewp)
 
         with self._servo_position_persist() as p:
             p.servo_z_ta = _target_ta
+
+        return _target_ta
 
     def _frequency_get_servo_f(self) -> float:
         try:

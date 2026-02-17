@@ -219,14 +219,15 @@ class PushButtonWidget(QtWidgets.QWidget):
 
     def _set_value(self, value: float) -> None:
         assert isinstance(value, float)
-        self.f_value = value
-        self.value.setText(f"{value:.3f}")
+        value_choosen = value
         if self.cb_set is not None:
             try:
-                self.cb_set(value)
+                value_choosen =self.cb_set(value)
             except Exception:
                 logger.exception(f"Failed to set {self.label} to {value}")
                 raise
+        self.f_value = value_choosen
+        self.value.setText(f"{value_choosen:.3f}")
 
     def _open_value_dialog(self) -> None:
         dialog = QtWidgets.QDialog(self)

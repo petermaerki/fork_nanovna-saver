@@ -14,7 +14,9 @@ Frequency Offset textfeld mit button set
 Frequency auto get from TX checkbox
 Frequency TX textfeld mit button set
 Frequency target textfeld
+Frequency current textfeld
 Frequency servo_f textfeld button set
+
 
 Impedance enable checkbox
 Impedance target textfeld mit button set

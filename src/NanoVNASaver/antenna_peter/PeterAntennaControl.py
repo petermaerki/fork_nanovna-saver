@@ -26,6 +26,9 @@ logger = logging.getLogger(__name__)
 
 QWidgetT = TypeVar("QWidgetT", bound=QtWidgets.QWidget)
 
+RIGCTL_HOSTNAME = "localhost"
+RIGCTL_HOSTNAME = "yoga-260"
+RIGCTL_PORT = 4532
 
 # Frequency limits for magnetic loop antenna
 F_USEFUL_MIN_Hz = 1.0e6
@@ -611,7 +614,7 @@ class PeterAntennaControl(Control):
             # Send command over the same localhost:4532 socket used by _auto_get_frequency
             try:
                 with socket.create_connection(
-                    ("localhost", 4532), timeout=1
+                    (RIGCTL_HOSTNAME, RIGCTL_PORT), timeout=1
                 ) as s:
                     # send rigctl-style command over socket; server accepts newline-terminated commands
                     cmd = f"L RFPOWER {scaled_str}\n"
@@ -738,7 +741,7 @@ class PeterAntennaControl(Control):
         integer frequency in Hz (as bytes). Any errors are logged and ignored.
         """
         try:
-            with socket.create_connection(("localhost", 4532), timeout=1) as s:
+            with socket.create_connection((RIGCTL_HOSTNAME, RIGCTL_PORT), timeout=1) as s:
                 s.sendall(b"f\n")
                 data = s.recv(1024).strip()
                 if not data:

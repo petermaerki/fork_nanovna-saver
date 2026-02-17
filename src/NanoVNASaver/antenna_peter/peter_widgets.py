@@ -213,9 +213,9 @@ class PushButtonWidget(QtWidgets.QWidget):
         layout.addWidget(self.unit)
         layout.addWidget(self.button)
 
-        self._set_value(f_value)
+        self.set_value(f_value)
 
-    def _set_value(self, value: float) -> None:
+    def set_value(self, value: float) -> None:
         assert isinstance(value, float)
         value_choosen = value
         if self.cb_set is not None:
@@ -256,7 +256,7 @@ class PushButtonWidget(QtWidgets.QWidget):
         layout.addWidget(buttons)
 
         if dialog.exec() == QtWidgets.QDialog.Accepted:
-            self._set_value(new_value.value())
+            self.set_value(new_value.value())
 
     @staticmethod
     def _parse_value(text: str) -> float:

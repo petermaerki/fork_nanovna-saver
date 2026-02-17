@@ -524,7 +524,7 @@ class PeterAntennaControl(Control):
         """
         if self.frequency_auto_get.isChecked():
             freq_hz = float(self._get_frequency_from_tx())
-            self.frequency_tx._set_value(freq_hz)
+            self.frequency_tx.set_value(freq_hz)
         else:
             freq_hz = self.frequency_tx.f_value
         offset_hz = self.frequency_offset.f_value

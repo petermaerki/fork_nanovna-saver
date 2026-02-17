@@ -133,5 +133,5 @@ class StatemachineTuner:
         logger.info(
             f"_tune_heading(): heading_servo {heading_target_deg=}. {ctl.heading_servo.f_value:0.3f}->{servo_targed_t:0.3f} ta"
         )
-        ctl.heading_servo._set_value(servo_targed_t)
+        ctl.heading_servo.set_value(servo_targed_t)
         return False

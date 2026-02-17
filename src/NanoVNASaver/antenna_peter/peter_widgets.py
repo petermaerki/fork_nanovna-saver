@@ -178,7 +178,7 @@ class PushButtonWidget(QtWidgets.QWidget):
         label: str,
         f_value: float,
         unit: str,
-        cb_set: abc.Callable[[float], None] | None = None,
+        cb_set: abc.Callable[[float], float] | None = None,
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)

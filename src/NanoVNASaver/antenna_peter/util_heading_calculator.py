@@ -29,30 +29,26 @@ Es gibt Fälle wo es zwei mögliche Servo-Positionen gibt. Es soll jene Position
 
 def servo_targed_t(
     servo_t_actual: float = 0.6,
-    heading_actual_deg: int = 90,
-    heading_target_deg: int = 100,
+    heading_actual_deg: float = 90,
+    heading_target_deg: float = 100,
     servo_min_t: float = 0.4,
     servo_max_t: float = 1.1,
     debug: bool = True,
 ) -> float:
     if debug:
         print(
-            "inputs -> servo_t_actual: {servo_t_actual:.3f}, heading_actual_deg: {heading_actual_deg:d}, "
-            "heading_target_deg: {heading_target_deg:d}, range_t: [{servo_min_t:.3f}, {servo_max_t:.3f}]".format(
-                servo_t_actual=servo_t_actual,
-                heading_actual_deg=int(heading_actual_deg),
-                heading_target_deg=int(heading_target_deg),
-                servo_min_t=servo_min_t,
-                servo_max_t=servo_max_t,
-            )
+            f"inputs -> servo_t_actual: {servo_t_actual:.3f}, "
+            f"heading_actual_deg: {heading_actual_deg:d}, "
+            f"heading_target_deg: {heading_target_deg:d}, "
+            f"range_t: [{servo_min_t:.3f}, {servo_max_t:.3f}]"
         )
     span_t = servo_max_t - servo_min_t
-    heading_actual_deg = int(heading_actual_deg) % 360
-    heading_target_deg = int(heading_target_deg) % 360
+    heading_actual_deg = heading_actual_deg % 360
+    heading_target_deg = heading_target_deg % 360
 
     heading_alt_deg = (heading_target_deg + 180) % 360
 
-    def delta_deg(from_deg: int, to_deg: int) -> int:
+    def delta_deg(from_deg: float, to_deg: float) -> float:
         return ((to_deg - from_deg + 540) % 360) - 180
 
     def clamp_t(t: float) -> float:
@@ -104,30 +100,13 @@ def servo_targed_t(
             decision = "both out of range, alt clamps closer"
     if debug:
         print(
-            "normalize headings -> actual: {actual:d}, target: {target:d}, alt: {alt:d}".format(
-                actual=heading_actual_deg,
-                target=heading_target_deg,
-                alt=heading_alt_deg,
-            )
+            f"normalize headings -> actual: {heading_actual_deg:d}, target: {heading_target_deg:d}, alt: {heading_alt_deg:d}"
         )
         print(
-            "primary raw t: {primary_raw:.3f}, alt raw t: {alt_raw:.3f}".format(
-                primary_raw=servo_t_primary_raw,
-                alt_raw=servo_t_alt_raw,
-            )
+            f"primary raw t: {servo_t_primary_raw:.3f}, alt raw t: {servo_t_alt_raw:.3f}"
         )
-        print(
-            "range ok -> primary: {primary_ok}, alt: {alt_ok}".format(
-                primary_ok=primary_ok,
-                alt_ok=alt_ok,
-            )
-        )
-        print(
-            "decision -> {decision}, chosen: {chosen:.3f}".format(
-                decision=decision,
-                chosen=servo_choosen_ta,
-            )
-        )
+        print(f"range ok -> primary: {primary_ok}, alt: {alt_ok}")
+        print(f"decision -> {decision}, chosen: {servo_choosen_ta:.3f}")
         sys.stdout.flush()
 
     if debug:
@@ -195,7 +174,7 @@ def servo_targed_t(
         ax.text(
             0.02,
             0.02,
-            "decision: {decision}".format(decision=decision),
+            f"decision: {decision}",
             transform=ax.transAxes,
             fontsize=8,
             va="bottom",

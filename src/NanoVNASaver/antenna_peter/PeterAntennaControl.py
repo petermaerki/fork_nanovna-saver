@@ -232,25 +232,20 @@ class PeterAntennaControl(Control):
             #     QtWidgets.QLabel("Set Values"), self.button_set_values
             # )
 
-        #### NEW
         self.add_row(peter_widgets.SeparatorWidget())
 
-        # Tune heading checkbox
         self.heading_checkbox = self.add_row(
             peter_widgets.CheckboxWidget("Tune heading checkbox")
         ).checkbox
         self.heading_checkbox.setChecked(True)
-        # Tune heading target textfeld, button set
         self.heading_target = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Tune heading target", f_value=0.0, unit="deg"
             )
         )
-        # Tune heading current textfeld
         self.heading_current = self.add_row(
             peter_widgets.ValueWidget(label="Tune heading current", value="0")
         )
-        # Tune heading servo_h textfeld, button set
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Tune heading servo_h",
@@ -262,70 +257,36 @@ class PeterAntennaControl(Control):
 
         self.add_row(peter_widgets.SeparatorWidget())
 
-        self.checkbox_auto_get_f = self.add_row(
-            peter_widgets.CheckboxWidget("Auto get frequency (OBSOLETE)")
-        ).checkbox
-
-        if True:
-            # MOVE
-            self.auto_get_timer = QtCore.QTimer(self)
-            self.auto_get_timer.setInterval(2000)  # 2 seconds
-            self.auto_get_timer.timeout.connect(self._auto_get_frequency)
-
-            # self.tx_inhibit_timer = QtCore.QTimer(self)
-            # self.tx_inhibit_timer.setInterval(1000)
-            # self.tx_inhibit_timer.timeout.connect(
-            #     self._update_tx_inhibit_switch
-            # )
-
-            self.checkbox_auto_get_f.checkStateChanged.connect(
-                self.on_auto_get_frequency_toggle
-            )
-            # Enable auto-get by default at initialization
-            self.checkbox_auto_get_f.setChecked(True)
-
-        self.input_swr_offset_Hz = self.add_row(
-            peter_widgets.DoubleSpinBoxWidget(
-                label="Set offset (OBSOLETE)", value=1500, unit="Hz"
-            )
-        ).entry
-
-        self.input_set_Hz = self.add_row(
-            peter_widgets.DoubleSpinBoxWidget(
-                label="Set swr min(OBSOLETE)", value=7.074e6, unit="Hz"
-            )
-        ).entry
-
-        # Frequency enable checkbox
         self.frequency_checkbox = self.add_row(
             peter_widgets.CheckboxWidget("Tune Frequency enable")
         ).checkbox
-        # Frequency Offset textfeld mit button set
         self.frequency_offset = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency Offset (DOPPELT)", f_value=0.0, unit="Hz"
+                label="Frequency Offset", f_value=0.0, unit="Hz"
             )
         )
-        # Frequency auto get from TX checkbox
         self.frequency_auto_get = self.add_row(
-            peter_widgets.CheckboxWidget("Frequency auto get from TX (DOPPELT)")
+            peter_widgets.CheckboxWidget("Frequency auto get from TX")
         ).checkbox
-        # Frequency TX textfeld mit button set
+        self.auto_get_timer = QtCore.QTimer(self)
+        self.auto_get_timer.setInterval(2000)
+        self.auto_get_timer.timeout.connect(self._auto_get_frequency)
+        self.frequency_auto_get.checkStateChanged.connect(
+            self.on_auto_get_frequency_toggle
+        )
+
         self.frequency_tx = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Frequency TX", f_value=0.0, unit="Hz"
             )
         )
-        # Frequency target textfeld
         self.frequency_target = self.add_row(
             peter_widgets.ValueWidget(label="Frequency target", value="0")
         )
-        # Frequency current textfeld
-        self.frequency_target = self.add_row(
+        self.frequency_current = self.add_row(
             peter_widgets.ValueWidget(label="Frequency current", value="0")
         )
 
-        # Frequency servo_f textfeld button set
         self.frequency_servo_f = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Frequency servo_f",
@@ -336,21 +297,17 @@ class PeterAntennaControl(Control):
         )
 
         self.add_row(peter_widgets.SeparatorWidget())
-        # Impedance enable checkbox
         self.impedance_checkbox = self.add_row(
             peter_widgets.CheckboxWidget("Tune Impedance enable")
         ).checkbox
-        # Impedance target textfeld mit button set
         self.impedance_target = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Impedance target", f_value=0.0, unit="Ohm"
             )
         )
-        # Impedance current textfeld
         self.impedance_current = self.add_row(
             peter_widgets.ValueWidget(label="Impedance current", value="0")
         )
-        # Impedance servo_z textfeld button set
         self.impedance_servo_z = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Impedance servo_z",
@@ -361,7 +318,6 @@ class PeterAntennaControl(Control):
         )
 
         self.add_row(peter_widgets.SeparatorWidget())
-        #### NEW
 
         self.delta_display = self.add_row(
             peter_widgets.ValueWidget(label="Δ kHz (SWR min)", value="--")
@@ -555,9 +511,7 @@ class PeterAntennaControl(Control):
         """
         assert isinstance(checked, QtCore.Qt.CheckState)
         try:
-            state_vna_enabled = (
-                checked.value
-            )  # self.checkbox_vna_enable.isChecked()
+            state_vna_enabled = checked == QtCore.Qt.CheckState.Checked
             # The following code will ALSO power the servos
             self._mp_exec(
                 label_full="pico_vna_enable",
@@ -725,7 +679,7 @@ class PeterAntennaControl(Control):
 
     def on_auto_get_frequency_toggle(self):
         """Start/stop the automatic frequency polling based on checkbox state."""
-        if self.checkbox_auto_get_f.isChecked():
+        if self.frequency_auto_get.isChecked():
             logger.debug("Starting auto frequency fetch timer (1s)")
             # do an immediate fetch, then rely on timer for subsequent updates
             self._auto_get_frequency()
@@ -741,7 +695,9 @@ class PeterAntennaControl(Control):
         integer frequency in Hz (as bytes). Any errors are logged and ignored.
         """
         try:
-            with socket.create_connection((RIGCTL_HOSTNAME, RIGCTL_PORT), timeout=1) as s:
+            with socket.create_connection(
+                (RIGCTL_HOSTNAME, RIGCTL_PORT), timeout=1
+            ) as s:
                 s.sendall(b"f\n")
                 data = s.recv(1024).strip()
                 if not data:
@@ -755,22 +711,16 @@ class PeterAntennaControl(Control):
                     )
                     return
                 # Apply SWR offset to received frequency
-                try:
-                    offset_hz = int(self.input_swr_offset_Hz.text())
-                except (ValueError, AttributeError):
-                    offset_hz = 0
+                self.frequency_tx._set_value(float(freq_hz))
+                offset_hz = self.frequency_offset.f_value
                 freq_hz_with_offset = freq_hz + offset_hz
-                # Insert the offset-adjusted Hz integer into the input field (naked number)
-                if hasattr(self, "input_set_Hz"):
-                    self.input_set_Hz.setValue(freq_hz_with_offset)
-                logger.debug(
-                    "Auto-get frequency: set %d Hz (received %d Hz + offset %d Hz)",
-                    freq_hz_with_offset,
-                    freq_hz,
-                    offset_hz,
+
+                self.frequency_target.value.setText(
+                    f"{freq_hz_with_offset:0.0f} Hz"
                 )
-        except Exception as e:
-            logger.warning("Auto-get frequency failed: %s", e)
+
+        except Exception:
+            logger.exception("Auto-get frequency failed")
 
     # def _update_tx_inhibit_switch_obsolete(self):
     #     try:
@@ -1162,7 +1112,7 @@ class PeterAntennaControl(Control):
             logger.exception("Failed to update SWR min display")
             self.swrmin_display.setText("--")
 
-    def _update_impedance_display(self):
+    def _update_impedance_display(self) -> None:
         """Compute and display the antenna impedance from the Smith chart circle.
 
         The three marker points form a circle in the Smith chart.
@@ -1521,7 +1471,7 @@ class PeterAntennaControl(Control):
             if self.servos is None:
                 return 42.0
             if ENABLE_STS3215_SERVO_F:
-                return
+                return 42.0
             return self.servos.servo_ctl_f.get_persist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1

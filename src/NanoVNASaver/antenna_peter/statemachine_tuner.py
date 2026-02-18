@@ -54,11 +54,15 @@ class StatemachineTuner:
         return False: Requires more steps for tuning.
         exception. Something bad happened.
         """
-        self._tune_band_change(ctl=ctl)
-        return True
+        if False:
+            heading_tuned = self._tune_heading(ctl=ctl)
+            return heading_tuned
 
-        heading_tuned = self._tune_heading(ctl=ctl)
-        return heading_tuned
+        band_changed = self._tune_band_change(ctl=ctl)
+        if not band_changed:
+            return False
+        self._set_vna_range(ctl=ctl)
+        return True
 
         duration_s = time.monotonic() - self.last_s
         logger.info(f"tune {duration_s} s")
@@ -164,3 +168,6 @@ class StatemachineTuner:
         with ctl._servo_position_persist() as p:
             p.freq_antenna_hz = ctl.frequency_target.f_value
         return False
+
+    def _set_vna_range(self, ctl: PeterAntennaControl) -> bool:
+        pass

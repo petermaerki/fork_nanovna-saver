@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, TypeVar
 import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
 from sts3215_ctl import util_mpremote
-from sts3215_ctl.servo_ctl import Servo, ServoPortConfig
+from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
@@ -39,6 +39,7 @@ DIRECTORY_MICROPYTHON = DIRECTORY_OF_THIS_FILE / "micropython"
 assert DIRECTORY_MICROPYTHON.is_dir()
 DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
+FILENAME_PERSIST_SERVO_F=DIRECTORY_OF_THIS_FILE                / "tmp_sts3215_servo_f.json"
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
@@ -55,8 +56,7 @@ class Servos:
                 acceleration=300,
                 position_p_gain=10,
                 position_i_gain=2,
-                filename_persist=DIRECTORY_OF_THIS_FILE
-                / "tmp_sts3215_servo_f.json",
+                filename_persist=FILENAME_PERSIST_SERVO_F,
             )
         self.servo_ctl_z = Servo(
             port_config=port_config,
@@ -1246,14 +1246,13 @@ class PeterAntennaControl(Control):
         return _target_ta
 
     def _frequency_get_servo_f(self) -> float:
+        if not ENABLE_STS3215_SERVO_F:
+            return 4.2
         try:
-            if self.servos is None:
-                return 4.2
-            if ENABLE_STS3215_SERVO_F:
-                return 4.2
-            return self.servos.servo_ctl_f.get_persist().present_ta
+            persist = ServoPersistent.get_persist(filename=FILENAME_PERSIST_SERVO_F)
+            return persist.present_ta
         except calculator.ExceptionRequireHoming:
-            return 0.1
+            return 4.3
 
     def _mp_exec(self, label_full: str, cmd: str) -> str:
         assert isinstance(label_full, str)

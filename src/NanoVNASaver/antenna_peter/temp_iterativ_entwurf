@@ -28,7 +28,7 @@ def dummy_messung_impedanz_ohm(servo_z_target_ta: float):
 
 iter = util_iteration_regula_falsi.iteration(
     ySoll=impedanz_target_ohm,
-    yToleranz=0.5,
+    yToleranz=4.0,
     xMin=statemachine_tuner.IMPEDANCE_TARGET_TA_MIN,
     xMax=statemachine_tuner.IMPEDANCE_TARGET_TA_MAX,
     iMax=20,

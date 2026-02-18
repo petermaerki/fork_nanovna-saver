@@ -14,7 +14,8 @@ __pycache__/*
 */.ipynb_checkpoints/*
 .DS_Store
 src/NanoVNASaver/antenna_peter/tmp_sts3215_servo_z_h.json
-src/NanoVNASaver/antenna_peter/util_persist.py
+src/NanoVNASaver/antenna_peter/util_persist.
+*663_iteration*
 
 
 # Project files
@@ -68,3 +69,4 @@ NanoVNASaver.txt
 **/tmp_sts3215_servo_f_logs/*
 **/tmp_sts3215_servo_f.json
 
+src/NanoVNASaver/antenna_peter/663_iteration/ablaufsteuerung.bat

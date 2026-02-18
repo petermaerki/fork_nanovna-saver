@@ -1235,7 +1235,7 @@ class PeterAntennaControl(Control):
             return target_ta
         _target_ta = min(
             statemachine_tuner.IMPEDANCE_TARGET_TA_MAX,
-            max(statemachine_tuner.IMPEDANCE_ARGET_TA_MIN, target_ta),
+            max(statemachine_tuner.IMPEDANCE_TARGET_TA_MIN, target_ta),
         )
         ewp = int(_target_ta * 4096) + 2048
         self.servos.servo_ctl_z.move_ewp(ewp=ewp)

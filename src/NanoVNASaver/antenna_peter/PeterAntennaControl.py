@@ -61,9 +61,9 @@ class Servos:
         self.servo_ctl_z = Servo(
             port_config=port_config,
             scs_id=3,
-            torque_limit=100,
+            torque_limit=150,
             goal_speed=1000,
-            acceleration=1,
+            acceleration=10,
             position_p_gain=10,
             position_i_gain=2,
         )
@@ -140,9 +140,9 @@ class PeterAntennaControl(Control):
         self.add_row(peter_widgets.SeparatorWidget())
 
         self.heading_checkbox = self.add_row(
-            peter_widgets.CheckboxWidget("Tune heading checkbox")
+            peter_widgets.CheckboxWidget("Tune heading enable")
         ).checkbox
-        self.heading_checkbox.setChecked(True)
+        self.heading_checkbox.setChecked(False)
         self.heading_target = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Tune heading target", f_value=0.0, unit="deg"
@@ -166,7 +166,7 @@ class PeterAntennaControl(Control):
 
         self.add_row(peter_widgets.SeparatorWidget())
 
-        self.frequency_checkbox = self.add_row(
+        self.frequency_tune_enable = self.add_row(
             peter_widgets.CheckboxWidget("Tune Frequency enable")
         ).checkbox
         self.frequency_offset = self.add_row(
@@ -207,7 +207,7 @@ class PeterAntennaControl(Control):
         )
 
         self.add_row(peter_widgets.SeparatorWidget())
-        self.impedance_checkbox = self.add_row(
+        self.impedance_tune_enable = self.add_row(
             peter_widgets.CheckboxWidget("Tune Impedance enable")
         ).checkbox
         self.impedance_target = self.add_row(
@@ -1248,9 +1248,9 @@ class PeterAntennaControl(Control):
     def _frequency_get_servo_f(self) -> float:
         try:
             if self.servos is None:
-                return 42.0
+                return 4.2
             if ENABLE_STS3215_SERVO_F:
-                return 42.0
+                return 4.2
             return self.servos.servo_ctl_f.get_persist().present_ta
         except calculator.ExceptionRequireHoming:
             return 0.1

@@ -84,15 +84,15 @@ BANDS: Bands = Bands(
         Band(
             band_m=40,
             ft8_hz=7_074_000,
-            measurement1=Measurement(7.0, 7_000_000),
-            measurement2=Measurement(8.0, 8_000_000),
+            measurement1=Measurement(25.0, 7.099E6),
+            measurement2=Measurement(26.0, 6.940e6),
             servo_z_ta=-0.1,
         ),
         Band(
             band_m=30,
             ft8_hz=10_136_000,
-            measurement1=Measurement(10.0, 10_000_000),
-            measurement2=Measurement(11.0, 11_000_000),
+            measurement1=Measurement(12.0, 1.1066E7),
+            measurement2=Measurement(13.0, 1.0504E7),
             servo_z_ta=0.1,
         ),
         Band(

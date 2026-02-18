@@ -15,12 +15,15 @@ logger = logging.getLogger(__name__)
 HEADING_TARGET_TA_MAX = 0.3
 HEADING_TARGET_TA_MIN = -0.3
 
-IMPEDANCE_TARGET_TA_MAX = 0.25
-IMPEDANCE_ARGET_TA_MIN = -0.25
+IMPEDANCE_TARGET_TA_MAX = 0.21
+"""0.25 moeglich aber steht an"""
+
+IMPEDANCE_ARGET_TA_MIN = -0.12  # -0.25
+"""-0.15 moelich"""
 
 FREQUENCY_TARGET_TA_MAX = 37.0
-"mechanical Limit of Capacitor"
-FREQUENCY_TARGET_TA_MIN = 0.05
+"mechanical Limit of Capacitor. Würde bis auf 37.2 funktionieren."
+FREQUENCY_TARGET_TA_MIN = 0.02
 "near to homing position"
 
 

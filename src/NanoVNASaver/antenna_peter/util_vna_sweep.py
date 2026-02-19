@@ -17,8 +17,8 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Frequency limits for magnetic loop antenna
-F_USEFUL_MIN_Hz = 1.0e6
-F_USEFUL_MAX_Hz = 30.0e6
+F_USEFUL_MIN_Hz_obsolete = 1.0e6
+F_USEFUL_MAX_Hz_obsolete = 30.0e6
 
 
 class StatemachineVna(enum.IntEnum):
@@ -162,11 +162,11 @@ class VnaSweeper:
                     "Failed to update impedance display after sweep finish"
                 )
             # increment tune iteration counter if tuning is still enabled
-            try:
-                if self.checkbox_tune.isChecked():
-                    self._tune_iteration_obsolete += 1
-            except Exception:
-                logger.exception("Failed to increment tune iteration counter")
+            # try:
+            #     if self.checkbox_tune.isChecked():
+            #         self._tune_iteration_obsolete += 1
+            # except Exception:
+            #     logger.exception("Failed to increment tune iteration counter")
         except Exception:
             logger.exception("Critical error in sweepFinished_peter_antenna")
             # Ensure motor is stopped on any error
@@ -448,11 +448,11 @@ class VnaSweeper:
                 # Center is outside circle → undercoupled
                 r_antenna = 50.0 / swr_min
 
-            self.impedance_display.setText(f"{r_antenna:.0f} Ω")
+            self.impedance_current.set_value(float(r_antenna))
 
         except Exception:
             logger.exception("Failed to update impedance display")
-            self.impedance_display.setText("--")
+            # self.impedance_display.setText("--")
 
     def _setMakerFrequencyFloat(
         self,
@@ -480,19 +480,19 @@ class VnaSweeper:
         assert SWEEP_RANGE_OVERLAP > 1.1
 
         # Safety check: if no valid data from find_min_swr, use full range
-        if (
-            f_swr_min_Hz is None
-            and f_swr_p2_64_l_Hz is None
-            and f_swr_p2_64_h_Hz is None
-        ):
-            logger.warning(
-                "find_sweep_start_stop: No valid frequency data, using full range"
-            )
-            self._setStartStopFrequencyFloat("Start", F_USEFUL_MIN_Hz)
-            self._setStartStopFrequencyFloat("Stop", F_USEFUL_MAX_Hz)
-            self._setDatapointCount(500)
-            # self._set_motor_status_obsolete("stop (no data)")
-            return
+        # if (
+        #     f_swr_min_Hz is None
+        #     and f_swr_p2_64_l_Hz is None
+        #     and f_swr_p2_64_h_Hz is None
+        # ):
+        #     logger.warning(
+        #         "find_sweep_start_stop: No valid frequency data, using full range"
+        #     )
+        #     self._setStartStopFrequencyFloat("Start", F_USEFUL_MIN_Hz_obsolete)
+        #     self._setStartStopFrequencyFloat("Stop", F_USEFUL_MAX_Hz_obsolete)
+        #     self._setDatapointCount(500)
+        #     # self._set_motor_status_obsolete("stop (no data)")
+        #     return
 
         try:
             set_f_swr_min_Hz = float(self.input_set_Hz.text())
@@ -532,9 +532,9 @@ class VnaSweeper:
                 )
 
             sweep_stop_Hz = set_f_swr_min_Hz + distance_f * SWEEP_RANGE_OVERLAP
-            sweep_stop_Hz = min(F_USEFUL_MAX_Hz, sweep_stop_Hz)
+            sweep_stop_Hz = min(F_USEFUL_MAX_Hz_obsolete, sweep_stop_Hz)
             sweep_start_Hz = set_f_swr_min_Hz - distance_f * SWEEP_RANGE_OVERLAP
-            sweep_start_Hz = max(F_USEFUL_MIN_Hz, sweep_start_Hz)
+            sweep_start_Hz = max(F_USEFUL_MIN_Hz_obsolete, sweep_start_Hz)
 
             logger.debug(
                 "Zoom calc: f_swr_min=%s Hz, set_f=%s Hz, distance_f=%s Hz, "
@@ -545,11 +545,11 @@ class VnaSweeper:
                 sweep_start_Hz,
                 sweep_stop_Hz,
             )
-        else:
-            # No SWR min found at all, use full range
-            logger.debug("No SWR min found, using full range")
-            sweep_start_Hz = F_USEFUL_MIN_Hz
-            sweep_stop_Hz = F_USEFUL_MAX_Hz
+        # else:
+        #     # No SWR min found at all, use full range
+        #     logger.debug("No SWR min found, using full range")
+        #     sweep_start_Hz = F_USEFUL_MIN_Hz_obsolete
+        #     sweep_stop_Hz = F_USEFUL_MAX_Hz_obsolete
 
         self._setStartStopFrequencyFloat("Start", sweep_start_Hz)
         self._setStartStopFrequencyFloat("Stop", sweep_stop_Hz)
@@ -610,7 +610,7 @@ class VnaSweeper:
         if f_swr_min_Hz is not None and (
             abs(f_swr_min_Hz - set_f_swr_min_Hz) > 1e6 or swr_min < 2.0
         ):
-            if F_USEFUL_MIN_Hz < f_swr_min_Hz < F_USEFUL_MAX_Hz:
+            if F_USEFUL_MIN_Hz_obsolete < f_swr_min_Hz < F_USEFUL_MAX_Hz_obsolete:
                 difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
                 direction_up = difference_Hz > 0
                 deviation = abs(difference_Hz / set_f_swr_min_Hz)

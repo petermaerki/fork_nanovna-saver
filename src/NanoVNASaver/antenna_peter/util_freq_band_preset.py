@@ -86,14 +86,14 @@ BANDS: Bands = Bands(
             ft8_hz=7_074_000,
             measurement1=Measurement(25.0, 7.099e6),
             measurement2=Measurement(26.0, 6.940e6),
-            servo_z_ta=-0.1,
+            servo_z_ta=0.15,
         ),
         Band(
             band_m=30,
             ft8_hz=10_136_000,
             measurement1=Measurement(12.0, 1.1066e7),
             measurement2=Measurement(13.0, 1.0504e7),
-            servo_z_ta=0.1,
+            servo_z_ta=0.15,
         ),
         Band(
             band_m=20,

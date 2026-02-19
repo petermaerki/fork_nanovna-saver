@@ -27,6 +27,11 @@ class StatemachineVna(enum.IntEnum):
     VNA_IS_SWEEPING = 3
 
 
+class StatemachineZoom(enum.IntEnum):
+    OVERVIEW = 1
+    ZOOMED = 2
+
+
 class VnaSweeper:
     def __init__(self, ctl: PeterAntennaControl, sweep: Sweep):
         self.ctl = ctl
@@ -37,7 +42,7 @@ class VnaSweeper:
         self.lower_freq_Hz: float
         self.upper_freq_Hz: float
         self.swr_min: float = 42.0
-        #self.reset_range(freq_Hz=7e6)
+        # self.reset_range(freq_Hz=7e6)
 
     def reset_range(self, freq_Hz: float) -> None:
         BAND_TEIL = 0.05
@@ -47,7 +52,7 @@ class VnaSweeper:
         self._setDatapointPoints(points=100)
         self._setSegments(segments=10)
         self.state = StatemachineVna.RESULTS_OUTDATED
-
+        self.state = StatemachineZoom.OVERVIEW
 
     def sweep(self) -> bool:
         """Falls Messwerte READY: True, sonst False"""
@@ -73,7 +78,7 @@ class VnaSweeper:
         input.textEdited.emit(input.text())
         self.app.sweep_control.update_sweep()
 
-    def _setDatapointPoints(self,  points: int):
+    def _setDatapointPoints(self, points: int):
         # See: src/NanoVNASaver/Windows/DeviceSettings.py, def updateNrDatapoints()
         vna = self.app.vna
         assert isinstance(vna, VNA)
@@ -82,7 +87,6 @@ class VnaSweeper:
         self.app.sweep.set_points(vna.datapoints)
         self.app.sweep_control.update_step_size()
 
-
     def _setSegments(self, segments: int):
         assert 0 < segments < 100
         # Total Punkte = DatapointSegemns x DatapointCount
@@ -90,33 +94,32 @@ class VnaSweeper:
 
     def sweepFinished_peter_antenna(self):
         self.state = StatemachineVna.RESULTS_OUTDATED
+        if not self.find_min_swr():
+            return
+        self.ctl.impedance_current.set_value(self.impedance)
+        self.state = StatemachineVna.RESULTS_READY
 
-        try:
-            f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
-                self.find_min_swr()
-            )
-            if (
-                f_swr_p2_64_l_Hz is None
-                and f_swr_min_Hz is None
-                and f_swr_p2_64_h_Hz is None
-            ):
-                logger.warning("sweepFinished: No valid frequencies found")
-                # Still call find_sweep_start_stop to handle the case properly
-            self.find_sweep_start_stop(
-                f_swr_p2_64_l_Hz,
-                f_swr_min_Hz,
-                f_swr_p2_64_h_Hz,
-                swr_min,
-            )
-            self.f_swr_p2_64_l_Hz = f_swr_p2_64_l_Hz
-            self.f_swr_min_Hz = f_swr_min_Hz
-            self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
-            self.swr_min = swr_min
-
-            self.ctl.impedance_current.set_value(self.impedance)
-
-            self.state = StatemachineVna.RESULTS_READY
-
+        # try:
+        #     f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
+        #         self.find_min_swr()
+        #     )
+        #     if (
+        #         f_swr_p2_64_l_Hz is None
+        #         and f_swr_min_Hz is None
+        #         and f_swr_p2_64_h_Hz is None
+        #     ):
+        #         logger.warning("sweepFinished: No valid frequencies found")
+        #         # Still call find_sweep_start_stop to handle the case properly
+        #     self.find_sweep_start_stop(
+        #         f_swr_p2_64_l_Hz,
+        #         f_swr_min_Hz,
+        #         f_swr_p2_64_h_Hz,
+        #         swr_min,
+        #     )
+        #     self.f_swr_p2_64_l_Hz = f_swr_p2_64_l_Hz
+        #     self.f_swr_min_Hz = f_swr_min_Hz
+        #     self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
+        #     self.swr_min = swr_min
             # Update ppm and Q displays only after sweep finish / after find_min_swr()
             # try:
             #     self._update_delta_display()
@@ -148,8 +151,8 @@ class VnaSweeper:
             #         self._tune_iteration_obsolete += 1
             # except Exception:
             #     logger.exception("Failed to increment tune iteration counter")
-        except Exception:
-            logger.exception("Critical error in sweepFinished_peter_antenna")
+        # except Exception:
+        #     logger.exception("Critical error in sweepFinished_peter_antenna")
             # Ensure motor is stopped on any error
             # try:
             #     self._pico_run(direction_up=True, on=False)
@@ -157,7 +160,49 @@ class VnaSweeper:
             # except Exception:
             #     logger.exception("Failed to stop motor after error")
 
-    def find_min_swr(self):
+    def find_min_swr(self) -> Bool:
+        """Returns True if swr und 2.64 freqeuencies are found"""
+        with self.app.dataLock:
+            s11: list[Datapoint]
+            s11 = self.app.data.s11[:]
+
+            swr = np.asarray([d.vswr for d in s11])
+            freq_Hz = np.asarray([float(d.freq) for d in s11])
+
+            if len(swr) == 0 or len(freq_Hz) == 0:
+                logger.warning("find_min_swr: No data available")
+                return False
+
+            idx_min = np.argmin(swr)
+            swr_min = swr[idx_min]
+
+            swr_min_limit = 2.0
+            if swr_min > swr_min_limit:
+                logger.warning(
+                    f"{swr_min=} is not below {swr_min_limit=}: adjust servo_z manually to get a lower swr"
+                )
+                return False
+            f_swr_min_Hz = freq_Hz[idx_min]
+
+            TARGET_SWR_2_64 = 2.64
+
+            left_idx = np.where(swr[:idx_min] >= TARGET_SWR_2_64)[0]
+            right_idx = np.where(swr[idx_min:] >= TARGET_SWR_2_64)[0]
+
+            f_swr_p2_64_l_Hz = freq_Hz[left_idx[-1]] if len(left_idx) else None
+            f_swr_p2_64_h_Hz = (
+                freq_Hz[idx_min + right_idx[0]] if len(right_idx) else None
+            )
+
+        if f_swr_p2_64_l_Hz is not None and f_swr_p2_64_h_Hz is not None:
+            self.f_swr_p2_64_l_Hz = f_swr_p2_64_l_Hz
+            self.f_swr_min_Hz = f_swr_min_Hz
+            self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
+            self.swr_min = swr_min
+            return True
+        return False
+
+    def find_min_swr_obsolete_old(self):
         with self.app.dataLock:
             s11: list[Datapoint]
             s11 = self.app.data.s11[:]
@@ -252,6 +297,7 @@ class VnaSweeper:
         self._set_marker(2, f_swr_p2_64_h_Hz)
 
         return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min
+        self.state = StatemachineVna.RESULTS_OUTDATED
 
     @property
     def f_swr_p2_64_l_Hz(self) -> int:

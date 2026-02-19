@@ -93,9 +93,14 @@ class VnaSweeper:
         self.app.sweep_control.set_segments(count=segments)
 
     def sweepFinished_peter_antenna(self):
-        self.state = StatemachineVna.RESULTS_OUTDATED
-        if not self.find_min_swr():
+        self.state = StatemachineVna.RESULTS_READY
+        if not self._find_min_swr():
+            self.state = StatemachineVna.RESULTS_OUTDATED
             return
+        if not self._zoom():
+            self.state = StatemachineVna.RESULTS_OUTDATED
+            return
+
         self.ctl.impedance_current.set_value(self.impedance)
         self.state = StatemachineVna.RESULTS_READY
 
@@ -120,47 +125,47 @@ class VnaSweeper:
         #     self.f_swr_min_Hz = f_swr_min_Hz
         #     self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
         #     self.swr_min = swr_min
-            # Update ppm and Q displays only after sweep finish / after find_min_swr()
-            # try:
-            #     self._update_delta_display()
-            # except Exception:
-            #     logger.exception(
-            #         "Failed to update delta display after sweep finish"
-            #     )
-            # try:
-            #     self._update_q_display()
-            # except Exception:
-            #     logger.exception(
-            #         "Failed to update Q display after sweep finish"
-            #     )
-            # try:
-            #     self._update_swrmin_display()
-            # except Exception:
-            #     logger.exception(
-            #         "Failed to update SWR min display after sweep finish"
-            #     )
-            # try:
-            #     self._update_impedance_display()
-            # except Exception:
-            #     logger.exception(
-            #         "Failed to update impedance display after sweep finish"
-            #     )
-            # increment tune iteration counter if tuning is still enabled
-            # try:
-            #     if self.checkbox_tune.isChecked():
-            #         self._tune_iteration_obsolete += 1
-            # except Exception:
-            #     logger.exception("Failed to increment tune iteration counter")
+        # Update ppm and Q displays only after sweep finish / after find_min_swr()
+        # try:
+        #     self._update_delta_display()
+        # except Exception:
+        #     logger.exception(
+        #         "Failed to update delta display after sweep finish"
+        #     )
+        # try:
+        #     self._update_q_display()
+        # except Exception:
+        #     logger.exception(
+        #         "Failed to update Q display after sweep finish"
+        #     )
+        # try:
+        #     self._update_swrmin_display()
+        # except Exception:
+        #     logger.exception(
+        #         "Failed to update SWR min display after sweep finish"
+        #     )
+        # try:
+        #     self._update_impedance_display()
+        # except Exception:
+        #     logger.exception(
+        #         "Failed to update impedance display after sweep finish"
+        #     )
+        # increment tune iteration counter if tuning is still enabled
+        # try:
+        #     if self.checkbox_tune.isChecked():
+        #         self._tune_iteration_obsolete += 1
+        # except Exception:
+        #     logger.exception("Failed to increment tune iteration counter")
         # except Exception:
         #     logger.exception("Critical error in sweepFinished_peter_antenna")
-            # Ensure motor is stopped on any error
-            # try:
-            #     self._pico_run(direction_up=True, on=False)
-            #     self._set_motor_status_obsolete("stop (error)")
-            # except Exception:
-            #     logger.exception("Failed to stop motor after error")
+        # Ensure motor is stopped on any error
+        # try:
+        #     self._pico_run(direction_up=True, on=False)
+        #     self._set_motor_status_obsolete("stop (error)")
+        # except Exception:
+        #     logger.exception("Failed to stop motor after error")
 
-    def find_min_swr(self) -> Bool:
+    def _find_min_swr(self) -> bool:
         """Returns True if swr und 2.64 freqeuencies are found"""
         with self.app.dataLock:
             s11: list[Datapoint]
@@ -201,6 +206,29 @@ class VnaSweeper:
             self.swr_min = swr_min
             return True
         return False
+
+    def _zoom(self) -> bool:
+        SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.64 band
+        assert SWEEP_RANGE_OVERLAP > 1.1
+        target_hz=self.ctl.frequency_target.f_value
+        distance_f = abs(target_hz - self.f_swr_min_Hz)
+        distance_f = max(
+            abs(self.f_swr_p2_64_l_Hz - target_hz), distance_f
+        )
+        distance_f = max(
+            abs(self.f_swr_p2_64_h_Hz - target_hz), distance_f
+        )
+        upper_freq_Hz = target_hz + distance_f * SWEEP_RANGE_OVERLAP
+        upper_freq_Hz = min(F_USEFUL_MAX_Hz_obsolete, upper_freq_Hz)
+        lower_freq_Hz = target_hz - distance_f * SWEEP_RANGE_OVERLAP
+        lower_freq_Hz = max(F_USEFUL_MIN_Hz_obsolete, lower_freq_Hz)
+
+        self.lower_freq_Hz =lower_freq_Hz
+        self.upper_freq_Hz =upper_freq_Hz
+        self._setSegments(segments=1)
+        return True
+
+    # ...existing code...
 
     def find_min_swr_obsolete_old(self):
         with self.app.dataLock:
@@ -515,22 +543,6 @@ class VnaSweeper:
 
         except Exception as e:
             logger.exception(f"Failed to update impedance display: {e}")
-            # self.impedance_display.setText("--")
-
-    # def _setMakerFrequencyFloat(
-    #     self,
-    #     index: int,
-    #     freq_Hz: float | None,
-    #     freq_default_Hz: float,
-    # ):
-    #     if freq_Hz is None:
-    #         freq_Hz = freq_default_Hz
-    #     self._setMakerFrequency(index, f"{freq_Hz:0.0f} Hz")
-
-    # def _setMakerFrequency(self, index: int, text: str):
-    #     marker = self.app.markers[index]
-    #     assert isinstance(marker, Marker)
-    #     marker.setFrequency(text)
 
     def find_sweep_start_stop(
         self,

@@ -310,7 +310,6 @@ class PeterAntennaControl(Control):
         assert isinstance(checked, QtCore.Qt.CheckState)
         state_tuning = checked.value  #  self.checkbox_tune.isChecked()
         self.checkbox_vna_enable.setChecked(state_tuning)
-        logger.error("on_tune(): Why?")
         return
         if state_tuning:
             # Auto-enable VNA if not already enabled
@@ -326,14 +325,14 @@ class PeterAntennaControl(Control):
             # except Exception:
             #     logger.exception("Failed to send initial power on tune enable")
             # self.on_button_set_values()
-            if False:
-                sweep_stop = self.app.sweep_control.inputs["Stop"]
-                assert isinstance(sweep_stop, FrequencyInputWidget)
-                if sweep_stop.get_freq() > F_USEFUL_MAX_Hz:
-                    sweep_stop.setText(f"{F_USEFUL_MAX_Hz:0.0f}Hz")
-                    sweep_start = self.app.sweep_control.inputs["Start"]
-                    assert isinstance(sweep_start, FrequencyInputWidget)
-                    sweep_start.setText(f"{F_USEFUL_MIN_Hz:0.0f}Hz")
+            # if False:
+            #     sweep_stop = self.app.sweep_control.inputs["Stop"]
+            #     assert isinstance(sweep_stop, FrequencyInputWidget)
+            #     if sweep_stop.get_freq() > F_USEFUL_MAX_Hz:
+            #         sweep_stop.setText(f"{F_USEFUL_MAX_Hz:0.0f}Hz")
+            #         sweep_start = self.app.sweep_control.inputs["Start"]
+            #         assert isinstance(sweep_start, FrequencyInputWidget)
+            #         sweep_start.setText(f"{F_USEFUL_MIN_Hz:0.0f}Hz")
 
             # self._setStartStopFrequencyFloat("Start", 1e6)
             # self._setStartStopFrequencyFloat("Stop", 30e6)
@@ -341,7 +340,9 @@ class PeterAntennaControl(Control):
             # self.app.sweep.set_logarithmic(True)
 
             # self.app.sweep_start()
+            pass
         else:
+            pass
             # self._pico_run(direction_up=True, on=False)
             # When tune is disabled, also disable VNA enable
             # if self.checkbox_vna_enable.isChecked():
@@ -350,32 +351,6 @@ class PeterAntennaControl(Control):
             # self._set_motor_status_obsolete("stop")
             # clear internal tune iteration counter when tuning disabled
             # self._tune_iteration_obsolete = 0
-            def run_vna_on_frequency_which_does_not_harm():
-                # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
-                try:
-                    # Restore a harmless sweep on low frequencies and start it so the
-                    # VNA runs there (this keeps the device quiet on other bands).
-                    # Update the UI fields so behavior is visible and consistent.
-                    self._setStartStopFrequencyFloat("Start", 100e3)
-                    self._setStartStopFrequencyFloat("Stop", 200e3)
-                    # use a small number of points for quick harmless sweep
-                    self._setDatapointCount(201)
-                    self.app.sweep.set_logarithmic(False)
-                    # mark/apply suppression of display updates while this
-                    # harmless sweep runs so the visible graph is not overwritten
-                    self.app._suppress_display_updates = True
-                    self.app._harmless_sweep_active = True
-                    # start the harmless sweep so the VNA actually runs at low freq
-                    self.app.sweep_start()
-                    logger.debug(
-                        "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"
-                    )
-                except Exception:
-                    logger.exception(
-                        "Failed to set harmless sweep on tune disable"
-                    )
-
-            run_vna_on_frequency_which_does_not_harm()
 
             # sweep_start.setText(f"100kHz") # todo: disable sweep completely
             # sweep_stop.setText(f"200kHz")
@@ -399,8 +374,10 @@ class PeterAntennaControl(Control):
                     self.servos = Servos(port_config=self.port_config)
             else:
                 self.servos = None
+                self.vna.run_vna_on_frequency_which_does_not_harm()
 
             self._enable_widgets(state_vna_enabled=state_vna_enabled)
+
             # If the user enabled VNA, also try to connect the serial port control
             # (do nothing if already connected)
             # if checked:
@@ -553,7 +530,6 @@ class PeterAntennaControl(Control):
         self._setDatapointCount(1000)
         self.app.sweep.set_logarithmic(True)
         self.app.sweep_start()
-
 
     def _frequency_set_servo_f(self, target_ta: float) -> float:
         if self.servos is None:

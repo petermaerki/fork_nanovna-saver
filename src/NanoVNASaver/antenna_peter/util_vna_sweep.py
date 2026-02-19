@@ -69,46 +69,9 @@ class VnaSweeper:
 
     def _setStartStopFrequency(self, tag: str, text: str):
         input = self.app.sweep_control.inputs[tag]
-        assert isinstance(input, FrequencyInputWidget)
-        # Log incoming requested update and existing content
-        try:
-            logger.debug(
-                f"_setStartStopFrequency request: tag={tag} text={text} (before={input.text()})"
-            )
-        except Exception:
-            logger.exception("Failed to log before-set state for sweep input")
-
-        # Update the visible input field
         input.setText(text)
-
-        # Log the field after setText to verify the widget contains the
-        # expected value (diagnostic for why the hardware may not receive it)
-        try:
-            logger.debug(
-                f"_setStartStopFrequency after setText: tag={tag} content={input.text()}"
-            )
-        except Exception:
-            logger.exception("Failed to log after-set state for sweep input")
-        # Make sure the sweep control reacts to the change so the
-        # internal Sweep object is updated immediately (otherwise the
-        # VNA will keep using the old sweep range).
-        try:
-            input.textEdited.emit(input.text())
-        except Exception:
-            logger.exception("Failed to emit textEdited for sweep input")
-        try:
-            self.app.sweep_control.update_sweep()
-        except Exception:
-            logger.exception("Failed to update sweep after changing Start/Stop")
-        else:
-            # Log the active sweep range for diagnostics
-            try:
-                logger.debug(
-                    f"Set sweep Start/Stop -> {self.app.sweep.start} - {self.app.sweep.end}"
-                )
-            except Exception:
-                # Best-effort, do not crash on logging
-                logger.exception("Failed to log new sweep range")
+        input.textEdited.emit(input.text())
+        self.app.sweep_control.update_sweep()
 
     def _setDatapointPoints(self,  points: int):
         # See: src/NanoVNASaver/Windows/DeviceSettings.py, def updateNrDatapoints()

@@ -35,6 +35,7 @@ FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
+DEBUG_FORCE_BAND_SWITCH = True
 
 
 class Servos:
@@ -90,6 +91,8 @@ class PeterAntennaControl(Control):
         )
 
         with self._servo_position_persist() as p:
+            if DEBUG_FORCE_BAND_SWITCH:
+                p.freq_antenna_hz = 10e6
             servo_position_persist = p
 
         self.vna = util_vna_sweep.VnaSweeper(ctl=self, sweep=self.app.sweep)

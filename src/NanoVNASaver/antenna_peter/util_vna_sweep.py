@@ -34,15 +34,16 @@ class VnaSweeper:
         self.ctl_sweep = sweep
         self.app = self.ctl.app
         self.vna_is_sweeping = False
-        self.lower_freq_hz: float
-        self.upper_freq_hz: float
-        self.reset_range(freq_hz=7e6)
+        self.lower_freq_Hz: float
+        self.upper_freq_Hz: float
+        self.swrmin: float = 42.0
+        self.reset_range(freq_Hz=7e6)
 
-    def reset_range(self, freq_hz: float) -> None:
+    def reset_range(self, freq_Hz: float) -> None:
         BAND_TEIL = 0.05
         """Damit mit allen Toleranzen die Resonanz sicher abgebildet wird"""
-        self.lower_freq_hz = freq_hz * (1.0 - BAND_TEIL)
-        self.upper_freq_hz = freq_hz * (1.0 + BAND_TEIL)
+        self.lower_freq_Hz = freq_Hz * (1.0 - BAND_TEIL)
+        self.upper_freq_Hz = freq_Hz * (1.0 + BAND_TEIL)
         self.state = StatemachineVna.RESULTS_OUTDATED
 
     def sweep(self) -> bool:
@@ -53,8 +54,8 @@ class VnaSweeper:
         # Falls ok: return True
         # servo_f, servo_z
         # Sonst: neuen sweep starten
-        self._setStartStopFrequencyFloat("Start", self.lower_freq_hz)
-        self._setStartStopFrequencyFloat("Stop", self.upper_freq_hz)
+        self._setStartStopFrequencyFloat("Start", self.lower_freq_Hz)
+        self._setStartStopFrequencyFloat("Stop", self.upper_freq_Hz)
         self._setDatapointCount(200)
         self.ctl_sweep.set_logarithmic(False)
         self.app.sweep_start()
@@ -266,11 +267,39 @@ class VnaSweeper:
                 freq_Hz[idx_min + right_idx[0]] if len(right_idx) else None
             )
 
-        self._setMakerFrequencyFloat(0, f_swr_p2_64_l_Hz, freq_Hz[0])
-        self._setMakerFrequencyFloat(1, f_swr_min_Hz, freq_Hz[0])
-        self._setMakerFrequencyFloat(2, f_swr_p2_64_h_Hz, freq_Hz[0])
+        self._set_marker(0, f_swr_p2_64_l_Hz)
+        self._set_marker(1, f_swr_min_Hz)
+        self._set_marker(2, f_swr_p2_64_h_Hz)
 
         return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min
+
+    @property
+    def f_swr_p2_64_l_Hz(self) -> int:
+        return self.app.markers[0].frequencyInput.get_freq()
+
+    @f_swr_p2_64_l_Hz.setter
+    def f_swr_p2_64_l_Hz(self, freq_Hz: int) -> None:
+        self._set_marker(0, freq_Hz=freq_Hz)
+
+    @property
+    def f_swr_min_Hz(self) -> int:
+        return self.app.markers[1].frequencyInput.get_freq()
+
+    @f_swr_min_Hz.setter
+    def f_swr_min_Hz(self, freq_Hz: int) -> None:
+        self._set_marker(1, freq_Hz=freq_Hz)
+
+    @property
+    def f_swr_p2_64_h_Hz(self) -> int:
+        return self.app.markers[2].frequencyInput.get_freq()
+
+    @f_swr_p2_64_h_Hz.setter
+    def f_swr_p2_64_h_Hz(self, freq_Hz: int) -> None:
+        self._set_marker(2, freq_Hz=freq_Hz)
+
+    def _set_marker(self, index: int, freq_Hz: int|float):
+        assert isinstance(freq_Hz, int|float)
+        self.app.markers[index].setFrequency(f"{freq_Hz:0.0f} Hz")
 
     def _update_q_display(self):
         """Compute Q = marker2 / (marker3 - marker1) and update label.
@@ -346,14 +375,13 @@ class VnaSweeper:
                 s11: list[Datapoint]
                 s11 = self.app.data.s11[:]
                 if not s11:
-                    self.swrmin_display.setText("--")
+                    self.swrmin = 42
                     return
                 swr = np.asarray([d.vswr for d in s11])
-            swr_min = float(np.min(swr))
-            self.swrmin_display.setText(f"{swr_min:.2f}")
+            self.swrmin = float(np.min(swr))
         except Exception:
             logger.exception("Failed to update SWR min display")
-            self.swrmin_display.setText("--")
+            self.swrmin = 42
 
     def _update_impedance_display(self) -> None:
         """Compute and display the antenna impedance from the Smith chart circle.
@@ -448,26 +476,26 @@ class VnaSweeper:
                 # Center is outside circle → undercoupled
                 r_antenna = 50.0 / swr_min
 
-            self.impedance_current.set_value(float(r_antenna))
+            self.ctl.impedance_current.set_value(float(r_antenna))
 
         except Exception:
             logger.exception("Failed to update impedance display")
             # self.impedance_display.setText("--")
 
-    def _setMakerFrequencyFloat(
-        self,
-        index: int,
-        freq_Hz: float | None,
-        freq_default_Hz: float,
-    ):
-        if freq_Hz is None:
-            freq_Hz = freq_default_Hz
-        self._setMakerFrequency(index, f"{freq_Hz:0.0f} Hz")
+    # def _setMakerFrequencyFloat(
+    #     self,
+    #     index: int,
+    #     freq_Hz: float | None,
+    #     freq_default_Hz: float,
+    # ):
+    #     if freq_Hz is None:
+    #         freq_Hz = freq_default_Hz
+    #     self._setMakerFrequency(index, f"{freq_Hz:0.0f} Hz")
 
-    def _setMakerFrequency(self, index: int, text: str):
-        marker = self.app.markers[index]
-        assert isinstance(marker, Marker)
-        marker.setFrequency(text)
+    # def _setMakerFrequency(self, index: int, text: str):
+    #     marker = self.app.markers[index]
+    #     assert isinstance(marker, Marker)
+    #     marker.setFrequency(text)
 
     def find_sweep_start_stop(
         self,
@@ -610,7 +638,11 @@ class VnaSweeper:
         if f_swr_min_Hz is not None and (
             abs(f_swr_min_Hz - set_f_swr_min_Hz) > 1e6 or swr_min < 2.0
         ):
-            if F_USEFUL_MIN_Hz_obsolete < f_swr_min_Hz < F_USEFUL_MAX_Hz_obsolete:
+            if (
+                F_USEFUL_MIN_Hz_obsolete
+                < f_swr_min_Hz
+                < F_USEFUL_MAX_Hz_obsolete
+            ):
                 difference_Hz = set_f_swr_min_Hz - f_swr_min_Hz
                 direction_up = difference_Hz > 0
                 deviation = abs(difference_Hz / set_f_swr_min_Hz)

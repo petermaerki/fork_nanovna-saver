@@ -192,7 +192,7 @@ class StatemachineTuner:
         success = False
         print(f"{self.iteration=}")
         ctl.vna.state = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
-        if self.iteration > 5:
+        if self.iteration > 2:
             self.iteration = 0
             success = True
         return success

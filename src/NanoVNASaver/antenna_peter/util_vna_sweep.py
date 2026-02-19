@@ -33,21 +33,24 @@ class VnaSweeper:
         self.state = StatemachineVna.RESULTS_OUTDATED
         self.ctl_sweep = sweep
         self.app = self.ctl.app
-        #self.vna_is_sweeping___obsolete = False
+        # self.vna_is_sweeping___obsolete = False
         self.lower_freq_Hz: float
         self.upper_freq_Hz: float
         self.swr_min: float = 42.0
-        self.reset_range(freq_Hz=7e6)
+        #self.reset_range(freq_Hz=7e6)
 
     def reset_range(self, freq_Hz: float) -> None:
         BAND_TEIL = 0.05
         """Damit mit allen Toleranzen die Resonanz sicher abgebildet wird"""
         self.lower_freq_Hz = freq_Hz * (1.0 - BAND_TEIL)
         self.upper_freq_Hz = freq_Hz * (1.0 + BAND_TEIL)
+        self._setDatapointPoints(points=100)
+        self._setSegments(segments=10)
         self.state = StatemachineVna.RESULTS_OUTDATED
 
+
     def sweep(self) -> bool:
-        '''Falls Messwerte READY: True, sonst False'''
+        """Falls Messwerte READY: True, sonst False"""
         if self.state is StatemachineVna.VNA_IS_SWEEPING:
             return False
         if self.state is StatemachineVna.RESULTS_READY:
@@ -55,7 +58,7 @@ class VnaSweeper:
         assert self.state is StatemachineVna.RESULTS_OUTDATED
         self._setStartStopFrequencyFloat("Start", self.lower_freq_Hz)
         self._setStartStopFrequencyFloat("Stop", self.upper_freq_Hz)
-        self._setDatapointCount(200)
+
         self.ctl_sweep.set_logarithmic(False)
         self.app.sweep_start()
         self.state = StatemachineVna.VNA_IS_SWEEPING
@@ -107,14 +110,20 @@ class VnaSweeper:
                 # Best-effort, do not crash on logging
                 logger.exception("Failed to log new sweep range")
 
-    def _setDatapointCount(self, count: int):
+    def _setDatapointPoints(self,  points: int):
         # See: src/NanoVNASaver/Windows/DeviceSettings.py, def updateNrDatapoints()
         vna = self.app.vna
         assert isinstance(vna, VNA)
-        vna.datapoints = count
+        vna.datapoints = points
         logger.debug(f"DP: {vna.datapoints}")
         self.app.sweep.set_points(vna.datapoints)
         self.app.sweep_control.update_step_size()
+
+
+    def _setSegments(self, segments: int):
+        assert 0 < segments < 100
+        # Total Punkte = DatapointSegemns x DatapointCount
+        self.app.sweep_control.set_segments(count=segments)
 
     def sweepFinished_peter_antenna(self):
         self.state = StatemachineVna.RESULTS_OUTDATED
@@ -713,7 +722,7 @@ class VnaSweeper:
             logger.warning("points variable not set, using default: %d", points)
 
         try:
-            self._setDatapointCount(points)
+            self._setDatapointPoints(points)
         except Exception:
             logger.exception("Failed to set datapoint count")
 
@@ -727,7 +736,7 @@ class VnaSweeper:
             self._setStartStopFrequencyFloat("Start", 100e3)
             self._setStartStopFrequencyFloat("Stop", 200e3)
             # use a small number of points for quick harmless sweep
-            self._setDatapointCount(201)
+            self._setDatapointPoints(201)
             self.app.sweep.set_logarithmic(False)
             # mark/apply suppression of display updates while this
             # harmless sweep runs so the visible graph is not overwritten

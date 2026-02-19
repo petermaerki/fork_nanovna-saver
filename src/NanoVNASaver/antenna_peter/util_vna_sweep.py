@@ -36,7 +36,7 @@ class VnaSweeper:
         self.vna_is_sweeping = False
         self.lower_freq_Hz: float
         self.upper_freq_Hz: float
-        self.swrmin: float = 42.0
+        self.swr_min: float = 42.0
         self.reset_range(freq_Hz=7e6)
 
     def reset_range(self, freq_Hz: float) -> None:
@@ -137,31 +137,35 @@ class VnaSweeper:
                 f_swr_p2_64_h_Hz,
                 swr_min,
             )
+            self.f_swr_p2_64_l_Hz = f_swr_p2_64_l_Hz
+            self.f_swr_min_Hz = f_swr_min_Hz
+            self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
+            self.swr_min = swr_min
             # Update ppm and Q displays only after sweep finish / after find_min_swr()
-            try:
-                self._update_delta_display()
-            except Exception:
-                logger.exception(
-                    "Failed to update delta display after sweep finish"
-                )
-            try:
-                self._update_q_display()
-            except Exception:
-                logger.exception(
-                    "Failed to update Q display after sweep finish"
-                )
-            try:
-                self._update_swrmin_display()
-            except Exception:
-                logger.exception(
-                    "Failed to update SWR min display after sweep finish"
-                )
-            try:
-                self._update_impedance_display()
-            except Exception:
-                logger.exception(
-                    "Failed to update impedance display after sweep finish"
-                )
+            # try:
+            #     self._update_delta_display()
+            # except Exception:
+            #     logger.exception(
+            #         "Failed to update delta display after sweep finish"
+            #     )
+            # try:
+            #     self._update_q_display()
+            # except Exception:
+            #     logger.exception(
+            #         "Failed to update Q display after sweep finish"
+            #     )
+            # try:
+            #     self._update_swrmin_display()
+            # except Exception:
+            #     logger.exception(
+            #         "Failed to update SWR min display after sweep finish"
+            #     )
+            # try:
+            #     self._update_impedance_display()
+            # except Exception:
+            #     logger.exception(
+            #         "Failed to update impedance display after sweep finish"
+            #     )
             # increment tune iteration counter if tuning is still enabled
             # try:
             #     if self.checkbox_tune.isChecked():
@@ -288,6 +292,7 @@ class VnaSweeper:
     @f_swr_min_Hz.setter
     def f_swr_min_Hz(self, freq_Hz: int) -> None:
         self._set_marker(1, freq_Hz=freq_Hz)
+        self.ctl.frequency_current.set_value(float(freq_Hz))
 
     @property
     def f_swr_p2_64_h_Hz(self) -> int:
@@ -297,9 +302,23 @@ class VnaSweeper:
     def f_swr_p2_64_h_Hz(self, freq_Hz: int) -> None:
         self._set_marker(2, freq_Hz=freq_Hz)
 
-    def _set_marker(self, index: int, freq_Hz: int|float):
-        assert isinstance(freq_Hz, int|float)
+    def _set_marker(self, index: int, freq_Hz: int | float):
+        assert isinstance(freq_Hz, int | float)
         self.app.markers[index].setFrequency(f"{freq_Hz:0.0f} Hz")
+
+    @property
+    def antenna_bandwith_3db_Hz(self) -> int:
+        bandwith_hz = self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz
+        assert bandwith_hz >= 0
+        return bandwith_hz
+
+    @property
+    def antenna_q(self) -> int:
+        try:
+            antenna_q = self.f_swr_min_Hz / self.antenna_bandwith_3db_Hz
+        except ZeroDivisionError:
+            return 42
+        return antenna_q
 
     def _update_q_display(self):
         """Compute Q = marker2 / (marker3 - marker1) and update label.
@@ -333,36 +352,36 @@ class VnaSweeper:
             logger.exception("Failed to update Q display")
             self.q_display.setText("--")
 
-    def _update_delta_display(self):
-        """Compute deviation of SWR min to set SWR min in kHz and update label.
+    # def _update_delta_display(self):
+    #     """Compute deviation of SWR min to set SWR min in kHz and update label.
 
-        The display shows (f_swr_min - set_f) / 1e3 as an integer kHz value with
-        unit 'kHz'. If markers or set frequency are missing/invalid, show `--`.
-        """
-        try:
-            markers = self.app.markers
-            if len(markers) < 2:
-                self.delta_display.setText("--")
-                return
-            m2 = markers[1]
-            f_min = m2.frequencyInput.get_freq()
-            try:
-                set_f = float(self.input_set_Hz.text())
-            except Exception:
-                self.delta_display.setText("--")
-                return
-            if set_f == 0 or f_min is None:
-                self.delta_display.setText("--")
-                return
-            delta = f_min - set_f
-            # determine sign based on comparison before rounding
-            sign = "-" if delta < 0 else "+"
-            delta_khz_abs = abs(delta) / 1e3
-            # show numeric value with three decimal places, include explicit sign and unit
-            self.delta_display.setText(f"{sign}{delta_khz_abs:.3f} kHz")
-        except Exception:
-            logger.exception("Failed to update delta display")
-            self.delta_display.setText("--")
+    #     The display shows (f_swr_min - set_f) / 1e3 as an integer kHz value with
+    #     unit 'kHz'. If markers or set frequency are missing/invalid, show `--`.
+    #     """
+    #     try:
+    #         markers = self.app.markers
+    #         if len(markers) < 2:
+    #             self.delta_display.setText("--")
+    #             return
+    #         m2 = markers[1]
+    #         f_min = m2.frequencyInput.get_freq()
+    #         try:
+    #             set_f = float(self.input_set_Hz.text())
+    #         except Exception:
+    #             self.delta_display.setText("--")
+    #             return
+    #         if set_f == 0 or f_min is None:
+    #             self.delta_display.setText("--")
+    #             return
+    #         delta = f_min - set_f
+    #         # determine sign based on comparison before rounding
+    #         sign = "-" if delta < 0 else "+"
+    #         delta_khz_abs = abs(delta) / 1e3
+    #         # show numeric value with three decimal places, include explicit sign and unit
+    #         self.delta_display.setText(f"{sign}{delta_khz_abs:.3f} kHz")
+    #     except Exception:
+    #         logger.exception("Failed to update delta display")
+    #         self.delta_display.setText("--")
 
     def _update_swrmin_display(self):
         """Compute the minimum SWR from the latest sweep and update label.
@@ -375,13 +394,13 @@ class VnaSweeper:
                 s11: list[Datapoint]
                 s11 = self.app.data.s11[:]
                 if not s11:
-                    self.swrmin = 42
+                    self.swr_min = 42
                     return
                 swr = np.asarray([d.vswr for d in s11])
-            self.swrmin = float(np.min(swr))
+            self.swr_min = float(np.min(swr))
         except Exception:
             logger.exception("Failed to update SWR min display")
-            self.swrmin = 42
+            self.swr_min = 42
 
     def _update_impedance_display(self) -> None:
         """Compute and display the antenna impedance from the Smith chart circle.

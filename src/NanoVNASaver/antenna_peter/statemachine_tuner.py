@@ -179,7 +179,7 @@ class StatemachineTuner:
         ctl.impedance_servo_z.set_value(target_band.servo_z_ta)
         with ctl._servo_position_persist() as p:
             p.freq_antenna_hz = ctl.frequency_target.f_value
-        ctl.vna.reset_range(freq_hz=ctl.frequency_target.f_value)
+        ctl.vna.reset_range(freq_Hz=ctl.frequency_target.f_value)
         return False
 
     def _sweep_vna(self, ctl: PeterAntennaControl) -> bool:

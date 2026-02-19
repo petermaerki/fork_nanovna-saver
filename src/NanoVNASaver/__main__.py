@@ -78,7 +78,7 @@ def main():
         console_log_level = logging.DEBUG
 
     logger = logging.getLogger("NanoVNASaver")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     ch = logging.StreamHandler()
     ch.setLevel(console_log_level)

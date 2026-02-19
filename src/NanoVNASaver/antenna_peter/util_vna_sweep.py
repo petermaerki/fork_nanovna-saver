@@ -141,6 +141,9 @@ class VnaSweeper:
             self.f_swr_min_Hz = f_swr_min_Hz
             self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
             self.swr_min = swr_min
+
+            self.ctl.impedance_current.set_value(self.impedance)
+
             # Update ppm and Q displays only after sweep finish / after find_min_swr()
             # try:
             #     self._update_delta_display()
@@ -402,7 +405,8 @@ class VnaSweeper:
             logger.exception("Failed to update SWR min display")
             self.swr_min = 42
 
-    def _update_impedance_display(self) -> None:
+    @property
+    def impedance(self) -> float:
         """Compute and display the antenna impedance from the Smith chart circle.
 
         The three marker points form a circle in the Smith chart.
@@ -411,26 +415,24 @@ class VnaSweeper:
         - If outside: undercoupled → R = 50 Ω / SWR_min
         """
         try:
-            markers = self.app.markers
-            if len(markers) < 3:
-                self.impedance_display.setText("--")
-                return
+            # markers = self.app.markers
+            # if len(markers) < 3:
+            #     self.impedance_display.setText("--")
+            #     return
 
-            # Get all three marker frequencies
-            f1 = markers[0].frequencyInput.get_freq()  # SWR 2.64 low
-            f2 = markers[1].frequencyInput.get_freq()  # SWR min
-            f3 = markers[2].frequencyInput.get_freq()  # SWR 2.64 high
+            # # Get all three marker frequencies
+            # f1 = markers[0].frequencyInput.get_freq()  # SWR 2.64 low
+            # f2 = markers[1].frequencyInput.get_freq()  # SWR min
+            # f3 = markers[2].frequencyInput.get_freq()  # SWR 2.64 high
 
-            if f1 is None or f2 is None or f3 is None:
-                self.impedance_display.setText("--")
-                return
+            # if f1 is None or f2 is None or f3 is None:
+            #     self.impedance_display.setText("--")
+            #     return
 
             # Get S11 data
             with self.app.dataLock:
                 s11: list[Datapoint] = self.app.data.s11[:]
-                if not s11:
-                    self.impedance_display.setText("--")
-                    return
+                assert len(s11) > 2
                 # Also get SWR at marker 2 (SWR min)
                 swr_array = np.asarray([d.vswr for d in s11])
 
@@ -447,13 +449,11 @@ class VnaSweeper:
                         closest = dp
                 return closest
 
-            dp1 = find_closest(f1)
-            dp2 = find_closest(f2)
-            dp3 = find_closest(f3)
+            dp1 = find_closest(self.f_swr_p2_64_l_Hz)
+            dp2 = find_closest(self.f_swr_min_Hz)
+            dp3 = find_closest(self.f_swr_p2_64_h_Hz)
 
-            if dp1 is None or dp2 is None or dp3 is None:
-                self.impedance_display.setText("--")
-                return
+            assert dp1 is not None and dp2 is not None and dp3 is not None
 
             # Get S11 (Gamma) for all three points
             g1 = complex(dp1.re, dp1.im)
@@ -474,10 +474,7 @@ class VnaSweeper:
             diff = mid23 - mid12
             det = perp12.real * perp23.imag - perp12.imag * perp23.real
 
-            if abs(det) < 1e-10:
-                # Points are collinear
-                self.impedance_display.setText("--")
-                return
+            assert abs(det) >= 1e-10
 
             t = (diff.real * perp23.imag - diff.imag * perp23.real) / det
             circle_center = mid12 + t * perp12
@@ -495,10 +492,10 @@ class VnaSweeper:
                 # Center is outside circle → undercoupled
                 r_antenna = 50.0 / swr_min
 
-            self.ctl.impedance_current.set_value(float(r_antenna))
+            return r_antenna
 
-        except Exception:
-            logger.exception("Failed to update impedance display")
+        except Exception as e:
+            logger.exception(f"Failed to update impedance display: {e}")
             # self.impedance_display.setText("--")
 
     # def _setMakerFrequencyFloat(

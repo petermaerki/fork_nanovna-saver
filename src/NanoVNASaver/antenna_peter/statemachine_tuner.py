@@ -55,24 +55,22 @@ class StatemachineTuner:
         return False: Requires more steps for tuning.
         exception. Something bad happened.
         """
-        success = True
+        #success = True
         if not self._tune_heading(ctl=ctl):
             return False
 
         band_changed = self._tune_band_change(ctl=ctl)
         if not band_changed:
             return False
-        if ctl.vna.state is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
+        if ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
             return False
-        if ctl.vna.state is util_vna_sweep.StatemachineVna.RESULTS_OUTDATED:
+        if ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.RESULTS_OUTDATED:
             self._sweep_vna(ctl=ctl)
             return False
-        assert ctl.vna.state is util_vna_sweep.StatemachineVna.RESULTS_READY
+        assert ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.RESULTS_READY
         if not self._tune_impedance_z(ctl=ctl):
-            success = False
+            return False
         if not self._tune_servo_f(ctl=ctl):
-            success = False
-        if not success:
             return False
         return True
 
@@ -191,7 +189,7 @@ class StatemachineTuner:
         self.iteration += 1
         success = False
         print(f"{self.iteration=}")
-        ctl.vna.state = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
+        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         if self.iteration > 2:
             self.iteration = 0
             success = True

@@ -35,7 +35,8 @@ class StatemachineZoom(enum.IntEnum):
 class VnaSweeper:
     def __init__(self, ctl: PeterAntennaControl, sweep: Sweep):
         self.ctl = ctl
-        self.state = StatemachineVna.RESULTS_OUTDATED
+        self.stateVNA = StatemachineVna.RESULTS_OUTDATED
+        self.stateZOOM = StatemachineZoom.OVERVIEW
         self.ctl_sweep = sweep
         self.app = self.ctl.app
         # self.vna_is_sweeping___obsolete = False
@@ -49,24 +50,24 @@ class VnaSweeper:
         """Damit mit allen Toleranzen die Resonanz sicher abgebildet wird"""
         self.lower_freq_Hz = freq_Hz * (1.0 - BAND_TEIL)
         self.upper_freq_Hz = freq_Hz * (1.0 + BAND_TEIL)
-        self._setDatapointPoints(points=100)
+        self._setDatapointPoints(points_per_segment=100)
         self._setSegments(segments=10)
         self.state = StatemachineVna.RESULTS_OUTDATED
         self.state = StatemachineZoom.OVERVIEW
 
     def sweep(self) -> bool:
         """Falls Messwerte READY: True, sonst False"""
-        if self.state is StatemachineVna.VNA_IS_SWEEPING:
+        if self.stateVNA is StatemachineVna.VNA_IS_SWEEPING:
             return False
-        if self.state is StatemachineVna.RESULTS_READY:
+        if self.stateVNA is StatemachineVna.RESULTS_READY:
             return True
-        assert self.state is StatemachineVna.RESULTS_OUTDATED
+        assert self.stateVNA is StatemachineVna.RESULTS_OUTDATED
         self._setStartStopFrequencyFloat("Start", self.lower_freq_Hz)
         self._setStartStopFrequencyFloat("Stop", self.upper_freq_Hz)
 
         self.ctl_sweep.set_logarithmic(False)
         self.app.sweep_start()
-        self.state = StatemachineVna.VNA_IS_SWEEPING
+        self.stateVNA = StatemachineVna.VNA_IS_SWEEPING
         return False
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
@@ -78,11 +79,11 @@ class VnaSweeper:
         input.textEdited.emit(input.text())
         self.app.sweep_control.update_sweep()
 
-    def _setDatapointPoints(self, points: int):
+    def _setDatapointPoints(self, points_per_segment: int):
         # See: src/NanoVNASaver/Windows/DeviceSettings.py, def updateNrDatapoints()
         vna = self.app.vna
         assert isinstance(vna, VNA)
-        vna.datapoints = points
+        vna.datapoints = points_per_segment
         logger.debug(f"DP: {vna.datapoints}")
         self.app.sweep.set_points(vna.datapoints)
         self.app.sweep_control.update_step_size()
@@ -93,16 +94,15 @@ class VnaSweeper:
         self.app.sweep_control.set_segments(count=segments)
 
     def sweepFinished_peter_antenna(self):
-        self.state = StatemachineVna.RESULTS_READY
+        self.stateVNA = StatemachineVna.RESULTS_READY
         if not self._find_min_swr():
-            self.state = StatemachineVna.RESULTS_OUTDATED
+            self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
         if not self._zoom():
-            self.state = StatemachineVna.RESULTS_OUTDATED
+            self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
 
         self.ctl.impedance_current.set_value(self.impedance)
-        self.state = StatemachineVna.RESULTS_READY
 
         # try:
         #     f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
@@ -210,22 +210,29 @@ class VnaSweeper:
     def _zoom(self) -> bool:
         SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.64 band
         assert SWEEP_RANGE_OVERLAP > 1.1
-        target_hz=self.ctl.frequency_target.f_value
+        target_hz = self.ctl.frequency_target.f_value
         distance_f = abs(target_hz - self.f_swr_min_Hz)
-        distance_f = max(
-            abs(self.f_swr_p2_64_l_Hz - target_hz), distance_f
-        )
-        distance_f = max(
-            abs(self.f_swr_p2_64_h_Hz - target_hz), distance_f
-        )
+        distance_f = max(abs(self.f_swr_p2_64_l_Hz - target_hz), distance_f)
+        distance_f = max(abs(self.f_swr_p2_64_h_Hz - target_hz), distance_f)
         upper_freq_Hz = target_hz + distance_f * SWEEP_RANGE_OVERLAP
         upper_freq_Hz = min(F_USEFUL_MAX_Hz_obsolete, upper_freq_Hz)
         lower_freq_Hz = target_hz - distance_f * SWEEP_RANGE_OVERLAP
         lower_freq_Hz = max(F_USEFUL_MIN_Hz_obsolete, lower_freq_Hz)
 
-        self.lower_freq_Hz =lower_freq_Hz
-        self.upper_freq_Hz =upper_freq_Hz
-        self._setSegments(segments=1)
+        self.lower_freq_Hz = lower_freq_Hz
+        self.upper_freq_Hz = upper_freq_Hz
+        POINTS_IN_BANDWITH = 50
+        frequency_per_point = abs(self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz)/POINTS_IN_BANDWITH
+        points_total =  (upper_freq_Hz-lower_freq_Hz)/frequency_per_point
+        POINTS_PER_SEGMENT_TARGET = 100
+        segments = max(int(points_total/POINTS_PER_SEGMENT_TARGET+0.5),1)
+        points_per_segment = int(points_total/segments)
+        self._setDatapointPoints(points_per_segment=points_per_segment)
+        self._setSegments(segments=segments)
+        if self.stateZOOM is StatemachineZoom.OVERVIEW:
+            self.stateZOOM = StatemachineZoom.ZOOMED
+            '''Nochmals sweepen damit die Aufloesung sicher gut genug ist'''
+            return False
         return True
 
     # ...existing code...

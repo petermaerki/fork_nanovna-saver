@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 from PySide6 import QtWidgets
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class QHLine(QtWidgets.QFrame):
 
 
 class Analysis:
-    def __init__(self, app: "vna_app") -> None:
+    def __init__(self, app: "NanoVNASaver") -> None:
         self.app = app
         self.label: dict[str, QtWidgets.QLabel] = {
             "titel": QtWidgets.QLabel(),

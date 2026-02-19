@@ -27,13 +27,13 @@ from ..Formatting import format_frequency
 from .Base import CUTOFF_VALS, MIN_CUTOFF_DAMPING, Analysis
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
 
 class BandPassAnalysis(Analysis):
-    def __init__(self, app: "vna_app") -> None:
+    def __init__(self, app: "NanoVNASaver") -> None:
         super().__init__(app)
 
         for label in (

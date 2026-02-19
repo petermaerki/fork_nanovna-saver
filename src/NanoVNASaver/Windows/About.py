@@ -31,12 +31,12 @@ from ..utils import Version, get_app_version, get_runtime_information
 from .ui.about import Ui_DialogAbout
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 logger = logging.getLogger(__name__)
 
 
 class AboutWindow(QtWidgets.QDialog):
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super(AboutWindow, self).__init__()
         self.ui = Ui_DialogAbout()
         self.ui.setupUi(self)

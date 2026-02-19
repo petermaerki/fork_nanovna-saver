@@ -27,7 +27,7 @@ from ..Marker.Widget import Marker
 from .Control import Control
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class ShowButton(QtWidgets.QPushButton):
 
 
 class MarkerControl(Control):
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Markers")
 
         app_config = get_app_config()

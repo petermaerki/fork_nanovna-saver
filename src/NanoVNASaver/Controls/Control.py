@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 from PySide6 import QtCore, QtWidgets
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 class Control(QtWidgets.QGroupBox):
     updated = QtCore.Signal(object)
 
-    def __init__(self, app: "vna_app", title: str = ""):
+    def __init__(self, app: "NanoVNASaver", title: str = ""):
         super().__init__()
-        self.app = app
+        self.app  = app
         self.setMaximumWidth(250)
         self.setTitle(title)
         self.layout = QtWidgets.QFormLayout(self)

@@ -63,7 +63,7 @@ class WorkerSignals(QObject):
 
 
 class SweepWorker(QThread):
-    def __init__(self, app: "vna_app") -> None:
+    def __init__(self, app: "NanoVNASaver") -> None:
         super().__init__()
         logger.info("Initializing SweepWorker")
         self.signals: WorkerSignals = WorkerSignals()

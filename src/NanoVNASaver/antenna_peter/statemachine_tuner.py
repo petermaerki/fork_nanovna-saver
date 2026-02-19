@@ -1,10 +1,11 @@
 import logging
 import time
 from typing import TYPE_CHECKING
+import enum
 
 from sts3215_micropython.sts3215_portable import calculator
 
-from . import util_heading_calculator
+from . import util_heading_calculator, util_vna_sweep
 from .util_freq_band_preset import BANDS
 
 if TYPE_CHECKING:
@@ -54,14 +55,27 @@ class StatemachineTuner:
         return False: Requires more steps for tuning.
         exception. Something bad happened.
         """
+        success = True
         if False:
-            heading_tuned = self._tune_heading(ctl=ctl)
-            return heading_tuned
+            if not self._tune_heading(ctl=ctl):
+                return False
 
-        band_changed = self._tune_band_change(ctl=ctl)
-        if not band_changed:
+        if False:
+            band_changed = self._tune_band_change(ctl=ctl)
+            if not band_changed:
+                return False
+        if ctl.vna.state is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
             return False
-        self._set_vna_range(ctl=ctl)
+        if ctl.vna.state is util_vna_sweep.StatemachineVna.RESULTS_OUTDATED:
+            self._sweep_vna(ctl=ctl)
+            return False
+        assert ctl.vna.state is util_vna_sweep.StatemachineVna.RESULTS_READY
+        if not self._tune_impedance_z(ctl=ctl):
+            success = False
+        if not self._tune_servo_f(ctl=ctl):
+            success = False
+        if not success:
+            return False
         return True
 
         duration_s = time.monotonic() - self.last_s
@@ -167,7 +181,22 @@ class StatemachineTuner:
         ctl.impedance_servo_z.set_value(target_band.servo_z_ta)
         with ctl._servo_position_persist() as p:
             p.freq_antenna_hz = ctl.frequency_target.f_value
+        ctl.vna.reset_range(freq_hz=ctl.frequency_target.f_value)
         return False
 
-    def _set_vna_range(self, ctl: PeterAntennaControl) -> bool:
-        pass
+    def _sweep_vna(self, ctl: PeterAntennaControl) -> bool:
+        success = ctl.vna.sweep()
+        return success
+
+    def _tune_impedance_z(self, ctl: PeterAntennaControl):
+        self.iteration += 1
+        success = False
+        print(f"{self.iteration=}")
+        if self.iteration > 5:
+            self.iteration = 0
+            success = True
+        return success
+
+    def _tune_servo_f(self, ctl: PeterAntennaControl):
+        success = True
+        return success

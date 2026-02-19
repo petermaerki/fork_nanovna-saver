@@ -63,6 +63,16 @@ stateDiagram-v2
 * idle entry action: State `enable_tx`
 * tuning entry action: State `inhibit_tx`
 
+```mermaid
+stateDiagram-v2
+    results_ready: results_ready
+    sweeping: sweeping
+    results_outdated: results_outdated
+    results_outdated --> sweeping: sweep()
+    sweeping --> results_ready: sweepFinished_peter_antenna
+    results_ready --> results_outdated: servo z oder f fahren
+```
+
 # servo
 
 Implementation: Blocks GUI while moveing

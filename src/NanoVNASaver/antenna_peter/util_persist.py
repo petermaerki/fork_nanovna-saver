@@ -12,9 +12,9 @@ class ServoPositionPersistent:
     It will be used to calculate the required movement to the next position
     """
 
-    servo_h_ta: float=0.0
-    servo_z_ta: float=0.0
-    freq_antenna_hz: float=42.0
+    servo_h_ta: float = 0.0
+    servo_z_ta: float = 0.0
+    freq_antenna_hz: float = 42.0
 
     def __post_init__(self):
         assert isinstance(self.servo_h_ta, float)
@@ -49,4 +49,3 @@ class ServoPositionPersistent:
                 sort_keys=True,
             )
         )
-

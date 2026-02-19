@@ -28,7 +28,7 @@ from ..RFTools import Datapoint
 from .ui import get_window_icon
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class MarkerSettingsWindow(QtWidgets.QWidget):
         Datapoint(124000000, -0.2, 0.5),
     ]
 
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super().__init__()
         self.app = app
 

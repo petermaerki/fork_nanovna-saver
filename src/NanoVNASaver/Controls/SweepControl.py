@@ -31,7 +31,7 @@ from ..Formatting import (
 from .Control import Control
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class FrequencyInputWidget(QtWidgets.QLineEdit):
 
 
 class SweepControl(Control):
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Sweep control")
 
         sweep_settings = self.get_settings()

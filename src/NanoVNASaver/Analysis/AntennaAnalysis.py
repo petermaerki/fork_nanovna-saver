@@ -27,7 +27,7 @@ from PySide6 import QtWidgets
 from .VSWRAnalysis import VSWRAnalysis
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class MagLoopAnalysis(VSWRAnalysis):
     vswr_bandwith_value: float = 2.56  # -3 dB ?!?
     bandwith: int = 25000  # 25 kHz
 
-    def __init__(self, app: "vna_app") -> None:
+    def __init__(self, app: "NanoVNASaver") -> None:
         # app.sweep_control.get_start() return -1 ?!?
         # will populate first runAnalysis()
         self.min_freq: int = 0  # app.sweep_control.get_start()

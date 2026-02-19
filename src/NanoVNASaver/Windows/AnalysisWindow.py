@@ -39,7 +39,7 @@ from ..Windows.Defaults import make_scrollable
 from .ui import get_window_icon
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 class AnalysisWindow(QtWidgets.QWidget):
     analysis: Analysis | None = None
 
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super().__init__()
 
         self.app = app

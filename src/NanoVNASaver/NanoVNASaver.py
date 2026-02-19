@@ -619,7 +619,7 @@ class NanoVNASaver(QWidget):
 
     def sweepFinished(self):
         if self.peter_antenna_control.checkbox_tune.isChecked():
-            self.peter_antenna_control.sweepFinished_peter_antenna()
+            self.peter_antenna_control.vna.sweepFinished_peter_antenna()
             self.sweep_start()
             return
 

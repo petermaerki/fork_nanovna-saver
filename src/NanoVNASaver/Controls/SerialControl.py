@@ -27,7 +27,7 @@ from ..Hardware.Hardware import Interface, get_interfaces, get_VNA
 from .Control import Control
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class SerialControl(Control):
     # true when serial port was connected and false when it was disconnected
     connected = Signal(bool)
 
-    def __init__(self, app: "vna_app"):
+    def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Serial port control")
 
         self.interface = Interface("serial", "none")

@@ -27,7 +27,7 @@ from .Screenshot import LiveViewWindow, ScreenshotWindow
 from .ui import get_window_icon
 
 if TYPE_CHECKING:
-    from ..NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from ..NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class DeviceSettingsWindow(QtWidgets.QWidget):
     custom_points_checkbox: QtWidgets.QCheckBox
     custom_points_edit: QtWidgets.QLineEdit
 
-    def __init__(self, app: "vna_app") -> None:
+    def __init__(self, app: "NanoVNASaver") -> None:
         super().__init__()
 
         self.app = app

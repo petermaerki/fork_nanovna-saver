@@ -56,14 +56,12 @@ class StatemachineTuner:
         exception. Something bad happened.
         """
         success = True
-        if False:
-            if not self._tune_heading(ctl=ctl):
-                return False
+        if not self._tune_heading(ctl=ctl):
+            return False
 
-        if False:
-            band_changed = self._tune_band_change(ctl=ctl)
-            if not band_changed:
-                return False
+        band_changed = self._tune_band_change(ctl=ctl)
+        if not band_changed:
+            return False
         if ctl.vna.state is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
             return False
         if ctl.vna.state is util_vna_sweep.StatemachineVna.RESULTS_OUTDATED:
@@ -166,7 +164,7 @@ class StatemachineTuner:
         persist_band = BANDS.get_band(freq_hz=persist.freq_antenna_hz)
         target_band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
         if persist_band.band_m == target_band.band_m:
-            return True
+                return True
         if not target_band.valid:
             logger.warning(f"Invalid band: {target_band}")
             return True

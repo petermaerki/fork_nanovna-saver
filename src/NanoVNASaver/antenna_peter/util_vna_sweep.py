@@ -669,6 +669,7 @@ class VnaSweeper:
             logger.exception("Failed to set datapoint count")
 
     def run_vna_on_frequency_which_does_not_harm(self) -> None:
+        return
         # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
         try:
             # Restore a harmless sweep on low frequencies and start it so the

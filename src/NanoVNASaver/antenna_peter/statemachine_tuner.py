@@ -180,6 +180,7 @@ class StatemachineTuner:
         with ctl._servo_position_persist() as p:
             p.freq_antenna_hz = ctl.frequency_target.f_value
         ctl.vna.reset_range(freq_Hz=ctl.frequency_target.f_value)
+        ctl.vna.state = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return False
 
     def _sweep_vna(self, ctl: PeterAntennaControl) -> bool:
@@ -190,6 +191,7 @@ class StatemachineTuner:
         self.iteration += 1
         success = False
         print(f"{self.iteration=}")
+        ctl.vna.state = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         if self.iteration > 5:
             self.iteration = 0
             success = True

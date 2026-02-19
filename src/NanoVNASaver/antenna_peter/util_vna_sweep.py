@@ -33,7 +33,7 @@ class VnaSweeper:
         self.state = StatemachineVna.RESULTS_OUTDATED
         self.ctl_sweep = sweep
         self.app = self.ctl.app
-        self.vna_is_sweeping = False
+        #self.vna_is_sweeping___obsolete = False
         self.lower_freq_Hz: float
         self.upper_freq_Hz: float
         self.swr_min: float = 42.0
@@ -47,20 +47,19 @@ class VnaSweeper:
         self.state = StatemachineVna.RESULTS_OUTDATED
 
     def sweep(self) -> bool:
-        if self.vna_is_sweeping:
+        '''Falls Messwerte READY: True, sonst False'''
+        if self.state is StatemachineVna.VNA_IS_SWEEPING:
             return False
-
-        # Auswerten letzter sweep
-        # Falls ok: return True
-        # servo_f, servo_z
-        # Sonst: neuen sweep starten
+        if self.state is StatemachineVna.RESULTS_READY:
+            return True
+        assert self.state is StatemachineVna.RESULTS_OUTDATED
         self._setStartStopFrequencyFloat("Start", self.lower_freq_Hz)
         self._setStartStopFrequencyFloat("Stop", self.upper_freq_Hz)
         self._setDatapointCount(200)
         self.ctl_sweep.set_logarithmic(False)
         self.app.sweep_start()
-        self.vna_is_sweeping = True
-        return True
+        self.state = StatemachineVna.VNA_IS_SWEEPING
+        return False
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")
@@ -118,7 +117,7 @@ class VnaSweeper:
         self.app.sweep_control.update_step_size()
 
     def sweepFinished_peter_antenna(self):
-        self.state = StatemachineVna.RESULTS_READY
+        self.state = StatemachineVna.RESULTS_OUTDATED
 
         try:
             f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
@@ -143,6 +142,8 @@ class VnaSweeper:
             self.swr_min = swr_min
 
             self.ctl.impedance_current.set_value(self.impedance)
+
+            self.state = StatemachineVna.RESULTS_READY
 
             # Update ppm and Q displays only after sweep finish / after find_min_swr()
             # try:

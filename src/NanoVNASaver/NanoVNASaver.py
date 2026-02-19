@@ -618,12 +618,14 @@ class NanoVNASaver(QWidget):
         self.communicate.data_available.emit()
 
     def sweepFinished(self):
-        if self.peter_antenna_control.checkbox_tune.isChecked():
-            self.peter_antenna_control.vna.sweepFinished_peter_antenna()
-            self.sweep_start()
-            return
+        self.peter_antenna_control.vna.sweepFinished_peter_antenna()
+        return
+        # if self.peter_antenna_control.checkbox_tune.isChecked():
+        #     self.peter_antenna_control.vna.sweepFinished_peter_antenna()
+        #     self.sweep_start()
+        #     return
 
-        self._sweep_control(start=False)
+        # self._sweep_control(start=False)
 
         # If we just finished the harmless sweep that was started when tune
         # was disabled, clear the suppression flags and do NOT update the

@@ -35,6 +35,16 @@ class Band:
             m2.servo_f_ta - m1.servo_f_ta
         ) / (m2.freq_hz - m1.freq_hz)
 
+    @property
+    def servo_f_gain_hz_pro_t(self) -> float:
+        assert self.valid, self
+        m1 = self.measurement1
+        m2 = self.measurement2
+        assert m1 is not None and m2 is not None, self
+        assert m2.servo_f_ta != m1.servo_f_ta
+        gain_hz_pro_t = (m2.freq_hz - m1.freq_hz) / (m2.servo_f_ta - m1.servo_f_ta)
+        return gain_hz_pro_t
+
 
 class Bands(list[Band]):
     def get_band(self, freq_hz: float) -> Band:

@@ -36,7 +36,8 @@ def _angular_error_deg(target_deg: float, actual_deg: float) -> float:
 class StatemachineTuner:
     def __init__(self) -> None:
         self.last_s = time.monotonic()
-        self.iteration = 0
+        self.impedance_iteration = 0
+        self.frequency_iteration = 0
 
     def tune(self, ctl: PeterAntennaControl) -> None:
         try:
@@ -55,7 +56,7 @@ class StatemachineTuner:
         return False: Requires more steps for tuning.
         exception. Something bad happened.
         """
-        #success = True
+        # success = True
         if not self._tune_heading(ctl=ctl):
             return False
 
@@ -77,45 +78,6 @@ class StatemachineTuner:
         duration_s = time.monotonic() - self.last_s
         logger.info(f"tune {duration_s} s")
         return duration_s > 10.0
-        """
-
-        tune_success = True
-        if ctl.enable_heading:
-            measure_heading()
-            if heading not is inside tolerance:
-                set new servo heading
-                tune_success = False
-
-        if ctl.enable_frequency or ctl.enable_impedance:
-          measure_s11_vna(band_range)
-
-        if ctl.enable_frequency:
-            self.last_step_frequency = True
-            if bandwechsel:
-                servo_f(position= preset_f_position_band)
-                tune_success = False
-
-            f_in_tolerance = is_f_in_tolerance()
-            if not f_in_tolerance:
-                tune_success = False
-            if f_enabled:
-                servo_f(position = calculate_new_f_position())
-            if z_enabled:
-                servo_z(position = calculate_new_z_position())
-            #wait_on_servo()
-            iteration += 1
-
-        if ctl.enable_impedance:
-            if bandwechsel:
-                servo_z(position = preset_impedance_position_band)
-                return False
-            z_in_tolerance = is_z_in_tolerance()
-            if not z_in_tolerance:
-                tune_success = False
-
-        self.last_s = time.monotonic()
-        return tune_success
-        """
 
     def _tune_heading(self, ctl: PeterAntennaControl) -> bool:
         if not ctl.heading_checkbox.isChecked():
@@ -162,7 +124,7 @@ class StatemachineTuner:
         persist_band = BANDS.get_band(freq_hz=persist.freq_antenna_hz)
         target_band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
         if persist_band.band_m == target_band.band_m:
-                return True
+            return True
         if not target_band.valid:
             logger.warning(f"Invalid band: {target_band}")
             return True
@@ -186,15 +148,50 @@ class StatemachineTuner:
         return success
 
     def _tune_impedance_z(self, ctl: PeterAntennaControl):
-        self.iteration += 1
         success = False
-        print(f"{self.iteration=}")
-        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
-        if self.iteration > 2:
-            self.iteration = 0
+        servo_z_ta = ctl.impedance_servo_z.f_value
+        impedance_target = ctl.impedance_target.f_value
+        impedance_current = ctl.impedance_current.f_value
+        impedance_difference = impedance_current - impedance_target
+        if abs(impedance_difference) < 1.0:
             success = True
+            print(f'Impedance ok {impedance_current:0.1f} Ohm')
+            return success
+        REGELFAKTOR = 1e-3
+        MAX__STELLSCHRITT_ta = 0.01
+        assert MAX__STELLSCHRITT_ta > 0.0
+        stellschritt_ta = impedance_difference * REGELFAKTOR
+        stellschritt_ta = min(stellschritt_ta, MAX__STELLSCHRITT_ta)
+        stellschritt_ta = max(stellschritt_ta, -MAX__STELLSCHRITT_ta)
+        servo_z_ta_new = servo_z_ta + stellschritt_ta
+        ctl.impedance_servo_z.set_value(servo_z_ta_new)
+        self.impedance_iteration += 1
+        print(
+            f"Impedance iteration {self.impedance_iteration:d} current {impedance_current:0.1f}  servo_z_ta_new {servo_z_ta_new:0.3f} delta {stellschritt_ta:0.3f}"
+        )
+        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success
 
     def _tune_servo_f(self, ctl: PeterAntennaControl):
-        success = True
+        success = False
+        servo_f_ta = ctl.frequency_servo_f.f_value
+        target_hz = ctl.frequency_target.f_value
+        current_hz = ctl.vna.f_swr_min_Hz
+        difference_hz = current_hz - target_hz
+
+        if abs(difference_hz / target_hz) < 1e-4:
+            print(f'Frequency ok {current_hz:0.0f} Hz')
+            success = True
+            return success
+
+        band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
+        gain_hz_pro_ta = band.servo_f_gain_hz_pro_t
+        servo_f_ta_new = servo_f_ta - difference_hz / gain_hz_pro_ta
+        assert abs(servo_f_ta - servo_f_ta_new) < 3.0
+        ctl.frequency_servo_f.set_value(servo_f_ta_new)
+        self.frequency_iteration += 1
+        print(
+            f"Frequency iteration {self.frequency_iteration:d} current {current_hz:0.0f}  servo_f_ta_new {servo_f_ta_new:0.3f}"
+        )
+        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success

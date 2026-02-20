@@ -313,6 +313,7 @@ class PeterAntennaControl(Control):
         assert isinstance(checked, QtCore.Qt.CheckState)
         state_tuning = checked.value  #  self.checkbox_tune.isChecked()
         self.checkbox_vna_enable.setChecked(state_tuning)
+        self.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return
         if state_tuning:
             # Auto-enable VNA if not already enabled

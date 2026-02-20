@@ -70,6 +70,7 @@ class MarkerControl(Control):
 
         self.showMarkerButton = ShowButton()
         self.showMarkerButton.setFixedHeight(20)
+        app_config.gui.markers_hidden = True # Peter, braucht zu viel Platz
         self.showMarkerButton.setText()
         self.showMarkerButton.clicked.connect(self.toggle_frame)
 

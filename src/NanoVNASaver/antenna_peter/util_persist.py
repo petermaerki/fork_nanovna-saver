@@ -31,7 +31,7 @@ class ServoPositionPersistent:
         assert isinstance(filename, pathlib.Path)
         try:
             json_text = filename.read_text()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             return ServoPositionPersistent()
         json_dict = json.loads(json_text)
         return ServoPositionPersistent(**json_dict)

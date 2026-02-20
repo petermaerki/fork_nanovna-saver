@@ -65,7 +65,6 @@ True
 
 """
 
-import sys
 # import random
 
 
@@ -124,7 +123,7 @@ class iteration:
             self.strFehler = "%d Iteration ueberschritten" % self.iMax
             return False
         x, y = self.bestes()
-        if x == None:
+        if x is None:
             return True
         if abs(y - self.ySoll) <= self.yToleranz:
             self.bOk = True
@@ -143,11 +142,11 @@ class iteration:
         return True
 
     def bestes(self):
-        if (self.yMin != None) and (self.yMax == None):
+        if (self.yMin is not None) and (self.yMax is None):
             return self.xMin, self.yMin
-        if (self.yMax != None) and (self.yMin == None):
+        if (self.yMax is not None) and (self.yMin is None):
             return self.xMax, self.yMax
-        if (self.yMin == None) and (self.yMax == None):
+        if (self.yMin is None) and (self.yMax is None):
             return None, None
         minAbweichung = self.ySoll - self.yMin
         maxAbweichung = self.yMax - self.ySoll
@@ -174,12 +173,12 @@ class iteration:
         """Bestimmt den naechsten Wert gemaess Rugula Falsi oder Karl Otto Rumenigge"""
         if self.ySoll > y:
             self.xMin, self.yMin = x, y
-            if self.yMax == None:
+            if self.yMax is None:
                 # Karl Otto Rumenigge
                 return (self.xMax - x) * self.k + xiteraton
         else:
             self.xMax, self.yMax = x, y
-            if self.yMin == None:
+            if self.yMin is None:
                 # Karl Otto Rumenigge
                 return (self.xMin - x) * self.k + x
         # Regula Falsi
@@ -193,7 +192,8 @@ class iteration:
 
 
 def test():
-    import doctest, iteration
+    import doctest  # noqa: PLC0415
+    import iteration  # noqa: PLC0415
 
     return doctest.testmod(iteration)
 

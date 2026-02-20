@@ -2,15 +2,12 @@ import logging
 import typing
 import enum
 import numpy as np
-from ..Marker.Widget import Marker
 
 from ..RFTools import Datapoint
 
-from ..Controls.SweepControl import FrequencyInputWidget
 from ..Hardware.VNA import VNA
 
 if typing.TYPE_CHECKING:
-    from ..NanoVNASaver import NanoVNASaver
     from .PeterAntennaControl import PeterAntennaControl
     from ..Settings.Sweep import Sweep
 
@@ -35,8 +32,8 @@ class StatemachineZoom(enum.IntEnum):
 class VnaSweeper:
     def __init__(self, ctl: PeterAntennaControl, sweep: Sweep):
         self.ctl = ctl
-        self.stateVNA = StatemachineVna.RESULTS_OUTDATED
-        self.stateZOOM = StatemachineZoom.OVERVIEW
+        self.state_vna = StatemachineVna.RESULTS_OUTDATED
+        self.state_zoom = StatemachineZoom.OVERVIEW
         self.ctl_sweep = sweep
         self.app = self.ctl.app
         # self.vna_is_sweeping___obsolete = False
@@ -52,24 +49,26 @@ class VnaSweeper:
         self.upper_freq_Hz = freq_Hz * (1.0 + BAND_TEIL)
         self._setDatapointPoints(points_per_segment=100)
         self._setSegments(segments=5)
-        self.state = StatemachineVna.RESULTS_OUTDATED
-        self.state = StatemachineZoom.OVERVIEW
+        self.state_vna = StatemachineVna.RESULTS_OUTDATED
+        self.state_zoom = StatemachineZoom.OVERVIEW
 
     def sweep(self) -> bool:
         """Falls Messwerte READY: True, sonst False"""
-        if self.stateVNA is StatemachineVna.VNA_IS_SWEEPING:
+        if self.state_vna is StatemachineVna.VNA_IS_SWEEPING:
             return False
-        if self.stateVNA is StatemachineVna.RESULTS_READY:
+        if self.state_vna is StatemachineVna.RESULTS_READY:
             return True
-        assert self.stateVNA is StatemachineVna.RESULTS_OUTDATED
+        assert self.state_vna is StatemachineVna.RESULTS_OUTDATED
         if self.lower_freq_Hz is None:
             self.reset_range(freq_Hz=self.ctl.frequency_target.f_value)
+        assert isinstance(self.lower_freq_Hz, float)
         self._setStartStopFrequencyFloat("Start", self.lower_freq_Hz)
+        assert isinstance(self.upper_freq_Hz, float)
         self._setStartStopFrequencyFloat("Stop", self.upper_freq_Hz)
 
         self.ctl_sweep.set_logarithmic(False)
         self.app.sweep_start()
-        self.stateVNA = StatemachineVna.VNA_IS_SWEEPING
+        self.state_vna = StatemachineVna.VNA_IS_SWEEPING
         return False
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
@@ -96,14 +95,14 @@ class VnaSweeper:
         self.app.sweep_control.set_segments(count=segments)
 
     def sweepFinished_peter_antenna(self):
-        self.stateVNA = StatemachineVna.RESULTS_READY
+        self.state_vna = StatemachineVna.RESULTS_READY
         self.ctl.impedance_current.set_value(self.find_impedance)
         if not self._find_min_swr():
             # SWR ist noch nicht genug tief, daher keine gefunden werte, READY damit die impedanz getuned werden kann
             # self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
         if not self._zoom():
-            self.stateVNA = StatemachineVna.RESULTS_OUTDATED
+            self.state_vna = StatemachineVna.RESULTS_OUTDATED
             return
 
         # self.ctl.impedance_current.set_value(self.impedance)
@@ -238,8 +237,8 @@ class VnaSweeper:
         points_per_segment = int(points_total / segments)
         self._setDatapointPoints(points_per_segment=points_per_segment)
         self._setSegments(segments=segments)
-        if self.stateZOOM is StatemachineZoom.OVERVIEW:
-            self.stateZOOM = StatemachineZoom.ZOOMED
+        if self.state_zoom is StatemachineZoom.OVERVIEW:
+            self.state_zoom = StatemachineZoom.ZOOMED
             """Nochmals sweepen damit die Aufloesung sicher gut genug ist"""
             return False
         return True
@@ -263,7 +262,7 @@ class VnaSweeper:
         swr_min = swr[idx_min]
 
         f_swr_min_Hz = None
-        f_swr_p2_64_l_Hz = Nonetune_band_change
+        f_swr_p2_64_l_Hz = None
         f_swr_p2_64_h_Hz = None
 
         if swr_min < 2.0:
@@ -320,7 +319,7 @@ class VnaSweeper:
                                     "mean=%s, freq=%s Hz",
                                     max_val,
                                     mean_val,
-                                    f_swr_min_1Hz,
+                                f_swr_min_1Hz,
                                 )
             except Exception:
                 logger.exception("Failed to analyze phase double derivative")
@@ -341,7 +340,6 @@ class VnaSweeper:
         self._set_marker(2, f_swr_p2_64_h_Hz)
 
         return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min
-        self.state = StatemachineVna.RESULTS_OUTDATED
 
     @property
     def f_swr_p2_64_l_Hz(self) -> int:
@@ -373,13 +371,13 @@ class VnaSweeper:
         self.app.markers[index].setFrequency(f"{freq_Hz:0.0f} Hz")
 
     @property
-    def antenna_bandwith_3db_Hz(self) -> int:
+    def antenna_bandwith_3db_Hz(self) -> float:
         bandwith_hz = self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz
         assert bandwith_hz >= 0
         return bandwith_hz
 
     @property
-    def antenna_q(self) -> int:
+    def antenna_q(self) -> float:
         try:
             antenna_q = self.f_swr_min_Hz / self.antenna_bandwith_3db_Hz
         except ZeroDivisionError:
@@ -491,7 +489,7 @@ class VnaSweeper:
 
             idx_min = np.argmin(swr)
             swr_min = swr[idx_min]
-            f_swr_min_Hz = freq_Hz[idx_min]
+            _f_swr_min_Hz = freq_Hz[idx_min]
 
             # Find closest datapoints for all three markers
             # def find_closest(freq_target):

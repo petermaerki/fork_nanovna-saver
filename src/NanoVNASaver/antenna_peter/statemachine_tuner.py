@@ -1,7 +1,6 @@
 import logging
 import time
 from typing import TYPE_CHECKING
-import enum
 
 from sts3215_micropython.sts3215_portable import calculator
 
@@ -42,7 +41,7 @@ class StatemachineTuner:
     def reset_iterations(self, ctl: PeterAntennaControl):
         self.impedance_iteration_plus = 0
         self.frequency_iteration_plus = 0
-        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
+        ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
 
     def tune(self, ctl: PeterAntennaControl) -> None:
         try:
@@ -68,12 +67,12 @@ class StatemachineTuner:
         band_changed = self.tune_band_change(ctl=ctl)
         if not band_changed:
             return False
-        if ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
+        if ctl.vna.state_vna is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
             return False
-        if ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.RESULTS_OUTDATED:
+        if ctl.vna.state_vna is util_vna_sweep.StatemachineVna.RESULTS_OUTDATED:
             self._sweep_vna(ctl=ctl)
             return False
-        assert ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.RESULTS_READY
+        assert ctl.vna.state_vna is util_vna_sweep.StatemachineVna.RESULTS_READY
         if not self._tune_impedance_z(ctl=ctl):
             return False
         if not self._tune_servo_f(ctl=ctl):
@@ -145,7 +144,7 @@ class StatemachineTuner:
         with ctl._servo_position_persist() as p:
             p.freq_antenna_hz = ctl.frequency_target.f_value
         ctl.vna.reset_range(freq_Hz=ctl.frequency_target.f_value)
-        ctl.vna.state = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
+        ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return False
 
     def _sweep_vna(self, ctl: PeterAntennaControl) -> bool:
@@ -181,7 +180,7 @@ class StatemachineTuner:
         logger.info(
             f"Impedance iteration_plus {self.impedance_iteration_plus:d} current {impedance_current:0.1f}  servo_z_ta_new {servo_z_ta_new:0.3f} delta {stellschritt_ta:0.3f}"
         )
-        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
+        ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success
 
     def _tune_servo_f(self, ctl: PeterAntennaControl):
@@ -211,5 +210,5 @@ class StatemachineTuner:
         logger.info(
             f"Frequency iteration_plus {self.frequency_iteration_plus:d} current {current_hz:0.0f}  servo_f_ta_new {servo_f_ta_new:0.3f}"
         )
-        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
+        ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success

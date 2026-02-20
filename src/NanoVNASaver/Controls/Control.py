@@ -32,7 +32,7 @@ class Control(QtWidgets.QGroupBox):
 
     def __init__(self, app: "NanoVNASaver", title: str = ""):
         super().__init__()
-        self.app  = app
+        self.app = app
         self.setMaximumWidth(250)
         self.setTitle(title)
         self.layout = QtWidgets.QFormLayout(self)

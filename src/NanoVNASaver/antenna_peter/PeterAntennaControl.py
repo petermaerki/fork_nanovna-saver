@@ -11,7 +11,6 @@ from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
-from ..Controls.SweepControl import FrequencyInputWidget
 from . import peter_widgets, statemachine_tuner, util_persist, util_vna_sweep
 from .util_calculate_safety import calculate_safety_distance
 

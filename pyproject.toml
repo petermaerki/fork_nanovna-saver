@@ -169,14 +169,15 @@ ignore_missing_imports = true
 files = "src/NanoVNASaver"  # directory mypy should analyze
 # Directories to exclude from mypy's analysis
 exclude = [
-  "src/NanoVNASaver/Charts",
-  "src/NanoVNASaver/Controls",
   "src/NanoVNASaver/antenna_peter/micropython/initialization.py",
-  "src/NanoVNASaver/NanoVNASaver.py",
-  "src/NanoVNASaver/Defaults.py",
   "src/NanoVNASaver/antenna_peter/temp_entwurf_GPIO.py",
   "src/NanoVNASaver/antenna_peter/temp_entwurf_magnetometer_heading.py",
   "src/NanoVNASaver/antenna_peter/temp_entwurf_tuning.py",
   "src/NanoVNASaver/antenna_peter/temp_peter_layout_sample.py",
+  "src/NanoVNASaver/antenna_peter/temp_peter_sweep_swr_min_entwurf.py",
+  "src/NanoVNASaver/Charts",
+  "src/NanoVNASaver/Controls",
+  "src/NanoVNASaver/Defaults.py",
+  "src/NanoVNASaver/NanoVNASaver.py",
   "docs",
 ]

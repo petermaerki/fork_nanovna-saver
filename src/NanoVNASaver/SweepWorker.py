@@ -29,7 +29,7 @@ from .RFTools import Datapoint
 from .Settings.Sweep import Sweep, SweepMode
 
 if TYPE_CHECKING:
-    from .NanoVNASaver.NanoVNASaver import NanoVNASaver as vna_app
+    from NanoVNASaver import NanoVNASaver
 
 logger = logging.getLogger(__name__)
 

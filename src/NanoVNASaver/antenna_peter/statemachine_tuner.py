@@ -153,6 +153,8 @@ class StatemachineTuner:
         return success
 
     def _tune_impedance_z(self, ctl: PeterAntennaControl):
+        if not ctl.impedance_tune_enable.isChecked():
+            return True
         success = False
         servo_z_ta = ctl.impedance_servo_z.f_value
         impedance_target = ctl.impedance_target.f_value
@@ -183,6 +185,8 @@ class StatemachineTuner:
         return success
 
     def _tune_servo_f(self, ctl: PeterAntennaControl):
+        if not ctl.frequency_tune_enable.isChecked():
+            return True
         success = False
         servo_f_ta = ctl.frequency_servo_f.f_value
         target_hz = ctl.frequency_target.f_value

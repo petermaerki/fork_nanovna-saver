@@ -165,6 +165,7 @@ class PeterAntennaControl(Control):
         self.frequency_tune_enable = self.add_row(
             peter_widgets.CheckboxWidget("Tune Frequency enable")
         ).checkbox
+        self.frequency_tune_enable.setChecked(True)
         self.frequency_offset = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Frequency Offset", f_value=1500.0, unit="Hz"
@@ -206,6 +207,7 @@ class PeterAntennaControl(Control):
         self.impedance_tune_enable = self.add_row(
             peter_widgets.CheckboxWidget("Tune Impedance enable")
         ).checkbox
+        self.impedance_tune_enable.setChecked(True)
         self.impedance_target = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Impedance target", f_value=50.0, unit="Ohm"

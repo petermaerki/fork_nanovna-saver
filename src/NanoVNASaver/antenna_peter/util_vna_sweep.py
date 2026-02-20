@@ -40,8 +40,8 @@ class VnaSweeper:
         self.ctl_sweep = sweep
         self.app = self.ctl.app
         # self.vna_is_sweeping___obsolete = False
-        self.lower_freq_Hz = 1.0E6
-        self.upper_freq_Hz = 30.0E6
+        self.lower_freq_Hz = 1.0e6
+        self.upper_freq_Hz = 30.0e6
         self.swr_min: float = 42.0
         # self.reset_range(freq_Hz=7e6)
 
@@ -72,7 +72,7 @@ class VnaSweeper:
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")
-tuner
+
     def _setStartStopFrequency(self, tag: str, text: str):
         input = self.app.sweep_control.inputs[tag]
         input.setText(text)
@@ -98,13 +98,13 @@ tuner
         self.ctl.impedance_current.set_value(self.find_impedance)
         if not self._find_min_swr():
             # SWR ist noch nicht genug tief, daher keine gefunden werte, READY damit die impedanz getuned werden kann
-            #self.stateVNA = StatemachineVna.RESULTS_OUTDATED
+            # self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
         if not self._zoom():
             self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
 
-        #self.ctl.impedance_current.set_value(self.impedance)
+        # self.ctl.impedance_current.set_value(self.impedance)
 
         # try:
         #     f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
@@ -189,7 +189,7 @@ tuner
                     f"{swr_min=} is not below {swr_min_limit=}: adjust servo_z manually to get a lower swr"
                 )
 
-                #Todo: self.ctl.tuner.tune_band_change(self.ctl)
+                # Todo: self.ctl.tuner.tune_band_change(self.ctl)
                 return False
             f_swr_min_Hz = freq_Hz[idx_min]
 
@@ -226,16 +226,19 @@ tuner
         self.lower_freq_Hz = lower_freq_Hz
         self.upper_freq_Hz = upper_freq_Hz
         POINTS_IN_BANDWITH = 50
-        frequency_per_point = abs(self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz)/POINTS_IN_BANDWITH
-        points_total =  (upper_freq_Hz-lower_freq_Hz)/frequency_per_point
+        frequency_per_point = (
+            abs(self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz)
+            / POINTS_IN_BANDWITH
+        )
+        points_total = (upper_freq_Hz - lower_freq_Hz) / frequency_per_point
         POINTS_PER_SEGMENT_TARGET = 100
-        segments = max(int(points_total/POINTS_PER_SEGMENT_TARGET+0.5),1)
-        points_per_segment = int(points_total/segments)
+        segments = max(int(points_total / POINTS_PER_SEGMENT_TARGET + 0.5), 1)
+        points_per_segment = int(points_total / segments)
         self._setDatapointPoints(points_per_segment=points_per_segment)
         self._setSegments(segments=segments)
         if self.stateZOOM is StatemachineZoom.OVERVIEW:
             self.stateZOOM = StatemachineZoom.ZOOMED
-            '''Nochmals sweepen damit die Aufloesung sicher gut genug ist'''
+            """Nochmals sweepen damit die Aufloesung sicher gut genug ist"""
             return False
         return True
 
@@ -258,7 +261,7 @@ tuner
         swr_min = swr[idx_min]
 
         f_swr_min_Hz = None
-        f_swr_p2_64_l_Hz = None
+        f_swr_p2_64_l_Hz = Nonetune_band_change
         f_swr_p2_64_h_Hz = None
 
         if swr_min < 2.0:
@@ -488,7 +491,6 @@ tuner
             swr_min = swr[idx_min]
             f_swr_min_Hz = freq_Hz[idx_min]
 
-
             # Find closest datapoints for all three markers
             # def find_closest(freq_target):
             #     min_diff = float("inf")
@@ -506,20 +508,17 @@ tuner
 
             punkte_versatz = 10
 
-
             try:
-                dp1=s11[idx_min-punkte_versatz]
-                dp2=s11[idx_min]
-                dp3=s11[idx_min+punkte_versatz]
+                dp1 = s11[idx_min - punkte_versatz]
+                dp2 = s11[idx_min]
+                dp3 = s11[idx_min + punkte_versatz]
 
             except Exception as e:
                 logger.exception(f"Zoom to narrow, swr min on the edge: {e}")
                 self.reset_range(freq_Hz=self.ctl.frequency_target.f_value)
                 return 0.0
 
-            logger.debug(f'impedanze calculation {dp1=} {dp2=} {dp3=}')
-
-
+            logger.debug(f"impedanze calculation {dp1=} {dp2=} {dp3=}")
 
             assert dp1 is not None and dp2 is not None and dp3 is not None
 

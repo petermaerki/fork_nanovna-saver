@@ -95,9 +95,10 @@ class VnaSweeper:
 
     def sweepFinished_peter_antenna(self):
         self.stateVNA = StatemachineVna.RESULTS_READY
-        self.ctl.impedance_current.set_value(self.impedance)
+        self.ctl.impedance_current.set_value(self.find_impedance)
         if not self._find_min_swr():
-            self.stateVNA = StatemachineVna.RESULTS_OUTDATED
+            # SWR ist noch nicht genug tief, daher keine gefunden werte, READY damit die impedanz getuned werden kann
+            #self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
         if not self._zoom():
             self.stateVNA = StatemachineVna.RESULTS_OUTDATED
@@ -312,7 +313,7 @@ class VnaSweeper:
                                     "mean=%s, freq=%s Hz",
                                     max_val,
                                     mean_val,
-                                    f_swr_min_Hz,
+                                    f_swr_min_1Hz,
                                 )
             except Exception:
                 logger.exception("Failed to analyze phase double derivative")
@@ -461,7 +462,7 @@ class VnaSweeper:
             self.swr_min = 42
 
     @property
-    def impedance(self) -> float:
+    def find_impedance(self) -> float:
         """Compute and display the antenna impedance from the Smith chart circle.
 
         The three marker points form a circle in the Smith chart.
@@ -502,11 +503,20 @@ class VnaSweeper:
             # dp3 = find_closest(self.f_swr_p2_64_h_Hz)
 
             punkte_versatz = 10
-            dp1=s11[idx_min-punkte_versatz]
-            dp2=s11[idx_min]
-            dp3=s11[idx_min+punkte_versatz]
+
+
+            try:
+                dp1=s11[idx_min-punkte_versatz]
+                dp2=s11[idx_min]
+                dp3=s11[idx_min+punkte_versatz]
+
+            except Exception as e:
+                logger.exception(f"Zoom to narrow, swr min on the edge: {e}")
+                self.reset_range(freq_Hz=self.ctl.frequency_target.f_value)
+                return 0.0
 
             logger.debug(f'impedanze calculation {dp1=} {dp2=} {dp3=}')
+
 
 
             assert dp1 is not None and dp2 is not None and dp3 is not None

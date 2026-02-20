@@ -35,7 +35,7 @@ FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
-DEBUG_FORCE_BAND_SWITCH = True
+DEBUG_FORCE_BAND_SWITCH = False
 
 
 class Servos:
@@ -313,7 +313,9 @@ class PeterAntennaControl(Control):
         assert isinstance(checked, QtCore.Qt.CheckState)
         state_tuning = checked.value  #  self.checkbox_tune.isChecked()
         self.checkbox_vna_enable.setChecked(state_tuning)
-        self.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
+        if self.checkbox_tune.isChecked():
+            self.statemachine_tuner.reset_iterations(ctl=self)
+
         return
         if state_tuning:
             # Auto-enable VNA if not already enabled

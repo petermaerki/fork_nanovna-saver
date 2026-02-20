@@ -42,7 +42,9 @@ class Band:
         m2 = self.measurement2
         assert m1 is not None and m2 is not None, self
         assert m2.servo_f_ta != m1.servo_f_ta
-        gain_hz_pro_t = (m2.freq_hz - m1.freq_hz) / (m2.servo_f_ta - m1.servo_f_ta)
+        gain_hz_pro_t = (m2.freq_hz - m1.freq_hz) / (
+            m2.servo_f_ta - m1.servo_f_ta
+        )
         return gain_hz_pro_t
 
 
@@ -103,42 +105,42 @@ BANDS: Bands = Bands(
             ft8_hz=10_136_000,
             measurement1=Measurement(12.0, 1.1066e7),
             measurement2=Measurement(13.0, 1.0504e7),
-            servo_z_ta=0.15,
+            servo_z_ta=0.14,
         ),
         Band(
             band_m=20,
             ft8_hz=14_074_000,
-            measurement1=None,
-            measurement2=None,
-            servo_z_ta=None,
+            measurement1=Measurement(8.0, 1.464e7),
+            measurement2=Measurement(9.0, 1.346e7),
+            servo_z_ta=0.1,
         ),
         Band(
             band_m=17,
             ft8_hz=18_100_000,
-            measurement1=None,
-            measurement2=None,
-            servo_z_ta=None,
+            measurement1=Measurement(6.0, 1.62554e7),
+            measurement2=Measurement(7.0, 1.8318e7),
+            servo_z_ta=0.06,
         ),
         Band(
             band_m=15,
             ft8_hz=21_074_000,
-            measurement1=None,
-            measurement2=None,
-            servo_z_ta=None,
+            measurement1=Measurement(5.0, 2.128e7),
+            measurement2=Measurement(6.0, 1.62554e7),
+            servo_z_ta=0.0,
         ),
         Band(
             band_m=12,
             ft8_hz=24_915_000,
-            measurement1=None,
-            measurement2=None,
-            servo_z_ta=None,
+            measurement1=Measurement(3.0, 26780300),
+            measurement2=Measurement(4.0, 24197000),
+            servo_z_ta=-0.0,
         ),
         Band(
             band_m=10,
             ft8_hz=28_074_000,
-            measurement1=None,
-            measurement2=None,
-            servo_z_ta=None,
+            measurement1=Measurement(2.0, 28467500),
+            measurement2=Measurement(3.0, 26780300),
+            servo_z_ta=-0.05,
         ),
     ]
 )

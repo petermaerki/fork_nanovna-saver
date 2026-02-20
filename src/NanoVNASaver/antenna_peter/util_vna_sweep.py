@@ -40,8 +40,8 @@ class VnaSweeper:
         self.ctl_sweep = sweep
         self.app = self.ctl.app
         # self.vna_is_sweeping___obsolete = False
-        self.lower_freq_Hz: float
-        self.upper_freq_Hz: float
+        self.lower_freq_Hz = 1.0E6
+        self.upper_freq_Hz = 30.0E6
         self.swr_min: float = 42.0
         # self.reset_range(freq_Hz=7e6)
 
@@ -51,7 +51,7 @@ class VnaSweeper:
         self.lower_freq_Hz = freq_Hz * (1.0 - BAND_TEIL)
         self.upper_freq_Hz = freq_Hz * (1.0 + BAND_TEIL)
         self._setDatapointPoints(points_per_segment=100)
-        self._setSegments(segments=10)
+        self._setSegments(segments=5)
         self.state = StatemachineVna.RESULTS_OUTDATED
         self.state = StatemachineZoom.OVERVIEW
 
@@ -72,7 +72,7 @@ class VnaSweeper:
 
     def _setStartStopFrequencyFloat(self, tag: str, freq_Hz: float):
         self._setStartStopFrequency(tag, f"{freq_Hz:0.0f} Hz")
-
+tuner
     def _setStartStopFrequency(self, tag: str, text: str):
         input = self.app.sweep_control.inputs[tag]
         input.setText(text)
@@ -145,7 +145,7 @@ class VnaSweeper:
         # except Exception:
         #     logger.exception(
         #         "Failed to update SWR min display after sweep finish"
-        #     )
+        #     )PeterAntennaControl
         # try:
         #     self._update_impedance_display()
         # except Exception:
@@ -188,6 +188,8 @@ class VnaSweeper:
                 logger.warning(
                     f"{swr_min=} is not below {swr_min_limit=}: adjust servo_z manually to get a lower swr"
                 )
+
+                #Todo: self.ctl.tuner.tune_band_change(self.ctl)
                 return False
             f_swr_min_Hz = freq_Hz[idx_min]
 

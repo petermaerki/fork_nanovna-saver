@@ -36,8 +36,13 @@ def _angular_error_deg(target_deg: float, actual_deg: float) -> float:
 class StatemachineTuner:
     def __init__(self) -> None:
         self.last_s = time.monotonic()
-        self.impedance_iteration = 0
-        self.frequency_iteration = 0
+        self.impedance_iteration_plus = 0
+        self.frequency_iteration_plus = 0
+
+    def reset_iterations(self, ctl: PeterAntennaControl):
+        self.impedance_iteration_plus = 0
+        self.frequency_iteration_plus = 0
+        ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
 
     def tune(self, ctl: PeterAntennaControl) -> None:
         try:
@@ -60,7 +65,7 @@ class StatemachineTuner:
         if not self._tune_heading(ctl=ctl):
             return False
 
-        band_changed = self._tune_band_change(ctl=ctl)
+        band_changed = self.tune_band_change(ctl=ctl)
         if not band_changed:
             return False
         if ctl.vna.stateVNA is util_vna_sweep.StatemachineVna.VNA_IS_SWEEPING:
@@ -119,7 +124,7 @@ class StatemachineTuner:
         ctl.heading_servo.set_value(servo_targed_t)
         return False
 
-    def _tune_band_change(self, ctl: PeterAntennaControl) -> bool:
+    def tune_band_change(self, ctl: PeterAntennaControl) -> bool:
         persist = ctl._position_persist
         persist_band = BANDS.get_band(freq_hz=persist.freq_antenna_hz)
         target_band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
@@ -153,10 +158,16 @@ class StatemachineTuner:
         impedance_target = ctl.impedance_target.f_value
         impedance_current = ctl.impedance_current.f_value
         impedance_difference = impedance_current - impedance_target
-        if abs(impedance_difference) < 1.0:
-            success = True
-            print(f'Impedance ok {impedance_current:0.1f} Ohm')
-            return success
+
+        if abs(impedance_difference) < 2.5:
+            self.impedance_iteration_plus += 1
+            print(f"Impedance ok {impedance_current:0.1f} Ohm")
+            if self.impedance_iteration_plus > 1:
+                success = True
+                return success
+        else:
+            self.impedance_iteration_plus = 0
+
         REGELFAKTOR = 1e-3
         MAX__STELLSCHRITT_ta = 0.01
         assert MAX__STELLSCHRITT_ta > 0.0
@@ -165,9 +176,8 @@ class StatemachineTuner:
         stellschritt_ta = max(stellschritt_ta, -MAX__STELLSCHRITT_ta)
         servo_z_ta_new = servo_z_ta + stellschritt_ta
         ctl.impedance_servo_z.set_value(servo_z_ta_new)
-        self.impedance_iteration += 1
         print(
-            f"Impedance iteration {self.impedance_iteration:d} current {impedance_current:0.1f}  servo_z_ta_new {servo_z_ta_new:0.3f} delta {stellschritt_ta:0.3f}"
+            f"Impedance iteration_plus {self.impedance_iteration_plus:d} current {impedance_current:0.1f}  servo_z_ta_new {servo_z_ta_new:0.3f} delta {stellschritt_ta:0.3f}"
         )
         ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success
@@ -179,19 +189,23 @@ class StatemachineTuner:
         current_hz = ctl.vna.f_swr_min_Hz
         difference_hz = current_hz - target_hz
 
-        if abs(difference_hz / target_hz) < 1e-4:
-            print(f'Frequency ok {current_hz:0.0f} Hz')
-            success = True
-            return success
+        if abs(difference_hz) < 400:
+            self.frequency_iteration_plus += 1
+            print(f"Frequency ok {current_hz:0.0f} Hz")
+            if self.frequency_iteration_plus > 2:
+                success = True
+                return success
+        else:
+            self.frequency_iteration_plus = 0
 
         band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
         gain_hz_pro_ta = band.servo_f_gain_hz_pro_t
         servo_f_ta_new = servo_f_ta - difference_hz / gain_hz_pro_ta
         assert abs(servo_f_ta - servo_f_ta_new) < 3.0
         ctl.frequency_servo_f.set_value(servo_f_ta_new)
-        self.frequency_iteration += 1
+
         print(
-            f"Frequency iteration {self.frequency_iteration:d} current {current_hz:0.0f}  servo_f_ta_new {servo_f_ta_new:0.3f}"
+            f"Frequency iteration_plus {self.frequency_iteration_plus:d} current {current_hz:0.0f}  servo_f_ta_new {servo_f_ta_new:0.3f}"
         )
         ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success

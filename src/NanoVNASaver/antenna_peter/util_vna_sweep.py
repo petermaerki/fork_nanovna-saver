@@ -40,8 +40,8 @@ class VnaSweeper:
         self.ctl_sweep = sweep
         self.app = self.ctl.app
         # self.vna_is_sweeping___obsolete = False
-        self.lower_freq_Hz = 1.0e6
-        self.upper_freq_Hz = 30.0e6
+        self.lower_freq_Hz: float | None = None
+        self.upper_freq_Hz: float | None = None
         self.swr_min: float = 42.0
         # self.reset_range(freq_Hz=7e6)
 
@@ -62,6 +62,8 @@ class VnaSweeper:
         if self.stateVNA is StatemachineVna.RESULTS_READY:
             return True
         assert self.stateVNA is StatemachineVna.RESULTS_OUTDATED
+        if self.lower_freq_Hz is None:
+            self.reset_range(freq_Hz=self.ctl.frequency_target.f_value)
         self._setStartStopFrequencyFloat("Start", self.lower_freq_Hz)
         self._setStartStopFrequencyFloat("Stop", self.upper_freq_Hz)
 

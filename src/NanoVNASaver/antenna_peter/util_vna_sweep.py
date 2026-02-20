@@ -95,6 +95,7 @@ class VnaSweeper:
 
     def sweepFinished_peter_antenna(self):
         self.stateVNA = StatemachineVna.RESULTS_READY
+        self.ctl.impedance_current.set_value(self.impedance)
         if not self._find_min_swr():
             self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
@@ -102,7 +103,7 @@ class VnaSweeper:
             self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
 
-        self.ctl.impedance_current.set_value(self.impedance)
+        #self.ctl.impedance_current.set_value(self.impedance)
 
         # try:
         #     f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min = (
@@ -469,43 +470,44 @@ class VnaSweeper:
         - If outside: undercoupled → R = 50 Ω / SWR_min
         """
         try:
-            # markers = self.app.markers
-            # if len(markers) < 3:
-            #     self.impedance_display.setText("--")
-            #     return
-
-            # # Get all three marker frequencies
-            # f1 = markers[0].frequencyInput.get_freq()  # SWR 2.64 low
-            # f2 = markers[1].frequencyInput.get_freq()  # SWR min
-            # f3 = markers[2].frequencyInput.get_freq()  # SWR 2.64 high
-
-            # if f1 is None or f2 is None or f3 is None:
-            #     self.impedance_display.setText("--")
-            #     return
-
-            # Get S11 data
             with self.app.dataLock:
-                s11: list[Datapoint] = self.app.data.s11[:]
-                assert len(s11) > 2
-                # Also get SWR at marker 2 (SWR min)
-                swr_array = np.asarray([d.vswr for d in s11])
+                s11: list[Datapoint]
+                s11 = self.app.data.s11[:]
 
-            swr_min = float(np.min(swr_array))
+                swr = np.asarray([d.vswr for d in s11])
+                freq_Hz = np.asarray([float(d.freq) for d in s11])
+
+                if len(swr) == 0 or len(freq_Hz) == 0:
+                    logger.warning("find_min_swr: No data available")
+                    return False
+
+            idx_min = np.argmin(swr)
+            swr_min = swr[idx_min]
+            f_swr_min_Hz = freq_Hz[idx_min]
+
 
             # Find closest datapoints for all three markers
-            def find_closest(freq_target):
-                min_diff = float("inf")
-                closest = None
-                for dp in s11:
-                    diff = abs(dp.freq - freq_target)
-                    if diff < min_diff:
-                        min_diff = diff
-                        closest = dp
-                return closest
+            # def find_closest(freq_target):
+            #     min_diff = float("inf")
+            #     closest = None
+            #     for dp in s11:
+            #         diff = abs(dp.freq - freq_target)
+            #         if diff < min_diff:
+            #             min_diff = diff
+            #             closest = dp
+            #     return closest
 
-            dp1 = find_closest(self.f_swr_p2_64_l_Hz)
-            dp2 = find_closest(self.f_swr_min_Hz)
-            dp3 = find_closest(self.f_swr_p2_64_h_Hz)
+            # dp1 = find_closest(self.f_swr_p2_64_l_Hz)
+            # dp2 = find_closest(self.f_swr_min_Hz)
+            # dp3 = find_closest(self.f_swr_p2_64_h_Hz)
+
+            punkte_versatz = 10
+            dp1=s11[idx_min-punkte_versatz]
+            dp2=s11[idx_min]
+            dp3=s11[idx_min+punkte_versatz]
+
+            logger.debug(f'impedanze calculation {dp1=} {dp2=} {dp3=}')
+
 
             assert dp1 is not None and dp2 is not None and dp3 is not None
 
@@ -550,6 +552,7 @@ class VnaSweeper:
 
         except Exception as e:
             logger.exception(f"Failed to update impedance display: {e}")
+            return 0.0
 
     def find_sweep_start_stop(
         self,

@@ -127,10 +127,6 @@ class PeterAntennaControl(Control):
             peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
         ).checkbox
 
-        if True:
-            # OBSOLETE
-            self._q_factor = 500.0  # default value
-
         self.add_row(peter_widgets.SeparatorWidget())
 
         self.heading_checkbox = self.add_row(
@@ -316,52 +312,6 @@ class PeterAntennaControl(Control):
         if self.checkbox_tune.isChecked():
             self.statemachine_tuner.reset_iterations(ctl=self)
 
-        return
-        if state_tuning:
-            # Auto-enable VNA if not already enabled
-            # if not self.checkbox_vna_enable.isChecked():
-            #     logger.debug("Tune enabled: auto-enabling VNA")
-            #     self.checkbox_vna_enable.setChecked(True)
-
-            # reset tune iteration counter on initial enable; first sweep is a dry-run
-            # self._tune_iteration_obsolete = 0
-            # Send current power setting to FT-991 when tuning is enabled
-            # try:
-            #     self.on_power_changed()
-            # except Exception:
-            #     logger.exception("Failed to send initial power on tune enable")
-            # self.on_button_set_values()
-            # if False:
-            #     sweep_stop = self.app.sweep_control.inputs["Stop"]
-            #     assert isinstance(sweep_stop, FrequencyInputWidget)
-            #     if sweep_stop.get_freq() > F_USEFUL_MAX_Hz:
-            #         sweep_stop.setText(f"{F_USEFUL_MAX_Hz:0.0f}Hz")
-            #         sweep_start = self.app.sweep_control.inputs["Start"]
-            #         assert isinstance(sweep_start, FrequencyInputWidget)
-            #         sweep_start.setText(f"{F_USEFUL_MIN_Hz:0.0f}Hz")
-
-            # self._setStartStopFrequencyFloat("Start", 1e6)
-            # self._setStartStopFrequencyFloat("Stop", 30e6)
-            # self._setDatapointCount(1000)  # initial bei overview
-            # self.app.sweep.set_logarithmic(True)
-
-            # self.app.sweep_start()
-            pass
-        else:
-            pass
-            # self._pico_run(direction_up=True, on=False)
-            # When tune is disabled, also disable VNA enable
-            # if self.checkbox_vna_enable.isChecked():
-            #     logger.debug("Tune disabled: auto-disabling VNA")
-            #     self.checkbox_vna_enable.setChecked(False)
-            # self._set_motor_status_obsolete("stop")
-            # clear internal tune iteration counter when tuning disabled
-            # self._tune_iteration_obsolete = 0
-
-            # sweep_start.setText(f"100kHz") # todo: disable sweep completely
-            # sweep_stop.setText(f"200kHz")
-            # self.app.sweep_start()
-
     def on_vna_enable(self, checked: QtCore.Qt.CheckState) -> None:
         """
         Statemachine "VNA Enable".
@@ -461,11 +411,12 @@ class PeterAntennaControl(Control):
             set_f_hz = freq_hz
             f_mhz = set_f_hz / 1e6
             watts = int(self.power_spin.value())
-            q_factor = self._q_factor
             info = calculate_safety_distance(
                 f_mhz=f_mhz,
                 p_watt=watts,
-                q_factor=q_factor,
+                antenna_q_factor=self.vna.antenna_q,
+                swr_min=self.vna.swr_min,
+                antenna_bandwith_3db_Hz=self.vna.antenna_bandwith_3db_Hz,
             )
             self.safety_info_html.setHtml(info)
         except Exception:
@@ -521,21 +472,6 @@ class PeterAntennaControl(Control):
         self.frequency_target.set_value(freq_hz_with_offset)
 
         self._update_safety_calculation(freq_hz=freq_hz)
-
-    def on_button_set_values_obsolete(self):
-        self._setDatapointCount(201)
-
-        # self._setStartStopFrequency("Start", "2MHz")
-        # self._setStartStopFrequency("Stop", "30MHz")
-        # self._setStartStartFrequency("Start", "2MHz")
-        # self._setStartStopFrequency("Stop", "28MHz")
-        # self._setMakerFrequency(0, "1MHz")
-        # self._setMakerFrequency(-1, "30MHz")
-        self._setStartStopFrequencyFloat("Start", 1e6)
-        self._setStartStopFrequencyFloat("Stop", 30e6)
-        self._setDatapointCount(1000)
-        self.app.sweep.set_logarithmic(True)
-        self.app.sweep_start()
 
     def _frequency_set_servo_f(self, target_ta: float) -> float:
         if self.servos is None:

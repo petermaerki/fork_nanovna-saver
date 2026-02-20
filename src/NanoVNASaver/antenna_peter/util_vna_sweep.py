@@ -319,7 +319,7 @@ class VnaSweeper:
                                     "mean=%s, freq=%s Hz",
                                     max_val,
                                     mean_val,
-                                f_swr_min_1Hz,
+                                    f_swr_min_1Hz,
                                 )
             except Exception:
                 logger.exception("Failed to analyze phase double derivative")
@@ -383,69 +383,6 @@ class VnaSweeper:
         except ZeroDivisionError:
             return 42
         return antenna_q
-
-    def _update_q_display(self):
-        """Compute Q = marker2 / (marker3 - marker1) and update label.
-
-        If markers are missing or the denominator is non-positive, show `--`.
-        """
-        try:
-            markers = self.app.markers
-            if len(markers) < 3:
-                self.q_display.setText("--")
-                self._q_factor = 500.0  # reset to default
-                return
-            m1 = markers[0]
-            m2 = markers[1]
-            m3 = markers[2]
-            # Use frequencyInput.get_freq() to parse the displayed frequency
-            f1 = m1.frequencyInput.get_freq()
-            f2 = m2.frequencyInput.get_freq()
-            f3 = m3.frequencyInput.get_freq()
-            denom = float(f3 - f1)
-            if denom <= 0:
-                self.q_display.setText("--")
-                self._q_factor = 500.0  # reset to default
-                return
-            q = float(f2) / denom
-            # Store Q for use in safety calculations
-            self._q_factor = q
-            # show numeric value only, no decimal places
-            self.q_display.setText(f"{q:.0f}")
-        except Exception:
-            logger.exception("Failed to update Q display")
-            self.q_display.setText("--")
-
-    # def _update_delta_display(self):
-    #     """Compute deviation of SWR min to set SWR min in kHz and update label.
-
-    #     The display shows (f_swr_min - set_f) / 1e3 as an integer kHz value with
-    #     unit 'kHz'. If markers or set frequency are missing/invalid, show `--`.
-    #     """
-    #     try:
-    #         markers = self.app.markers
-    #         if len(markers) < 2:
-    #             self.delta_display.setText("--")
-    #             return
-    #         m2 = markers[1]
-    #         f_min = m2.frequencyInput.get_freq()
-    #         try:
-    #             set_f = float(self.input_set_Hz.text())
-    #         except Exception:
-    #             self.delta_display.setText("--")
-    #             return
-    #         if set_f == 0 or f_min is None:
-    #             self.delta_display.setText("--")
-    #             return
-    #         delta = f_min - set_f
-    #         # determine sign based on comparison before rounding
-    #         sign = "-" if delta < 0 else "+"
-    #         delta_khz_abs = abs(delta) / 1e3
-    #         # show numeric value with three decimal places, include explicit sign and unit
-    #         self.delta_display.setText(f"{sign}{delta_khz_abs:.3f} kHz")
-    #     except Exception:
-    #         logger.exception("Failed to update delta display")
-    #         self.delta_display.setText("--")
 
     def _update_swrmin_display(self):
         """Compute the minimum SWR from the latest sweep and update label.

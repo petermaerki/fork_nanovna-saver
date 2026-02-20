@@ -2,9 +2,11 @@ import math
 
 
 def calculate_safety_distance(
-    f_mhz,
-    p_watt,
-    q_factor,
+    f_mhz: float,
+    p_watt: float,
+    antenna_q_factor: float,
+    swr_min: float,
+    antenna_bandwith_3db_Hz: float,
     loop_diameter_m=1.0,
     loop_area_m2=0.78,
 ) -> str:
@@ -13,7 +15,9 @@ def calculate_safety_distance(
     radius = loop_diameter_m / 2
     area = math.pi * (radius**2)
     l_henry = 1.55e-6
-    i_loop = math.sqrt((p_watt * q_factor) / (2 * math.pi * f_hz * l_henry))
+    i_loop = math.sqrt(
+        (p_watt * antenna_q_factor) / (2 * math.pi * f_hz * l_henry)
+    )
 
     # Capacitor voltage at resonance: V_c = I_loop * X_L (X_L = X_C at resonance)
     x_l = 2 * math.pi * f_hz * l_henry
@@ -46,16 +50,16 @@ def calculate_safety_distance(
 
     # Loss resistance from Q factor
     omega_l = 2 * math.pi * f_hz * l_henry
-    r_loss = omega_l / q_factor
+    r_loss = omega_l / antenna_q_factor
 
     # Efficiency and radiated power
     efficiency = (r_rad / (r_rad + r_loss)) * 100.0
     p_radiated = p_watt * (r_rad / (r_rad + r_loss))
 
     lines = [
-        f"Antenna Q Factor: {q_factor:.0f}",
-        "Antenna SWR: todo",
-        "Antenna Bandwith 3dB: todo kHz",
+        f"Antenna Q Factor: {antenna_q_factor:.0f}",
+        f"Antenna SWR: {swr_min:.2f}",
+        f"Antenna Bandwidth 3dB: {antenna_bandwith_3db_Hz / 1000.0:.3f} kHz",
         f"TX Frequency: {f_mhz:.3f} MHz",
         f"TX Power Transmitter: {p_watt:.0f} W",
         f"Antenna Efficiency: {efficiency:.1f} %",

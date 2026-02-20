@@ -85,6 +85,7 @@ class PeterAntennaControl(Control):
 
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
+        self._layout = QtWidgets.QVBoxLayout(self)
 
         self.filename_servo_position_persist = (
             DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_z_h.json"
@@ -119,8 +120,6 @@ class PeterAntennaControl(Control):
 
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
-
-        self._layout = QtWidgets.QVBoxLayout(self)
 
         self.checkbox_tune = self.add_row(
             peter_widgets.CheckboxWidget("Tune automatic")

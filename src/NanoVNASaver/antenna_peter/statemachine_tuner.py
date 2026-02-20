@@ -163,7 +163,7 @@ class StatemachineTuner:
 
         if abs(impedance_difference) < 2.5:
             self.impedance_iteration_plus += 1
-            print(f"Impedance ok {impedance_current:0.1f} Ohm")
+            logger.info(f"Impedance ok {impedance_current:0.1f} Ohm")
             if self.impedance_iteration_plus > 1:
                 success = True
                 return success
@@ -178,7 +178,7 @@ class StatemachineTuner:
         stellschritt_ta = max(stellschritt_ta, -MAX__STELLSCHRITT_ta)
         servo_z_ta_new = servo_z_ta + stellschritt_ta
         ctl.impedance_servo_z.set_value(servo_z_ta_new)
-        print(
+        logger.info(
             f"Impedance iteration_plus {self.impedance_iteration_plus:d} current {impedance_current:0.1f}  servo_z_ta_new {servo_z_ta_new:0.3f} delta {stellschritt_ta:0.3f}"
         )
         ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
@@ -195,7 +195,7 @@ class StatemachineTuner:
 
         if abs(difference_hz) < 400:
             self.frequency_iteration_plus += 1
-            print(f"Frequency ok {current_hz:0.0f} Hz")
+            logger.info(f"Frequency ok {current_hz:0.0f} Hz")
             if self.frequency_iteration_plus > 2:
                 success = True
                 return success
@@ -208,7 +208,7 @@ class StatemachineTuner:
         assert abs(servo_f_ta - servo_f_ta_new) < 3.0
         ctl.frequency_servo_f.set_value(servo_f_ta_new)
 
-        print(
+        logger.info(
             f"Frequency iteration_plus {self.frequency_iteration_plus:d} current {current_hz:0.0f}  servo_f_ta_new {servo_f_ta_new:0.3f}"
         )
         ctl.vna.stateVNA = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED

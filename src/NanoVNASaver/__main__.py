@@ -69,7 +69,7 @@ def main():
     )
     args = parser.parse_args()
 
-    console_log_level = logging.WARNING
+    console_log_level = logging.INFO
     file_log_level = logging.DEBUG
 
     print(INFO)
@@ -78,20 +78,25 @@ def main():
         console_log_level = logging.DEBUG
 
     logger = logging.getLogger("NanoVNASaver")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.WARNING)
+    _logger = logging.getLogger("NanoVNASaver.antenna_peter")
+    _logger.setLevel(logging.INFO)
 
+    formatter_stream = logging.Formatter(
+        "%(levelname)s %(filename)s:%(lineno)d %(message)s"
+    )
+    formatter_file = logging.Formatter(
+        "%(asctime)s %(levelname)s %(name)s %(message)s"
+    )
     ch = logging.StreamHandler()
     ch.setLevel(console_log_level)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    ch.setFormatter(formatter)
+    ch.setFormatter(formatter_stream)
     logger.addHandler(ch)
 
     if args.debug_file:
         fh = logging.FileHandler(args.debug_file)
         fh.setLevel(file_log_level)
-        fh.setFormatter(formatter)
+        fh.setFormatter(formatter_file)
         logger.addHandler(fh)
 
     # Print diagnostic data

@@ -27,8 +27,6 @@ FREQUENCY_TARGET_TA_MIN = 0.02
 "near to homing position"
 
 
-
-
 class StatemachineTuner:
     def __init__(self) -> None:
         self.last_s = time.monotonic()
@@ -98,13 +96,20 @@ class StatemachineTuner:
 
         # ctl.heading_current.set_value()
         heading_target_deg = ctl.heading_target.f_value
-        delta = (heading_target_deg - measured_heading_deg + 90.0) % 180.0 - 90.0
+        delta = (
+            heading_target_deg - measured_heading_deg + 90.0
+        ) % 180.0 - 90.0
         error_deg = abs(delta)
         if error_deg < 3.0:
-            logger.info(
-                f"_tune_heading() {heading_target_deg=} {measured_heading_deg=} {error_deg=} OK"
-            )
-            return True
+            self.heading_iteration_plus += 1
+            if self.heading_iteration_plus >= 2:
+                logger.info(
+                    f"Heading ok now {measured_heading_deg:0.0f} target {heading_target_deg:0.0f}  error {error_deg:0.0f}"
+                )
+                return True
+        else:
+            self.heading_iteration_plus = 0
+
         servo_targed_t = util_heading_calculator.servo_targed_t(
             servo_t_actual=ctl.heading_servo.f_value,
             heading_actual_deg=measured_heading_deg,
@@ -114,7 +119,7 @@ class StatemachineTuner:
             debug=False,
         )
         logger.info(
-            f"_tune_heading(): heading_servo {heading_target_deg=}. {ctl.heading_servo.f_value:0.3f}->{servo_targed_t:0.3f} ta"
+            f"Heading now {measured_heading_deg:0.0f} servo_h {ctl.heading_servo.f_value:0.3f}->{servo_targed_t:0.3f}"
         )
         ctl.heading_servo.set_value(servo_targed_t)
         return False
@@ -132,7 +137,7 @@ class StatemachineTuner:
             target_hz=ctl.frequency_target.f_value
         )
         logger.info(
-            f"_tune_band_change: band changed go to preset values {servo_f_ta=} {target_band.servo_z_ta=}"
+            f"tune_band_change: preset values {servo_f_ta=} {target_band.servo_z_ta=}"
         )
         ctl.frequency_servo_f.set_value(servo_f_ta)
         assert isinstance(target_band.servo_z_ta, float)
@@ -155,12 +160,14 @@ class StatemachineTuner:
         impedance_target = ctl.impedance_target.f_value
         impedance_current = ctl.impedance_current.f_value
         impedance_difference = impedance_current - impedance_target
-        impedance_error_ohm = abs(impedance_difference) 
+        impedance_error_ohm = abs(impedance_difference)
 
         if impedance_error_ohm < 2.5:
             self.impedance_iteration_plus += 1
-            logger.info(f"Impedance ok {impedance_current:0.1f} Ohm")
-            if self.impedance_iteration_plus > 1 or  impedance_error_ohm < 1.0:
+            if self.impedance_iteration_plus >= 2:
+                logger.info(
+                    f"Impedance ok {impedance_current:0.1f} Ohm target {impedance_target:0.1f} error {impedance_error_ohm:0.1f}"
+                )
                 success = True
                 return success
         else:
@@ -175,7 +182,7 @@ class StatemachineTuner:
         servo_z_ta_new = servo_z_ta + stellschritt_ta
         ctl.impedance_servo_z.set_value(servo_z_ta_new)
         logger.info(
-            f"Impedance iteration_plus {self.impedance_iteration_plus:d} current {impedance_current:0.1f}  servo_z_ta_new {servo_z_ta_new:0.3f} delta {stellschritt_ta:0.3f}"
+            f"Impedance iteration_plus {self.impedance_iteration_plus:d} now {impedance_current:0.1f}  servo_z_ta {servo_z_ta:0.3f} -> {servo_z_ta_new:0.3f}"
         )
         ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success
@@ -191,8 +198,11 @@ class StatemachineTuner:
 
         if abs(difference_hz) < 400:
             self.frequency_iteration_plus += 1
-            logger.info(f"Frequency ok {current_hz:0.0f} Hz")
-            if self.frequency_iteration_plus > 2:
+
+            if self.frequency_iteration_plus >= 2:
+                logger.info(
+                    f"Frequency ok {current_hz:0.0f}Hz target {target_hz:0.0f}Hz error {difference_hz:0.0f}Hz"
+                )
                 success = True
                 return success
         else:
@@ -205,7 +215,7 @@ class StatemachineTuner:
         ctl.frequency_servo_f.set_value(servo_f_ta_new)
 
         logger.info(
-            f"Frequency iteration_plus {self.frequency_iteration_plus:d} current {current_hz:0.0f}  servo_f_ta_new {servo_f_ta_new:0.3f}"
+            f"Frequency iteration_plus {self.frequency_iteration_plus:d} current {current_hz:0.0f}  servo_f_ta {servo_f_ta:0.3f} -> {servo_f_ta_new:0.3f}"
         )
         ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
         return success

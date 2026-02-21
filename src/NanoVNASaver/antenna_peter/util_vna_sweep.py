@@ -94,7 +94,28 @@ class VnaSweeper:
         # Total Punkte = DatapointSegemns x DatapointCount
         self.app.sweep_control.set_segments(count=segments)
 
+    def restore_sweep_control_fields(self):
+        """Restore sweep control Start/Stop fields to previous values after harmless sweep."""
+        sweep_ctrl = self.app.sweep_control.inputs
+        prev_start = getattr(self.app, '_prev_sweep_start', None)
+        prev_stop = getattr(self.app, '_prev_sweep_stop', None)
+        if prev_start is not None:
+            sweep_ctrl["Start"].setText(prev_start)
+            sweep_ctrl["Start"].textEdited.emit(prev_start)
+        if prev_stop is not None:
+            sweep_ctrl["Stop"].setText(prev_stop)
+            sweep_ctrl["Stop"].textEdited.emit(prev_stop)
+        self.app.sweep_control.update_sweep()
+
     def sweepFinished_peter_antenna(self):
+        # Skip GUI updates if harmless sweep is active
+        if getattr(self.app, '_harmless_sweep_active', False):
+            self.restore_sweep_control_fields()
+            self.app._harmless_sweep_active = False
+            self.app._suppress_display_updates = False
+            logger.info("Harmless sweep finished, skipping GUI updates and restoring sweep control values.")
+            return
+
         self.state_vna = StatemachineVna.RESULTS_READY
         self.ctl.impedance_current.set_value(self.find_impedance)
         if not self._find_min_swr():
@@ -102,8 +123,8 @@ class VnaSweeper:
             # self.stateVNA = StatemachineVna.RESULTS_OUTDATED
             return
         if not self.ctl.checkbox_tune.isChecked():
-                '''Sweep wurde von Hand gestartet'''
-                return
+            '''Sweep wurde von Hand gestartet'''
+            return
         if not self._zoom():
             self.state_vna = StatemachineVna.RESULTS_OUTDATED
             return
@@ -709,22 +730,20 @@ class VnaSweeper:
             logger.exception("Failed to set datapoint count")
 
     def run_vna_on_frequency_which_does_not_harm(self) -> None:
-        return
         # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
         try:
-            # Restore a harmless sweep on low frequencies and start it so the
-            # VNA runs there (this keeps the device quiet on other bands).
-            # Update the UI fields so behavior is visible and consistent.
-            self._setStartStopFrequencyFloat("Start", 100e3)
-            self._setStartStopFrequencyFloat("Stop", 200e3)
-            # use a small number of points for quick harmless sweep
-            self._setDatapointPoints(201)
-            self.app.sweep.set_logarithmic(False)
-            # mark/apply suppression of display updates while this
-            # harmless sweep runs so the visible graph is not overwritten
+            # Save current sweep control Start/Stop values
+            sweep_ctrl = self.app.sweep_control.inputs
+            self.app._prev_sweep_start = sweep_ctrl["Start"].text()
+            self.app._prev_sweep_stop = sweep_ctrl["Stop"].text()
+
+            # Only send sweep commands, do not update GUI data
             self.app._suppress_display_updates = True
             self.app._harmless_sweep_active = True
-            # start the harmless sweep so the VNA actually runs at low freq
+            self._setStartStopFrequencyFloat("Start", 100e3)
+            self._setStartStopFrequencyFloat("Stop", 200e3)
+            self._setDatapointPoints(201)
+            self.app.sweep.set_logarithmic(False)
             self.app.sweep_start()
             logger.debug(
                 "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"

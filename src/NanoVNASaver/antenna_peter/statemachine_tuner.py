@@ -27,9 +27,6 @@ FREQUENCY_TARGET_TA_MIN = 0.02
 "near to homing position"
 
 
-def _angular_error_deg(target_deg: float, actual_deg: float) -> float:
-    delta = (target_deg - actual_deg + 90.0) % 180.0 - 90.0
-    return abs(delta)
 
 
 class StatemachineTuner:
@@ -41,6 +38,7 @@ class StatemachineTuner:
     def reset_iterations(self, ctl: PeterAntennaControl):
         self.impedance_iteration_plus = 0
         self.frequency_iteration_plus = 0
+        self.heading_iteration_plus = 0
         ctl.vna.state_vna = util_vna_sweep.StatemachineVna.RESULTS_OUTDATED
 
     def tune(self, ctl: PeterAntennaControl) -> None:
@@ -100,10 +98,8 @@ class StatemachineTuner:
 
         # ctl.heading_current.set_value()
         heading_target_deg = ctl.heading_target.f_value
-        error_deg = _angular_error_deg(
-            target_deg=heading_target_deg,
-            actual_deg=measured_heading_deg,
-        )
+        delta = (heading_target_deg - measured_heading_deg + 90.0) % 180.0 - 90.0
+        error_deg = abs(delta)
         if error_deg < 3.0:
             logger.info(
                 f"_tune_heading() {heading_target_deg=} {measured_heading_deg=} {error_deg=} OK"
@@ -159,11 +155,12 @@ class StatemachineTuner:
         impedance_target = ctl.impedance_target.f_value
         impedance_current = ctl.impedance_current.f_value
         impedance_difference = impedance_current - impedance_target
+        impedance_error_ohm = abs(impedance_difference) 
 
-        if abs(impedance_difference) < 2.5:
+        if impedance_error_ohm < 2.5:
             self.impedance_iteration_plus += 1
             logger.info(f"Impedance ok {impedance_current:0.1f} Ohm")
-            if self.impedance_iteration_plus > 1:
+            if self.impedance_iteration_plus > 1 or  impedance_error_ohm < 1.0:
                 success = True
                 return success
         else:

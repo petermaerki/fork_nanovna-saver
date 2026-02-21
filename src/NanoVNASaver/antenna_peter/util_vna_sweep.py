@@ -742,8 +742,8 @@ class VnaSweeper:
             self.app._harmless_sweep_active = True
             self._setStartStopFrequencyFloat("Start", 100e3)
             self._setStartStopFrequencyFloat("Stop", 200e3)
-            self._setDatapointPoints(201)
-            self.app.sweep.set_logarithmic(False)
+            #self._setDatapointPoints(201)
+            #self.app.sweep.set_logarithmic(False)
             self.app.sweep_start()
             logger.debug(
                 "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"

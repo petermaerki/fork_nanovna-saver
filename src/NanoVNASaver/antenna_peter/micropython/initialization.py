@@ -103,4 +103,57 @@ def get_bmm(sample_count: int = 2):
     print(OK_STRING)
 
 
+class Minmax:
+    def __init__(self, do_min: bool):
+        self.value = 1e12 if do_min else -1e12
+        self.f = min if do_min else max
+
+    def push(self, value: float):
+        self.value = self.f(self.value, value)
+
+    def print(self) -> str:
+        return f"{self.value:>8.1f}"
+
+
+class XY:
+    def __init__(self, label):
+        self.label = label
+        self.min = Minmax(do_min=True)
+        self.max = Minmax(do_min=False)
+
+    def push(self, value: float):
+        self.min.push(value)
+        self.max.push(value)
+
+    def print(self) -> str:
+        return self.min.print() + "," + self.max.print()
+
+
+list_xy = (XY("x"), XY("y"), XY("z"))
+
+
+def calibrate_bmm(sample_count=10):
+    global USER_OFFSET_X  # noqa: PLW0603
+    global USER_OFFSET_Y  # noqa: PLW0603
+    global USER_OFFSET_Z  # noqa: PLW0603
+    USER_OFFSET_X = 0.0
+    USER_OFFSET_Y = 0.0
+    USER_OFFSET_Z = 0.0
+
+    if list_xy[0].min.value > 1e10:
+        # Only the first time
+        power_servo_magnetometer_out_pin.value(True)
+        time.sleep(1.5)  # 0.8s is ok
+        bmm350.init_sensor()
+
+    x, y, z, _b, _h = bmm350.read_data(sample_count=sample_count)
+    for xy, value in zip(list_xy, (x, y, z)):  # noqa: B905
+        xy.push(value)
+    value_str = "   /".join([xy.print() for xy in list_xy])
+    print(value_str)
+
+    print(f"BEGIN[[xyz_min_max_str={value_str}]]END")
+    print(OK_STRING)
+
+
 print("BEGIN[[exec: OK=]]END")

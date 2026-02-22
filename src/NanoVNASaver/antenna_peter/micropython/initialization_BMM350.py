@@ -3,9 +3,17 @@ import time
 
 # --- USER-OFFSETS (in µT) ---
 # Messung: Offset auf 0, zwei extremwerte messen, Mittelwert bilden und als USER_OFFSET verwenden
-USER_OFFSET_X = (41.4 + (11.39)) / 2.0
-USER_OFFSET_Y = (-12.34 + (-42.7)) / 2.0
+USER_OFFSET_X = (2.3 + (44.5)) / 2.0
+USER_OFFSET_Y = (-53.7 + (-10.5)) / 2.0
 USER_OFFSET_Z = (-21.4 + (11.0)) / 2.0
+
+'''
+2026-02-22 gemessen mit 
+DEBUG_BMM350_CALIBRATION = True
+     2.3,    44.5   /   -53.7,   -10.5   /    35.4,    38.5
+
+     Z gelassen,X ,Y angepasst
+'''
 
 BMM350_I2C_ADDR = 0x14
 BMM350_CHIP_ID = 0x33

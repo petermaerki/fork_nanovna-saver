@@ -35,6 +35,7 @@ FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
 DEBUG_FORCE_BAND_SWITCH = False
+DEBUG_BMM350_CALIBRATION = False
 
 
 class Servos:
@@ -114,6 +115,19 @@ class PeterAntennaControl(Control):
                 label_full=f"pico_initilization_{filename.stem}",
                 cmd=python_code,
             )
+
+        if DEBUG_BMM350_CALIBRATION:
+            while True:
+                stdout = self._mp_exec(
+                    label_full="calibrate_bmm",
+                    cmd="calibrate_bmm(sample_count=30)",
+                )
+                xyz_min_max_str = calculator.parse_value_str(
+                    stdout=stdout,
+                    label="xyz_min_max_str",
+                )
+                print(xyz_min_max_str)
+
         # time.sleep(1.0)
         self.servos: Servos | None = None
 

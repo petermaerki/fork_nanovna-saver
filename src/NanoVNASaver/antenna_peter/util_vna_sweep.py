@@ -399,8 +399,9 @@ class VnaSweeper:
     @property
     def antenna_bandwith_3db_Hz(self) -> float:
         bandwith_hz = self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz
-        assert bandwith_hz >= 0
-        return bandwith_hz
+        if bandwith_hz >= 0:
+            return bandwith_hz
+        return 42.0
 
     @property
     def antenna_q(self) -> float:

@@ -63,7 +63,7 @@ class Servos:
             port_config=port_config,
             scs_id=4,
             torque_limit=150,
-            goal_speed=100,
+            goal_speed=2,
             acceleration=1,
             position_p_gain=10,
             position_i_gain=2,
@@ -225,7 +225,7 @@ class PeterAntennaControl(Control):
         self.power_spin = self.add_row(
             peter_widgets.PowerspinWidget(
                 label="Power transmitter 5...100",
-                value=5,
+                value=100,
                 min_value=5,
                 max_value=100,
                 unit="W",

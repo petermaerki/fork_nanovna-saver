@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import typing
 import enum
@@ -30,7 +32,7 @@ class StatemachineZoom(enum.IntEnum):
 
 
 class VnaSweeper:
-    def __init__(self, ctl: PeterAntennaControl, sweep: Sweep):
+    def __init__(self, ctl: "PeterAntennaControl", sweep: Sweep):
         self.ctl = ctl
         self.state_vna = StatemachineVna.RESULTS_OUTDATED
         self.state_zoom = StatemachineZoom.OVERVIEW

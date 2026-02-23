@@ -92,7 +92,7 @@ class StatemachineTuner:
             heading_target_deg - measured_heading_deg + 90.0
         ) % 180.0 - 90.0
         error_deg = abs(delta)
-        set_iteratoins_plus = 1
+        set_iteratoins_plus = 0
         if error_deg < 3.0:
             self.heading_iteration_plus += 1
             if self.heading_iteration_plus >= set_iteratoins_plus+1:

@@ -72,6 +72,28 @@ class Servos:
 
 
 class PeterAntennaControl(Control):
+    def _start_heading_udp_listener(self):
+        import threading
+        import socket
+        def udp_loop():
+            UDP_IP = "127.0.0.1"
+            UDP_PORT = 12000
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.bind((UDP_IP, UDP_PORT))
+            while True:
+                data = sock.recvfrom(4096)[0]
+                decoded_data = data.decode('utf-8', errors='ignore')
+                print(f"[UDP] Received: {decoded_data}")
+                import re
+                match = re.search(r"<AZIMUTH>([0-9.]+)</AZIMUTH>", decoded_data)
+                if match:
+                    azimuth_val = match.group(1)
+                    print(f"[UDP] Parsed azimuth: {azimuth_val}")
+                    try:
+                        self.heading_target.set_value(float(azimuth_val))
+                    except Exception as e:
+                        print(f"[UDP] Error updating heading_target: {e}")
+        threading.Thread(target=udp_loop, daemon=True).start()
     def add_row(self, widget: QWidgetT) -> QWidgetT:
         self._layout.addWidget(widget)
         return widget
@@ -85,7 +107,8 @@ class PeterAntennaControl(Control):
 
     def __init__(self, app: "NanoVNASaver"):
         super().__init__(app, "Peter Antenna control")
-        self._layout = QtWidgets.QVBoxLayout(self)
+        self._layout = QtWidgets.QVBoxLayout()
+        self._start_heading_udp_listener()
 
         self.filename_servo_position_persist = (
             DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_z_h.json"

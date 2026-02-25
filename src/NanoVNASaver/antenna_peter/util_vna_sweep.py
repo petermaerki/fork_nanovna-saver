@@ -45,7 +45,7 @@ class VnaSweeper:
         # self.reset_range(freq_Hz=7e6)
 
     def reset_range(self, freq_Hz: float) -> None:
-        BAND_TEIL = 0.05
+        BAND_TEIL = 0.08
         """Damit mit allen Toleranzen die Resonanz sicher abgebildet wird"""
         self.lower_freq_Hz = freq_Hz * (1.0 - BAND_TEIL)
         self.upper_freq_Hz = freq_Hz * (1.0 + BAND_TEIL)

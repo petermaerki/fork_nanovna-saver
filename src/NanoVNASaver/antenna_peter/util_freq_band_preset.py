@@ -140,7 +140,7 @@ BANDS: Bands = Bands(
             ft8_hz=28_074_000,
             measurement1=Measurement(2.0, 28467500),
             measurement2=Measurement(3.0, 26780300),
-            servo_z_ta=-0.05,
+            servo_z_ta=0.09,
         ),
     ]
 )

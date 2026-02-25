@@ -63,11 +63,11 @@ class Servos:
         self.servo_ctl_h = Servo(
             port_config=port_config,
             scs_id=4,
-            torque_limit=150,
-            goal_speed=2,
+            torque_limit=100,
+            goal_speed=100,
             acceleration=1,
-            position_p_gain=10,
-            position_i_gain=2,
+            position_p_gain=2,
+            position_i_gain=0,
         )
 
 

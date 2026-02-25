@@ -6,10 +6,10 @@ import numpy as np
 from ..RFTools import Datapoint
 
 from ..Hardware.VNA import VNA
+from ..Settings.Sweep import Sweep
 
 if typing.TYPE_CHECKING:
     from .PeterAntennaControl import PeterAntennaControl
-    from ..Settings.Sweep import Sweep
 
 logger = logging.getLogger(__name__)
 
@@ -710,25 +710,7 @@ class VnaSweeper:
             logger.exception("Failed to set datapoint count")
 
     def run_vna_on_frequency_which_does_not_harm(self) -> None:
-        return
-        # set a harmless sweep range so the VNA does not disturb (100kHz .. 200kHz)
-        try:
-            # Restore a harmless sweep on low frequencies and start it so the
-            # VNA runs there (this keeps the device quiet on other bands).
-            # Update the UI fields so behavior is visible and consistent.
-            self._setStartStopFrequencyFloat("Start", 100e3)
-            self._setStartStopFrequencyFloat("Stop", 200e3)
-            # use a small number of points for quick harmless sweep
-            self._setDatapointPoints(201)
-            self.app.sweep.set_logarithmic(False)
-            # mark/apply suppression of display updates while this
-            # harmless sweep runs so the visible graph is not overwritten
-            self.app._suppress_display_updates = True
-            self.app._harmless_sweep_active = True
-            # start the harmless sweep so the VNA actually runs at low freq
-            self.app.sweep_start()
-            logger.debug(
-                "Tune disabled: started harmless sweep 100kHz-200kHz (display suppressed)"
-            )
-        except Exception:
-            logger.exception("Failed to set harmless sweep on tune disable")
+        vna = self.app.vna
+        assert isinstance(vna, VNA)
+        vna.setSweep(start=Sweep.HARMLESS_FREQ_START, stop=Sweep.HARMLESS_FREQ_STOP)
+

@@ -142,6 +142,10 @@ class SweepWorker(QThread):
                     break
                 start, stop = sweep.get_index_range(i)
 
+                if start == sweep.HARMLESS_FREQ_START:
+                    sleep(1.0)
+                    continue
+
                 freq, values11, values21 = self.read_averaged_segment(
                     start, stop, averages
                 )

@@ -39,6 +39,9 @@ class Properties(NamedTuple):
 
 
 class Sweep:  # noqa: PLW1641
+    HARMLESS_FREQ_START = 50_000
+    HARMLESS_FREQ_STOP = 100_000
+
     def __init__(
         self,
         start: int = 3600000,

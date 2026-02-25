@@ -160,7 +160,6 @@ class NanoVNASaver(QWidget):
         # Set initial window size but allow unlimited resizing
         self.resize(app_config.gui.window_width, app_config.gui.window_height)
         # Increased to ensure both S11 charts are visible
-        self.setMinimumHeight(1100)
         scrollarea.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             QtWidgets.QSizePolicy.Policy.MinimumExpanding,
@@ -264,6 +263,7 @@ class NanoVNASaver(QWidget):
         left_column = QtWidgets.QVBoxLayout()
         right_column = QtWidgets.QVBoxLayout()
         right_column.addLayout(self.charts_layout)
+        right_column.addStretch(1)
         self.marker_frame.setHidden(app_config.gui.markers_hidden)
         chart_widget = QWidget()
         chart_widget.setLayout(right_column)

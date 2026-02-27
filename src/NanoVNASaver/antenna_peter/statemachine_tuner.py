@@ -202,7 +202,7 @@ class StatemachineTuner:
             self.impedance_iteration_plus = 0
 
         REGELFAKTOR = 1e-3
-        MAX__STELLSCHRITT_ta = 0.01
+        MAX__STELLSCHRITT_ta = 0.03
         assert MAX__STELLSCHRITT_ta > 0.0
         stellschritt_ta = impedance_difference * REGELFAKTOR
         stellschritt_ta = min(stellschritt_ta, MAX__STELLSCHRITT_ta)
@@ -224,7 +224,11 @@ class StatemachineTuner:
         current_hz = ctl.vna.f_swr_min_Hz
         difference_hz = current_hz - target_hz
         set_iteratoins_plus = 1
-        if abs(difference_hz) < 400:
+        points_zoom = ctl.vna.POINTS_IN_BANDWITH_ZOOM
+        bandwith_Hz = ctl.vna.antenna_bandwith_3db_Hz
+        bandwith_per_point_Hz = bandwith_Hz/points_zoom
+        tolerance_Hz = max(400, bandwith_per_point_Hz*2.0)
+        if abs(difference_hz) < tolerance_Hz:
             self.frequency_iteration_plus += 1
             if self.frequency_iteration_plus >= set_iteratoins_plus+1:
                 if self.frequency_iteration_plus == set_iteratoins_plus+1:

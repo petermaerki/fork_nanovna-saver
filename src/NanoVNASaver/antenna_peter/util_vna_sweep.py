@@ -41,6 +41,7 @@ class VnaSweeper:
         self.upper_freq_Hz: float | None = None
         self.swr_min: float = 42.0
         # self.reset_range(freq_Hz=7e6)
+        self.POINTS_IN_BANDWITH_ZOOM = 50
 
     def reset_range(self, freq_Hz: float) -> None:
         BAND_TEIL = 0.08
@@ -216,8 +217,8 @@ class VnaSweeper:
         return False
 
     def _zoom(self) -> bool:
-        SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.64 band
-        assert SWEEP_RANGE_OVERLAP > 1.1
+        SWEEP_RANGE_OVERLAP = 1.08  # range biger than plus minus 2.64 band
+        assert SWEEP_RANGE_OVERLAP > 1.05
         target_hz = self.ctl.frequency_target.f_value
         distance_f = abs(target_hz - self.f_swr_min_Hz)
         distance_f = max(abs(self.f_swr_p2_64_l_Hz - target_hz), distance_f)
@@ -229,10 +230,10 @@ class VnaSweeper:
 
         self.lower_freq_Hz = lower_freq_Hz
         self.upper_freq_Hz = upper_freq_Hz
-        POINTS_IN_BANDWITH = 50
+        # self.POINTS_IN_BANDWITH_ZOOM = 50
         frequency_per_point = (
             abs(self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz)
-            / POINTS_IN_BANDWITH
+            / self.POINTS_IN_BANDWITH_ZOOM
         )
         points_total = (upper_freq_Hz - lower_freq_Hz) / frequency_per_point
         POINTS_PER_SEGMENT_TARGET = 100

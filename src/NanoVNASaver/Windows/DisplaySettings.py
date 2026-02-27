@@ -220,13 +220,16 @@ class DisplaySettingsWindow(QtWidgets.QWidget):
         self.vswrMarkers: list[float] = self.app.settings.value(
             "VSWRMarkers", [], float
         )
-
         if isinstance(self.vswrMarkers, float):
-            # Single values from the .ini become floats rather than lists.
-            # Convert them.
-            self.vswrMarkers = (
-                [] if self.vswrMarkers == 0.0 else [self.vswrMarkers]
-            )
+            self.vswrMarkers = [] if self.vswrMarkers == 0.0 else [self.vswrMarkers]
+
+        # Automatisch Marker 2.64 hinzufügen, falls nicht vorhanden
+        if 2.64 not in self.vswrMarkers:
+            self.vswrMarkers.append(2.64)
+            self.app.settings.setValue("VSWRMarkers", self.vswrMarkers)
+        # Marker in allen relevanten Charts anzeigen
+        for c in self.app.s11charts:
+            c.addSWRMarker(2.64)
 
         vswr_marker_layout.addRow(
             "VSWR Markers", self.color_picker("VSWRColor", "swr")

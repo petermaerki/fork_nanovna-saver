@@ -349,6 +349,8 @@ class PeterAntennaControl(Control):
         if self.checkbox_tune.isChecked():
             self.statemachine_tuner.reset_iterations(ctl=self)
 
+
+
     def on_vna_enable(self, checked: QtCore.Qt.CheckState) -> None:
         """
         Statemachine "VNA Enable".
@@ -365,6 +367,11 @@ class PeterAntennaControl(Control):
             if state_vna_enabled:
                 if ENABLE_STS3215:
                     self.servos = Servos(port_config=self.port_config)
+                # Setze VSWR-Marker bei Aktivierung des VNA
+                try:
+                    self.vna._set_marker(0, 2.64)
+                except Exception as e:
+                    logger.warning(f"VSWR Marker konnte nicht gesetzt werden: {e}")
             else:
                 self.servos = None
                 self.vna.run_vna_on_frequency_which_does_not_harm()

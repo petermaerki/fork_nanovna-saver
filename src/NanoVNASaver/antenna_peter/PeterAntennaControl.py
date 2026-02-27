@@ -72,6 +72,14 @@ class Servos:
 
 
 class PeterAntennaControl(Control):
+    def _frequency_usb_tx_set_marker4_5(self, freq_Hz: float) -> float:
+        # Setze Marker 4 auf Frequency TX und Marker 5 auf Frequency TX + 3 kHz
+        try:
+            self.vna._set_marker(index_0=(4-1), freq_Hz = freq_Hz)
+            self.vna._set_marker(index_0=(5-1), freq_Hz = freq_Hz + 3000.0)
+        except Exception as e:
+            logger.warning(f"Marker 4/5 konnten nicht gesetzt werden: {e}")
+        return freq_Hz
     def _start_heading_udp_listener(self):
         import threading
         import socket
@@ -506,16 +514,18 @@ class PeterAntennaControl(Control):
         integer frequency in Hz (as bytes). Any errors are logged and ignored.
         """
         if self.frequency_auto_get.isChecked():
-            freq_hz = float(self._get_frequency_from_tx())
-            self.frequency_tx.set_value(freq_hz)
+            freq_Hz = float(self._get_frequency_from_tx())
+            self.frequency_tx.set_value(freq_Hz)
         else:
-            freq_hz = self.frequency_tx.f_value
+            freq_Hz = self.frequency_tx.f_value
         offset_hz = self.frequency_offset.f_value
-        freq_hz_with_offset = freq_hz + offset_hz
+        freq_hz_with_offset = freq_Hz + offset_hz
 
         self.frequency_target.set_value(freq_hz_with_offset)
 
-        self._update_safety_calculation(freq_hz=freq_hz)
+        self._update_safety_calculation(freq_hz=freq_Hz)
+
+        self._frequency_usb_tx_set_marker4_5(freq_Hz=freq_Hz)
 
     def _frequency_set_servo_f(self, target_ta: float) -> float:
         if self.servos is None:

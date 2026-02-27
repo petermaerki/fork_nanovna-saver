@@ -217,7 +217,7 @@ class VnaSweeper:
         return False
 
     def _zoom(self) -> bool:
-        SWEEP_RANGE_OVERLAP = 1.08  # range biger than plus minus 2.64 band
+        SWEEP_RANGE_OVERLAP = 1.2  # range biger than plus minus 2.64 band
         assert SWEEP_RANGE_OVERLAP > 1.05
         target_hz = self.ctl.frequency_target.f_value
         distance_f = abs(target_hz - self.f_swr_min_Hz)
@@ -323,7 +323,7 @@ class VnaSweeper:
                                     "mean=%s, freq=%s Hz",
                                     max_val,
                                     mean_val,
-                                    f_swr_min_1Hz,
+                                    f_swr_min_Hz,
                                 )
             except Exception:
                 logger.exception("Failed to analyze phase double derivative")
@@ -339,9 +339,15 @@ class VnaSweeper:
                 freq_Hz[idx_min + right_idx[0]] if len(right_idx) else None
             )
 
-        self._set_marker(0, f_swr_p2_64_l_Hz)
-        self._set_marker(1, f_swr_min_Hz)
-        self._set_marker(2, f_swr_p2_64_h_Hz)
+            # Marker 4 und 5 nur setzen, wenn f_swr_min_Hz definiert ist
+            self._set_marker(0, f_swr_p2_64_l_Hz)
+            self._set_marker(1, f_swr_min_Hz)
+            self._set_marker(2, f_swr_p2_64_h_Hz)
+        else:
+            # Marker 4 und 5 nicht setzen
+            self._set_marker(0, None)
+            self._set_marker(1, None)
+            self._set_marker(2, None)
 
         return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min
 
@@ -370,9 +376,12 @@ class VnaSweeper:
     def f_swr_p2_64_h_Hz(self, freq_Hz: int) -> None:
         self._set_marker(2, freq_Hz=freq_Hz)
 
-    def _set_marker(self, index: int, freq_Hz: int | float):
+    def _set_marker(self, index_0: int, freq_Hz: int | float):
         assert isinstance(freq_Hz, int | float)
-        self.app.markers[index].setFrequency(f"{freq_Hz:0.0f} Hz")
+        if 0 <= index_0 < len(self.app.markers):
+            self.app.markers[index_0].setFrequency(f"{freq_Hz:0.0f} Hz")
+        else:
+            logger.warning(f"_set_marker: Marker-Index {index_0} nicht vorhanden (len={len(self.app.markers)})")
 
     @property
     def antenna_bandwith_3db_Hz(self) -> float:

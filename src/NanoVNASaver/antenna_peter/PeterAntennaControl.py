@@ -34,6 +34,7 @@ FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
+ENABLE_STS3215_SERVO_H = False
 DEBUG_FORCE_BAND_SWITCH = False
 DEBUG_BMM350_CALIBRATION = False
 
@@ -60,29 +61,32 @@ class Servos:
             position_p_gain=10,
             position_i_gain=2,
         )
-        self.servo_ctl_h = Servo(
-            port_config=port_config,
-            scs_id=4,
-            torque_limit=100,
-            goal_speed=100,
-            acceleration=1,
-            position_p_gain=2,
-            position_i_gain=0,
-        )
+        if ENABLE_STS3215_SERVO_H:
+            self.servo_ctl_h = Servo(
+                port_config=port_config,
+                scs_id=4,
+                torque_limit=100,
+                goal_speed=100,
+                acceleration=1,
+                position_p_gain=2,
+                position_i_gain=0,
+            )
 
 
 class PeterAntennaControl(Control):
     def _frequency_usb_tx_set_marker4_5(self, freq_Hz: float) -> float:
         # Setze Marker 4 auf Frequency TX und Marker 5 auf Frequency TX + 3 kHz
         try:
-            self.vna._set_marker(index_0=(4-1), freq_Hz = freq_Hz)
-            self.vna._set_marker(index_0=(5-1), freq_Hz = freq_Hz + 3000.0)
+            self.vna._set_marker(index_0=(4 - 1), freq_Hz=freq_Hz)
+            self.vna._set_marker(index_0=(5 - 1), freq_Hz=freq_Hz + 3000.0)
         except Exception as e:
             logger.warning(f"Marker 4/5 konnten nicht gesetzt werden: {e}")
         return freq_Hz
+
     def _start_heading_udp_listener(self):
         import threading
         import socket
+
         def udp_loop():
             UDP_IP = "127.0.0.1"
             UDP_PORT = 12000
@@ -90,7 +94,7 @@ class PeterAntennaControl(Control):
             sock.bind((UDP_IP, UDP_PORT))
             while True:
                 data = sock.recvfrom(4096)[0]
-                decoded_data = data.decode('utf-8', errors='ignore')
+                decoded_data = data.decode("utf-8", errors="ignore")
                 print(f"[UDP] Received: {decoded_data}")
                 import re
                 match = re.search(r"<AZIMUTH>([0-9.]+)</AZIMUTH>", decoded_data)
@@ -101,7 +105,9 @@ class PeterAntennaControl(Control):
                         self.heading_target.set_value(float(azimuth_val))
                     except Exception as e:
                         print(f"[UDP] Error updating heading_target: {e}")
+
         threading.Thread(target=udp_loop, daemon=True).start()
+
     def add_row(self, widget: QWidgetT) -> QWidgetT:
         self._layout.addWidget(widget)
         return widget
@@ -551,6 +557,9 @@ class PeterAntennaControl(Control):
     def _heading_set_servo_h(self, target_ta: float) -> float:
         if self.servos is None:
             return target_ta
+        if not ENABLE_STS3215_SERVO_H:
+            return target_ta
+
         _target_ta = min(
             statemachine_tuner.HEADING_TARGET_TA_MAX,
             max(statemachine_tuner.HEADING_TARGET_TA_MIN, target_ta),

@@ -481,6 +481,8 @@ class NanoVNASaver(QWidget):
 
         self.auto_connect()
 
+        self.peter_antenna_control.load_vna_calibration(calibration_window=self.windows["calibration"])
+
         logger.debug("Finished building interface")
 
     def auto_connect(

@@ -709,6 +709,9 @@ class CalibrationWindow(QtWidgets.QWidget):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
             filter="Calibration Files (*.cal);;All files (*.*)"
         )
+        self.loadCalibration2(filename=filename)
+
+    def loadCalibration2(self, filename:str) -> None:
         if filename:
             self.app.calibration.load(filename)
         if not self.app.calibration.isValid1Port():

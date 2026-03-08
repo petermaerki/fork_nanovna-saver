@@ -4,6 +4,8 @@ import pathlib
 import socket
 import typing
 from typing import TYPE_CHECKING, TypeVar
+import threading
+import re
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from sts3215_ctl import util_mpremote
@@ -13,6 +15,7 @@ from sts3215_micropython.sts3215_portable import calculator
 from ..Controls.Control import Control
 from . import peter_widgets, statemachine_tuner, util_persist, util_vna_sweep
 from .util_calculate_safety import calculate_safety_distance
+from ..Windows import CalibrationSettings
 
 if TYPE_CHECKING:
     from ..NanoVNASaver import NanoVNASaver
@@ -31,6 +34,7 @@ assert DIRECTORY_MICROPYTHON.is_dir()
 DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
 FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
+FILENAME_VNA_CALIBRATION = DIRECTORY_OF_THIS_FILE/"vna_calibration_cable_choke.cal"
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
@@ -84,8 +88,6 @@ class PeterAntennaControl(Control):
         return freq_Hz
 
     def _start_heading_udp_listener(self):
-        import threading
-        import socket
 
         def udp_loop():
             UDP_IP = "127.0.0.1"
@@ -96,7 +98,6 @@ class PeterAntennaControl(Control):
                 data = sock.recvfrom(4096)[0]
                 decoded_data = data.decode("utf-8", errors="ignore")
                 print(f"[UDP] Received: {decoded_data}")
-                import re
                 match = re.search(r"<AZIMUTH>([0-9.]+)</AZIMUTH>", decoded_data)
                 if match:
                     azimuth_val = match.group(1)
@@ -352,6 +353,18 @@ class PeterAntennaControl(Control):
         )
         self.rigctl_read_tx_timer.start()
 
+    def load_vna_calibration(
+        self, calibration_window: CalibrationSettings.CalibrationWindow,
+    ) -> None:
+        assert isinstance(
+            calibration_window, CalibrationSettings.CalibrationWindow
+        )
+        if not FILENAME_VNA_CALIBRATION.is_file():
+            logger.error(f"File not found: {FILENAME_VNA_CALIBRATION}")
+        else:
+            logger.info(f"Load calibration: {FILENAME_VNA_CALIBRATION}")
+            calibration_window.loadCalibration2(str(FILENAME_VNA_CALIBRATION))
+
     def on_tune(self, checked: QtCore.Qt.CheckState) -> None:
         """
         Statemachine "Tuning".
@@ -385,7 +398,9 @@ class PeterAntennaControl(Control):
                 try:
                     self.vna._set_marker(0, 2.64)
                 except Exception as e:
-                    logger.warning(f"VSWR Marker konnte nicht gesetzt werden: {e}")
+                    logger.warning(
+                        f"VSWR Marker konnte nicht gesetzt werden: {e}"
+                    )
             else:
                 self.servos = None
                 self.vna.run_vna_on_frequency_which_does_not_harm()

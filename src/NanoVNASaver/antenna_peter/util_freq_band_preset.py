@@ -117,8 +117,8 @@ BANDS: Bands = Bands(
         Band(
             band_m=17,
             ft8_hz=18_100_000,
-            measurement1=Measurement(6.0, 1.62554e7),
-            measurement2=Measurement(7.0, 1.8318e7),
+            measurement1=Measurement(5.0, 20686919),
+            measurement2=Measurement(6.0, 18049346),
             servo_z_ta=0.06,
         ),
         Band(

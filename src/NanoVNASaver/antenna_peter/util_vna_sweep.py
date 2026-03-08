@@ -194,7 +194,8 @@ class VnaSweeper:
                     f"{swr_min=} is not below {swr_min_limit=}: adjust servo_z manually to get a lower swr"
                 )
 
-                # Todo: self.ctl.tuner.tune_band_change(self.ctl)
+                #self.ctl.statemachine_tuner.tune_band_change(self.ctl)
+                self.reset_range(freq_Hz=self.ctl.frequency_target.f_value)
                 return False
             f_swr_min_Hz = freq_Hz[idx_min]
 

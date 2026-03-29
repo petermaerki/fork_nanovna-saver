@@ -93,7 +93,7 @@ class StatemachineTuner:
         ) % 180.0 - 90.0
         error_deg = abs(delta)
         set_iteratoins_plus = 0
-        if error_deg < 3.0:
+        if error_deg < 10.0:
             self.heading_iteration_plus += 1
             if self.heading_iteration_plus >= set_iteratoins_plus+1:
                 if self.heading_iteration_plus == set_iteratoins_plus+1:
@@ -126,18 +126,19 @@ class StatemachineTuner:
     
     def heading_is_stable(self, ctl) -> bool:
         # Speichere die letzten 20 Messwerte
+        counts = 2
         if not hasattr(self, "_heading_history"):
             self._heading_history = []
         measured_heading_deg = self.get_heading(sample_count=5, ctl=ctl)
         print(f"Heading meas {len(self._heading_history)}: {measured_heading_deg:.1f}")
         self._heading_history.append(measured_heading_deg)
-        if len(self._heading_history) > 20:
+        if len(self._heading_history) > counts:
             self._heading_history.pop(0)
-        if len(self._heading_history) < 20:
+        if len(self._heading_history) < counts:
             return False
         min_heading = min(self._heading_history)
         max_heading = max(self._heading_history)
-        return (max_heading - min_heading) <= 3.0
+        return (max_heading - min_heading) <= 7.0
 
     def get_heading(self, sample_count = 2, ctl=None) -> float:
         stdout = ctl._mp_exec(
@@ -243,7 +244,7 @@ class StatemachineTuner:
         band = BANDS.get_band(freq_hz=ctl.frequency_target.f_value)
         gain_hz_pro_ta = band.servo_f_gain_hz_pro_t
         servo_f_ta_new = servo_f_ta - difference_hz / gain_hz_pro_ta
-        assert abs(servo_f_ta - servo_f_ta_new) < 3.0
+        assert abs(servo_f_ta - servo_f_ta_new) < 7.0
         ctl.frequency_servo_f.set_value(servo_f_ta_new)
 
         logger.info(

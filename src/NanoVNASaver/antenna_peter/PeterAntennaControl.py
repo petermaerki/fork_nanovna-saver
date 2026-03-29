@@ -184,10 +184,10 @@ class PeterAntennaControl(Control):
         self.heading_checkbox = self.add_row(
             peter_widgets.CheckboxWidget("Tune heading enable")
         ).checkbox
-        self.heading_checkbox.setChecked(False)
+        self.heading_checkbox.setChecked(True)
         self.heading_target = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Tune heading target", f_value=0.0, unit="deg"
+                label="Tune heading target", f_value=300.0, unit="deg"
             )
         )
         self.heading_current = self.add_row(

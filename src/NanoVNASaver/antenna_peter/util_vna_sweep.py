@@ -101,6 +101,7 @@ class VnaSweeper:
         if not self._find_min_swr():
             # SWR ist noch nicht genug tief, daher keine gefunden werte, READY damit die impedanz getuned werden kann
             # self.stateVNA = StatemachineVna.RESULTS_OUTDATED
+            self.reset_range(freq_Hz=self.ctl.frequency_target.f_value)
             return
         if not self.ctl.checkbox_tune.isChecked():
                 '''Sweep wurde von Hand gestartet'''

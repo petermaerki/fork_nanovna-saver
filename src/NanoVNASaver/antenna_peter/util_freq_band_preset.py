@@ -75,9 +75,9 @@ BANDS: Bands = Bands(
         Band(
             band_m=160,
             ft8_hz=1_840_000,
-            measurement1=None,
-            measurement2=None,
-            servo_z_ta=None,
+            measurement1=Measurement(25.0, 1840611),
+            measurement2=Measurement(29.0, 1838251),
+            servo_z_ta=-0.071,
         ),
         Band(
             band_m=80,

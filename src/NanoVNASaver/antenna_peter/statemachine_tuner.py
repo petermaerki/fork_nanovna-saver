@@ -126,7 +126,7 @@ class StatemachineTuner:
     
     def heading_is_stable(self, ctl) -> bool:
         # Speichere die letzten 20 Messwerte
-        counts = 2
+        counts = 6
         if not hasattr(self, "_heading_history"):
             self._heading_history = []
         measured_heading_deg = self.get_heading(sample_count=5, ctl=ctl)

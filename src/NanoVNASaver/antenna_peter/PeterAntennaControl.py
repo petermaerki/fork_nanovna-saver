@@ -34,7 +34,7 @@ assert DIRECTORY_MICROPYTHON.is_dir()
 DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
 FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
-FILENAME_VNA_CALIBRATION = DIRECTORY_OF_THIS_FILE/"vna_calibration_cable_choke.cal"
+FILENAME_VNA_CALIBRATION = DIRECTORY_OF_THIS_FILE/"20260401_vna_calibration_at_cables_choke_antenna_MP.cal"
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True

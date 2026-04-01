@@ -62,7 +62,7 @@ def calculate_safety_distance(
         f"Antenna Bandwidth 3dB: {antenna_bandwith_3db_Hz / 1000.0:.3f} kHz",
         f"TX Frequency: {f_mhz:.3f} MHz",
         f"TX Power Transmitter: {p_watt:.0f} W",
-        f"Antenna Efficiency: {efficiency:.1f} %",
+        f"Antenna Efficiency: {efficiency:.2f} %",
         f"Antenna P Radiated: {p_radiated:.2f} W",
         f"Antenna Loop Current: {i_loop:.1f} A rms",
         f"Antenna Cap Voltage: {v_cap:.0f} V rms",

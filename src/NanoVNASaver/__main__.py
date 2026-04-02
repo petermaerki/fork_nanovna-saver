@@ -27,6 +27,7 @@ resulting data.
 
 import argparse
 import logging
+from logging.handlers import RotatingFileHandler
 import sys
 
 from PySide6 import QtWidgets
@@ -94,7 +95,11 @@ def main():
     logger.addHandler(ch)
 
     if args.debug_file:
-        fh = logging.FileHandler(args.debug_file)
+        fh = RotatingFileHandler(args.debug_file,
+            mode="a",
+            maxBytes=100_000_000,
+            backupCount=5,
+        )
         fh.setLevel(file_log_level)
         fh.setFormatter(formatter_file)
         logger.addHandler(fh)

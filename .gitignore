@@ -65,8 +65,9 @@ src/NanoVNASaver/Windows/ui/about.py
 
 *.spec
 *_rc.py
-NanoVNASaver*.txt
+NanoVNASaver*.txt*
 **/tmp_sts3215_servo_f_logs/*
 **/tmp_sts3215_servo_f.json
 
 src/NanoVNASaver/antenna_peter/663_iteration/ablaufsteuerung.bat
+NanoVNASaver.txt.1

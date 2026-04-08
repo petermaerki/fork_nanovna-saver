@@ -507,7 +507,11 @@ class PeterAntennaControl(Control):
     #         logger.debug("Stopping auto frequency fetch timer")
     #         self.auto_get_timer.stop()
 
-    def _get_frequency_from_tx(self) -> int:
+    def _get_frequency_from_tx(self) -> tuple[bool, float]:
+        """
+        Versucht, die Frequenz vom TX zu lesen.
+        Rückgabe: (success, freq_Hz)
+        """
         try:
             with socket.create_connection(
                 (RIGCTL_HOSTNAME, RIGCTL_PORT), timeout=1
@@ -516,17 +520,18 @@ class PeterAntennaControl(Control):
                 data = s.recv(1024).strip()
                 if not data:
                     logger.warning("Auto-get frequency: no data received")
-                    return 42
+                    return (False, 0.0)
                 try:
-                    return int(data)
+                    freq = float(int(data))
+                    return (True, freq)
                 except ValueError:
                     logger.warning(
                         "Auto-get frequency: received non-integer: %r", data
                     )
-                    return 42
+                    return (False, 0.0)
         except Exception:
             logger.exception("Auto-get frequency failed")
-            return 42
+            return (False, 0.0)
 
     def _rigctl_read_tx_frequency(self):
         """Fetch frequency from localhost socket and set it to the SWR input field.
@@ -535,8 +540,12 @@ class PeterAntennaControl(Control):
         integer frequency in Hz (as bytes). Any errors are logged and ignored.
         """
         if self.frequency_auto_get.isChecked():
-            freq_Hz = float(self._get_frequency_from_tx())
-            self.frequency_tx.set_value(freq_Hz)
+            success, freq_Hz = self._get_frequency_from_tx()
+            if success:
+                self.frequency_tx.set_value(freq_Hz)
+            else:
+                # Fehlerfall: nichts tun, später erneut probieren
+                return
         else:
             freq_Hz = self.frequency_tx.f_value
         offset_hz = self.frequency_offset.f_value

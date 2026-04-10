@@ -75,9 +75,12 @@ BANDS: Bands = Bands(
         Band(
             band_m=160,
             ft8_hz=1_840_000,
-            measurement1=Measurement(25.0, 1840611),
-            measurement2=Measurement(29.0, 1838251),
-            servo_z_ta=-0.071,
+            # measurement1=Measurement(26.0, 1840092), # pcb
+            # measurement2=Measurement(27.0, 1837600), # pcb
+            # servo_z_ta=0.075, # pcb
+            measurement1=Measurement(23.0, 1842240), # comet vacuum
+            measurement2=Measurement(24.0, 1839680), # comet vacuum
+            servo_z_ta=0.085, # comet vacuum
         ),
         Band(
             band_m=80,

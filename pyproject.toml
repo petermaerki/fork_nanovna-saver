@@ -35,7 +35,7 @@ dependencies=[
   'servo-sts3215 @ git+https://github.com/petermaerki/2026_antenna_servo_controller_git@main#subdirectory=servo_sts3215',
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
   # Static Code Analysis tools
   "ruff~=0.14",

@@ -69,7 +69,7 @@ class Servos:
             self.servo_ctl_h = Servo(
                 port_config=port_config,
                 scs_id=4,
-                torque_limit=100,
+                torque_limit=200,
                 goal_speed=100,
                 acceleration=1,
                 position_p_gain=2,
@@ -533,28 +533,33 @@ class PeterAntennaControl(Control):
             logger.exception("Auto-get frequency failed")
             return (False, 0.0)
 
+
     def _rigctl_read_tx_frequency(self):
         """Fetch frequency from localhost socket and set it to the SWR input field.
 
-        The expected protocol: connect to localhost:4532, send 'f\n', receive an
-        integer frequency in Hz (as bytes). Any errors are logged and ignored.
+        Die Frequenz wird nur übernommen, wenn sie im Bereich 1–30 MHz liegt.
         """
         if self.frequency_auto_get.isChecked():
             success, freq_Hz = self._get_frequency_from_tx()
             if success:
-                self.frequency_tx.set_value(freq_Hz)
+                freq_hz_with_offset = freq_Hz + self.frequency_offset.f_value
+                if 1_000_000 <= freq_hz_with_offset <= 30_000_000:
+                    self.frequency_tx.set_value(freq_Hz)
+                    self.frequency_target.set_value(freq_hz_with_offset)
+                else:
+                    logger.warning(f"Frequenz {freq_hz_with_offset/1e6:.3f} MHz ist außerhalb des Bereichs 1-30 MHz – wird ignoriert.")
+                    # Tune automatic ausschalten, falls aktiv
+                    self.checkbox_tune.setChecked(False)
+                    return
             else:
                 # Fehlerfall: nichts tun, später erneut probieren
                 return
         else:
             freq_Hz = self.frequency_tx.f_value
-        offset_hz = self.frequency_offset.f_value
-        freq_hz_with_offset = freq_Hz + offset_hz
-
-        self.frequency_target.set_value(freq_hz_with_offset)
+            freq_hz_with_offset = freq_Hz + self.frequency_offset.f_value
+            self.frequency_target.set_value(freq_hz_with_offset)
 
         self._update_safety_calculation(freq_hz=freq_Hz)
-
         self._frequency_usb_tx_set_marker4_5(freq_Hz=freq_Hz)
 
     def _frequency_set_servo_f(self, target_ta: float) -> float:

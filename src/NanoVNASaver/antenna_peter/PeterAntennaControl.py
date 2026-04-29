@@ -13,7 +13,7 @@ from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
-from . import peter_widgets, statemachine_tuner, util_persist, util_vna_sweep
+from . import peter_widgets, statemachine_tuner, util_persist, util_vna_sweep, util_wsjtx_kommunikation
 from .util_calculate_safety import calculate_safety_distance
 from ..Windows import CalibrationSettings
 
@@ -212,9 +212,13 @@ class PeterAntennaControl(Control):
             peter_widgets.CheckboxWidget("Tune Frequency enable")
         ).checkbox
         self.frequency_tune_enable.setChecked(True)
+        self.frequency_offset_from_wsjtx = self.add_row(
+            peter_widgets.CheckboxWidget("Frequency audio offset auto get from wsjtx")
+        ).checkbox
+        self.frequency_offset_from_wsjtx.setChecked(True)
         self.frequency_offset = self.add_row(
             peter_widgets.PushButtonWidget(
-                label="Frequency Offset", f_value=1500.0, unit="Hz"
+                label="Frequency audio offset", f_value=1500.0, unit="Hz"
             )
         )
         self.frequency_auto_get = self.add_row(
@@ -345,6 +349,8 @@ class PeterAntennaControl(Control):
 
         self.statemachine_tuner_timer.timeout.connect(tune)
         self.statemachine_tuner_timer.start()
+
+        self._wsjtx_listener = util_wsjtx_kommunikation.WsjtxListener()
 
         self.rigctl_read_tx_timer = QtCore.QTimer(self)
         self.rigctl_read_tx_timer.setInterval(2000)
@@ -542,6 +548,10 @@ class PeterAntennaControl(Control):
         if self.frequency_auto_get.isChecked():
             success, freq_Hz = self._get_frequency_from_tx()
             if success:
+                if self.frequency_offset_from_wsjtx.isChecked():
+                    offset = self._wsjtx_listener.tx_audio_offset_hz
+                    if offset is not None:
+                        self.frequency_offset.set_value(offset)
                 freq_hz_with_offset = freq_Hz + self.frequency_offset.f_value
                 if 1_000_000 <= freq_hz_with_offset <= 30_000_000:
                     self.frequency_tx.set_value(freq_Hz)

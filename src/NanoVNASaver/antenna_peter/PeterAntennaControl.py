@@ -13,7 +13,7 @@ from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
-from . import peter_widgets, statemachine_tuner, util_persist, util_vna_sweep, util_wsjtx_kommunikation
+from . import peter_widgets, statemachine_tuner, util_persist, util_set_minus_200hz, util_vna_sweep, util_wsjtx_kommunikation
 from .util_calculate_safety import calculate_safety_distance
 from ..Windows import CalibrationSettings
 
@@ -233,6 +233,10 @@ class PeterAntennaControl(Control):
                 unit="Hz",
             )
         )
+        self.frequency_auto_reduce_200hz = self.add_row(
+            peter_widgets.CheckboxWidget("Frequency auto reduce by 200 Hz")
+        ).checkbox
+        self.frequency_auto_reduce_200hz.setChecked(True)
         self.frequency_target = self.add_row(
             peter_widgets.ValueWidget(
                 label="Frequency target", unit="Hz", fmt="0.0f"
@@ -568,6 +572,13 @@ class PeterAntennaControl(Control):
             freq_Hz = self.frequency_tx.f_value
             freq_hz_with_offset = freq_Hz + self.frequency_offset.f_value
             self.frequency_target.set_value(freq_hz_with_offset)
+
+        if self.frequency_auto_reduce_200hz.isChecked():
+            util_set_minus_200hz.set_frequency_minus_200hz(
+                hostname=RIGCTL_HOSTNAME,
+                port=RIGCTL_PORT,
+                freq_hz=freq_Hz,
+            )
 
         self._update_safety_calculation(freq_hz=freq_Hz)
         self._frequency_usb_tx_set_marker4_5(freq_Hz=freq_Hz)

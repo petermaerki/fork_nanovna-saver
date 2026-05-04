@@ -197,6 +197,13 @@ class PeterAntennaControl(Control):
                 fmt="0.1f",
             )
         )
+        self.heading_symmetric = self.add_row(
+            peter_widgets.ValueWidget(
+                label="Tune heading current symmetric",
+                unit="deg",
+                fmt="0.1f",
+            )
+        )
         self.heading_servo = self.add_row(
             peter_widgets.PushButtonWidget(
                 label="Tune heading servo_h",

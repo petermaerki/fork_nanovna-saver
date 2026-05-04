@@ -150,6 +150,7 @@ class StatemachineTuner:
             label="heading_deg",
         )
         ctl.heading_current.set_value(measured_heading_deg)
+        ctl.heading_symmetric.set_value((measured_heading_deg + 180.0) % 360.0)
         return measured_heading_deg
 
     def tune_band_change(self, ctl: "PeterAntennaControl") -> bool:

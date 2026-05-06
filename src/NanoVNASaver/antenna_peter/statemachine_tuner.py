@@ -130,7 +130,8 @@ class StatemachineTuner:
         if not hasattr(self, "_heading_history"):
             self._heading_history = []
         measured_heading_deg = self.get_heading(sample_count=5, ctl=ctl)
-        print(f"Heading meas {len(self._heading_history)}: {measured_heading_deg:.1f}")
+        _error = (measured_heading_deg - ctl.heading_target.f_value + 90.0) % 180.0 - 90.0
+        print(f"Heading iteration {len(self._heading_history)}: {measured_heading_deg:.1f} error {_error:.1f}")
         self._heading_history.append(measured_heading_deg)
         if len(self._heading_history) > counts:
             self._heading_history.pop(0)
@@ -166,7 +167,10 @@ class StatemachineTuner:
             target_hz=ctl.frequency_target.f_value
         )
         logger.info(
-            f"tune_band_change: preset values {servo_f_ta=} {target_band.servo_z_ta=}"
+            f"tune_band_change: preset servo_f_ta {ctl.frequency_servo_f.f_value:0.3f} -> {servo_f_ta:0.3f}"
+        )
+        logger.info(
+            f"tune_band_change: preset servo_z_ta {ctl.impedance_servo_z.f_value:0.3f} -> {target_band.servo_z_ta:0.3f}"
         )
         ctl.frequency_servo_f.set_value(servo_f_ta)
         assert isinstance(target_band.servo_z_ta, float)

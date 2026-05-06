@@ -129,14 +129,14 @@ BANDS: Bands = Bands(
             ft8_hz=21_074_000,
             measurement1=Measurement(5.0, 2.128e7),
             measurement2=Measurement(6.0, 1.62554e7),
-            servo_z_ta=0.0,
+            servo_z_ta=0.02,
         ),
         Band(
             band_m=12,
             ft8_hz=24_915_000,
             measurement1=Measurement(3.0, 26780300),
             measurement2=Measurement(4.0, 24197000),
-            servo_z_ta=-0.0,
+            servo_z_ta=-0.02,
         ),
         Band(
             band_m=10,

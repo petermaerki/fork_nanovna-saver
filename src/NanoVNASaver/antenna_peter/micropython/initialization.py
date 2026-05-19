@@ -22,7 +22,7 @@ bmm350 = BMM350(i2c)  # noqa: F821
 
 OK_STRING = "BEGIN[[exec: OK=]]END"
 
-POWER_SERVO_ON_DURING_RADIO = True # True: moegliche Stoerungen durch Servoelektronik oder BMM350
+power_servo_on_during_radio = None # True: moegliche Stoerungen durch Servoelektronik oder BMM350
 
 # K2_ATTENUATION_out_pin.value(1)
 # K3_VNA_out_pin.value(1)
@@ -66,15 +66,23 @@ def set_tx_sperren(sperren: bool) -> None:
     TX_INH_out_pin(sperren)
 
 
+def set_power_servo_on_during_radio(value: bool) -> None:
+    global power_servo_on_during_radio  # noqa: PLW0603
+    power_servo_on_during_radio = value
+    power_servo_bmm350(enable = power_servo_on_during_radio)
+    print(OK_STRING)
+
+
 def power_servo_bmm350(enable: bool):
     if enable:
-        power_servo_magnetometer_out_pin.value(True)
-        time.sleep(1.5)  # 0.8s is ok
-        bmm350.init_sensor()
-        chip_id, rev_id, err_reg = bmm350.read_chip_info()
-        print(
-            f"BMM350 chip_id=0x{chip_id:02X}, rev=0x{rev_id:02X}, err=0x{err_reg:02X}"
-        )
+        if not power_servo_magnetometer_out_pin.value():
+            power_servo_magnetometer_out_pin.value(True)
+            time.sleep(1.5)  # 0.8s is ok
+            bmm350.init_sensor()
+            chip_id, rev_id, err_reg = bmm350.read_chip_info()
+            print(
+                f"BMM350 chip_id=0x{chip_id:02X}, rev=0x{rev_id:02X}, err=0x{err_reg:02X}"
+            )
         return
     power_servo_magnetometer_out_pin.value(False)
 
@@ -86,11 +94,9 @@ def vna_enable(enable: bool) -> None:
         time.sleep(0.3)
         K2_ATTENUATION_out_pin.value(True)
         K3_VNA_out_pin.value(True)
-        if not POWER_SERVO_ON_DURING_RADIO:
-            power_servo_bmm350(enable= True)
-
+        power_servo_bmm350(enable= True)
     else:
-        if not POWER_SERVO_ON_DURING_RADIO:
+        if power_servo_on_during_radio == False:
             power_servo_bmm350(enable= False)
         K2_ATTENUATION_out_pin.value(False)
         K3_VNA_out_pin.value(False)

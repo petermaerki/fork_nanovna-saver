@@ -179,6 +179,11 @@ class PeterAntennaControl(Control):
             peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
         ).checkbox
 
+        self.checkbox_power_servo_on_during_radio = self.add_row(
+            peter_widgets.CheckboxWidget("Power servo on during radio operation")
+        ).checkbox
+        self.checkbox_power_servo_on_during_radio.setChecked(True)
+
         self.add_row(peter_widgets.SeparatorWidget())
 
         self.heading_checkbox = self.add_row(
@@ -346,6 +351,7 @@ class PeterAntennaControl(Control):
         # self.checkbox_up.checkStateChanged.connect(self.on_up)
         # self.checkbox_down.checkStateChanged.connect(self.on_down)
         self.checkbox_vna_enable.checkStateChanged.connect(self.on_vna_enable)
+        self.checkbox_power_servo_on_during_radio.checkStateChanged.connect(self.on_power_servo_on_during_radio)
         self._default_app_palette = QtGui.QPalette(self.app.palette())
         # self._app_bg_inhibit_active = False
         # self._update_tx_inhibit_switch()
@@ -441,6 +447,17 @@ class PeterAntennaControl(Control):
             # Note: power spin is connected at init; no further action needed here
         except Exception:
             logger.exception("on_vna_enable")
+
+    def on_power_servo_on_during_radio(self, checked: QtCore.Qt.CheckState) -> None:
+        assert isinstance(checked, QtCore.Qt.CheckState)
+        try:
+            value = checked == QtCore.Qt.CheckState.Checked
+            self._mp_exec(
+                label_full="pico_power_servo_on_during_radio",
+                cmd=f"set_power_servo_on_during_radio({value})",
+            )
+        except Exception:
+            logger.exception("on_power_servo_on_during_radio")
 
     def on_power_changed(self):
         """Handle changes to the Power W spinbox.

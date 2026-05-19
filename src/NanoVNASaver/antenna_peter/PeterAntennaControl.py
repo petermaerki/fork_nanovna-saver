@@ -9,7 +9,7 @@ import re
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from sts3215_ctl import util_mpremote
-from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent
+from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent, ServoNotAccessibleException
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
@@ -602,6 +602,9 @@ class PeterAntennaControl(Control):
                 max(statemachine_tuner.FREQUENCY_TARGET_TA_MIN, target_ta),
             )
             self.servos.servo_ctl_f.move_ta(target_ta=_target_ta)
+        except ServoNotAccessibleException as e:
+            logger.error(f"servo_f konnte nicht angesteuert werden: {e}")
+            return target_ta
         except calculator.ExceptionRequireHoming as e:
             logger.warning(e)
             require_homeing = True

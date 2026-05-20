@@ -369,6 +369,9 @@ class VnaSweeper:
     def f_swr_min_Hz(self, freq_Hz: int) -> None:
         self._set_marker(1, freq_Hz=freq_Hz)
         self.ctl.frequency_current.set_value(float(freq_Hz))
+        target_hz = self.ctl.frequency_target.f_value
+        out_of_range = target_hz > 0 and abs(freq_Hz - target_hz) / target_hz > 0.01
+        self.ctl.set_frequency_out_of_range(out_of_range)
 
     @property
     def f_swr_p2_64_h_Hz(self) -> int:

@@ -459,6 +459,33 @@ class PeterAntennaControl(Control):
         except Exception:
             logger.exception("on_power_servo_on_during_radio")
 
+    def set_frequency_out_of_range(self, out_of_range: bool) -> None:
+        if not hasattr(self, '_warning_overlay'):
+            overlay = QtWidgets.QFrame(self.app)
+            overlay.setStyleSheet("background: transparent; border: 10px solid red;")
+            overlay.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            overlay.hide()
+            self._warning_overlay = overlay
+            self.app.installEventFilter(self)
+        if out_of_range:
+            self._warning_overlay.setGeometry(self.app.rect())
+            self._warning_overlay.show()
+            self._warning_overlay.raise_()
+        else:
+            self._warning_overlay.hide()
+
+    def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
+        overlay = getattr(self, '_warning_overlay', None)
+        if (
+            watched is self.app
+            and overlay is not None
+            and overlay.isVisible()
+            and event.type() == QtCore.QEvent.Type.Resize
+        ):
+            overlay.setGeometry(self.app.rect())
+            overlay.raise_()
+        return super().eventFilter(watched, event)
+
     def on_power_changed(self):
         """Handle changes to the Power W spinbox.
 
@@ -606,6 +633,11 @@ class PeterAntennaControl(Control):
 
         self._update_safety_calculation(freq_hz=freq_Hz)
         self._frequency_usb_tx_set_marker4_5(freq_Hz=freq_Hz)
+
+        current_hz = self.frequency_current.f_value
+        target_hz = self.frequency_target.f_value
+        out_of_range = target_hz > 0 and current_hz > 0 and abs(current_hz - target_hz) / target_hz > 0.01
+        self.set_frequency_out_of_range(out_of_range)
 
     def _frequency_set_servo_f(self, target_ta: float) -> float:
         if self.servos is None:

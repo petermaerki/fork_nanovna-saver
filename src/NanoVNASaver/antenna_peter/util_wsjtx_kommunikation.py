@@ -28,6 +28,7 @@ import logging
 import socket
 import struct
 import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,7 @@ class WsjtxListener:
             return self._tx_audio_offset_hz
 
     def _listen_loop(self) -> None:
+      while True:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -136,6 +138,7 @@ class WsjtxListener:
                     self._handle(data)
         except Exception:
             logger.exception("WsjtxListener error")
+            time.sleep(10)
 
     def _handle(self, data: bytes) -> None:
         if len(data) < 12:

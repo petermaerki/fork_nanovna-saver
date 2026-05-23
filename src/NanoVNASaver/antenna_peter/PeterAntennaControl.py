@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 QWidgetT = TypeVar("QWidgetT", bound=QtWidgets.QWidget)
 
 RIGCTL_HOSTNAME = "localhost"
-RIGCTL_HOSTNAME = "yoga-260"
+RIGCTL_HOSTNAME = "x1"
 RIGCTL_PORT = 4532
 
 DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent

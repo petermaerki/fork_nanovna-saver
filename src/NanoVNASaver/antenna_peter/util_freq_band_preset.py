@@ -9,6 +9,7 @@ class Band:
     measurement1: Measurement | None
     measurement2: Measurement | None
     servo_z_ta: float | None
+    impedance_target_ohm: float = 50.0
 
     @property
     def valid(self) -> bool:
@@ -81,6 +82,7 @@ BANDS: Bands = Bands(
             measurement1=Measurement(23.0, 1842240), # comet vacuum
             measurement2=Measurement(24.0, 1839680), # comet vacuum
             servo_z_ta=0.085, # comet vacuum
+            impedance_target_ohm=30.0, # komisches Verhalten der Antenne bei 160m, bei 30 Ohm ist die Anpassung beim Senden am besten.
         ),
         Band(
             band_m=80,

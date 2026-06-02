@@ -175,6 +175,7 @@ class StatemachineTuner:
         ctl.frequency_servo_f.set_value(servo_f_ta)
         assert isinstance(target_band.servo_z_ta, float)
         ctl.impedance_servo_z.set_value(target_band.servo_z_ta)
+        ctl.impedance_target.set_value(target_band.impedance_target_ohm)
         with ctl._servo_position_persist() as p:
             p.freq_antenna_hz = ctl.frequency_target.f_value
         ctl.vna.reset_range(freq_Hz=ctl.frequency_target.f_value)

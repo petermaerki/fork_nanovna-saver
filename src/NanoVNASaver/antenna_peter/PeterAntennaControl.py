@@ -178,7 +178,7 @@ class PeterAntennaControl(Control):
         self.checkbox_use_history = self.add_row(
             peter_widgets.CheckboxWidget("Use history")
         ).checkbox
-        self.checkbox_use_history.setChecked(False)
+        self.checkbox_use_history.setChecked(True)
         self.checkbox_vna_enable = self.add_row(
             peter_widgets.CheckboxWidget("VNA enable, TX inhibit")
         ).checkbox

@@ -33,6 +33,7 @@ class StatemachineTuner:
         self.last_s = time.monotonic()
         self.impedance_iteration_plus = 0
         self.frequency_iteration_plus = 0
+        self._history_pending = True
 
     def reset_iterations(self, ctl: "PeterAntennaControl"):
         self.impedance_iteration_plus = 0
@@ -44,6 +45,7 @@ class StatemachineTuner:
         try:
             if not ctl.checkbox_tune.isChecked():
                 self.last_s = time.monotonic()
+                self._history_pending = True
                 return
             tuned = self._tune(ctl=ctl)
             if tuned:
@@ -58,32 +60,9 @@ class StatemachineTuner:
         exception. Something bad happened.
         """
         # success = True
-
-        '''
-        if Use History;
-            set_values_from_history()
-            use history checkbox auf false
-            return False
-
-        set_values_from_history() soll:
-        suche in den einträgen von unten nach oben (neueste einträge zu erst finden)
-        falls es einen eintrag gibt bei welchem:
-        frequency_target_hz abweichung kleiner 50 Hz
-        heading_target_deg abweichung kleiner 5 deg
-        dann setzte die servos auf die i eintrag gespeicheten werte
-        - servo_h_ta =ctl.impedance_servo_h.f_value
-        - servo_f_ta = ctl.impedance_servo_f.f_value
-        - servo_z_ta = ctl.impedance_servo_z.f_value
-        mache einen logoutput mit infos dazu in der art
-        found entry in history, set servos to: und hier die json zeile
-        oder
-        no entry found in history
-
-        '''
-
-        if ctl.checkbox_use_history.isChecked():
+        if ctl.checkbox_use_history.isChecked() and self._history_pending:
+            self._history_pending = False
             self._set_values_from_history(ctl=ctl)
-            ctl.checkbox_use_history.setChecked(False)
             return False
 
         if not self._tune_heading(ctl=ctl):
@@ -103,29 +82,7 @@ class StatemachineTuner:
         if not self._tune_servo_f(ctl=ctl):
             return False
         self._save_history(ctl=ctl)
-        '''
-        save_history()
-        save_histor soll einen eintrag in einem history file machen
-        antenna_peter/history/history_tuning_data.py
-        falls das file noch nicht existiert: erstellen
-        fileformat: orientiere dich an den bereits existierenden file
-        so dass es später auch automatisch wieder eingelesen werden kann
-
-        später mache ich eine logig für: gibt es eine sehr ähnliche einstellung welche ich in der vergangenheit angefahren hate, so nimm als startwert genau die gespeicherten werte
-        
-        - datum zeit
-        - servo_h_ta =ctl.impedance_servo_h.f_value
-        - servo_f_ta = ctl.impedance_servo_f.f_value
-        - servo_z_ta = ctl.impedance_servo_z.f_value
-        - frequency_target_hz = ctl.heading_target.f_value
-        - heading_target_deg = ctl.heading_target.f_value
-        
-        '''
         return True
-
-        duration_s = time.monotonic() - self.last_s
-        logger.info(f"tune {duration_s} s")
-        return duration_s > 10.0
 
     def _tune_heading(self, ctl: "PeterAntennaControl") -> bool:
         if not ctl.heading_checkbox.isChecked():
@@ -234,11 +191,12 @@ class StatemachineTuner:
         entries = history_tuning_data.load_all()
         frequency_target_hz = ctl.frequency_target.f_value
         heading_target_deg = ctl.heading_target.f_value
+        logger.info(f"search history: {len(entries)} entries, freq={frequency_target_hz:.0f} heading={heading_target_deg:.1f}")
         for entry in reversed(entries):
-            if (
-                abs(entry.frequency_target_hz - frequency_target_hz) < 50
-                and abs(entry.heading_target_deg - heading_target_deg) < 5
-            ):
+            freq_diff = abs(entry.frequency_target_hz - frequency_target_hz)
+            head_diff = abs(entry.heading_target_deg - heading_target_deg)
+            logger.info(f"  check entry freq={entry.frequency_target_hz} heading={entry.heading_target_deg} -> freq_diff={freq_diff:.0f} head_diff={head_diff:.1f}")
+            if freq_diff < 50 and head_diff < 5:
                 logger.info(f"found entry in history, set servos to: {entry.to_json_line()}")
                 ctl.heading_servo.set_value(entry.servo_h_ta)
                 logger.info(f"set heading_servo to {entry.servo_h_ta:0.3f} turns")
@@ -261,7 +219,7 @@ class StatemachineTuner:
             heading_target_deg=ctl.heading_target.f_value,
         )
         history_tuning_data.append(entry)
-        logger.info(f"save_history: {entry}")
+        # logger.info(f"save_history: {entry}")
 
     def _sweep_vna(self, ctl: "PeterAntennaControl") -> bool:
         success = ctl.vna.sweep()

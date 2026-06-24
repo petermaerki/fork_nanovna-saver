@@ -39,9 +39,8 @@ class TuningHistoryEntry:
 
 
 def append(entry: TuningHistoryEntry, filename: pathlib.Path = HISTORY_FILE) -> None:
-    line = json.dumps(dataclasses.asdict(entry), sort_keys=True)
     with filename.open("a", encoding="utf-8") as f:
-        f.write(line + "\n")
+        f.write(entry.to_json_line() + "\n")
 
 
 def load_all(filename: pathlib.Path = HISTORY_FILE) -> list[TuningHistoryEntry]:

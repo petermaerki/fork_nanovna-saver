@@ -5,9 +5,10 @@ import socket
 
 logger = logging.getLogger(__name__)
 
-# All known FT8 frequencies in Hz
-_FT8_FREQUENCIES_HZ: frozenset[int] = frozenset(
+# All known FT8 and FT4 frequencies in Hz
+_FT8_FT4_FREQUENCIES_HZ: frozenset[int] = frozenset(
     {
+        # FT8
         1_840_000,
         3_573_000,
         5_357_000,
@@ -18,6 +19,15 @@ _FT8_FREQUENCIES_HZ: frozenset[int] = frozenset(
         21_074_000,
         24_915_000,
         28_074_000,
+        # FT4
+        3_575_000,
+        7_047_500,
+        10_140_000,
+        14_080_000,
+        18_104_000,
+        21_140_000,
+        24_919_000,
+        28_180_000,
     }
 )
 
@@ -25,20 +35,20 @@ REDUCE_HZ = 200
 
 
 def is_ft8_frequency(freq_hz: float) -> bool:
-    """Return True if freq_hz exactly matches a known FT8 frequency."""
-    return int(freq_hz) in _FT8_FREQUENCIES_HZ
+    """Return True if freq_hz exactly matches a known FT8/FT4 frequency."""
+    return int(freq_hz) in _FT8_FT4_FREQUENCIES_HZ
 
 
 def set_frequency_minus_200hz(hostname: str, port: int, freq_hz: float) -> None:
-    """If freq_hz is exactly an FT8 frequency, set rigctl to that frequency minus 200 Hz.
+    """If freq_hz is exactly an FT8/FT4 frequency, set rigctl to that frequency minus 200 Hz.
 
     Uses the rigctl 'F <freq>' command over a TCP socket connection.
-    Does nothing if freq_hz is not an FT8 frequency.
+    Does nothing if freq_hz is not an FT8/FT4 frequency.
     """
     freq_int = int(freq_hz)
-    if freq_int not in _FT8_FREQUENCIES_HZ:
+    if freq_int not in _FT8_FT4_FREQUENCIES_HZ:
         logger.debug(
-            "set_frequency_minus_200hz: %d Hz is not an FT8 frequency – skipped",
+            "set_frequency_minus_200hz: %d Hz is not an FT8/FT4 frequency - skipped",
             freq_int,
         )
         return

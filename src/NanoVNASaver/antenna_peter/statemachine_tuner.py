@@ -246,6 +246,9 @@ class StatemachineTuner:
                 logger.info(f"set frequency_servo_f to {entry.servo_f_ta:0.3f} turns")
                 ctl.impedance_servo_z.set_value(entry.servo_z_ta)
                 logger.info(f"set impedance_servo_z to {entry.servo_z_ta:0.3f} turns")
+                with ctl._servo_position_persist() as p:
+                    p.freq_antenna_hz = ctl.frequency_target.f_value
+                logger.info(f"updated persist freq_antenna_hz to {ctl.frequency_target.f_value:0.0f} Hz")
                 return
         logger.info("no entry found in history")
 

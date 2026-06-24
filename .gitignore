@@ -71,3 +71,4 @@ NanoVNASaver*.txt*
 
 src/NanoVNASaver/antenna_peter/663_iteration/ablaufsteuerung.bat
 NanoVNASaver.txt.1
+src/NanoVNASaver/antenna_peter/history/history_tuning_data.jsonl

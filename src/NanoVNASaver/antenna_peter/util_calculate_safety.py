@@ -1,12 +1,24 @@
 import math
 
 
+def calc_power_part_percent(frequency_deviation_Hz: float, antenna_bandwith_3db_Hz: float) -> float:
+    """Lorentz-like off-resonance power share in percent.
+    P_rel = 100 / (1 + (2*df/BW)^2), BW = full 3 dB bandwidth.
+    """
+    if antenna_bandwith_3db_Hz > 0:
+        return 100.0 / (1.0 + (2.0 * abs(frequency_deviation_Hz) / antenna_bandwith_3db_Hz) ** 2)
+    if abs(frequency_deviation_Hz) == 0:
+        return 100.0
+    return 0.0
+
+
 def calculate_safety_distance(
     f_mhz: float,
     p_watt: float,
     antenna_q_factor: float,
     swr_min: float,
     antenna_bandwith_3db_Hz: float,
+    frequency_deviation_Hz: float,
     loop_diameter_m=1.0,
     loop_area_m2=0.78,
 ) -> str:
@@ -56,6 +68,11 @@ def calculate_safety_distance(
     efficiency = (r_rad / (r_rad + r_loss)) * 100.0
     p_radiated = p_watt * (r_rad / (r_rad + r_loss))
 
+    power_part = calc_power_part_percent(
+        frequency_deviation_Hz=frequency_deviation_Hz,
+        antenna_bandwith_3db_Hz=antenna_bandwith_3db_Hz,
+    )
+
     lines = [
         f"Antenna Q Factor: {antenna_q_factor:.0f}",
         f"Antenna SWR: {swr_min:.2f}",
@@ -70,5 +87,8 @@ def calculate_safety_distance(
         f"<b>Safety Distance IGW: {r_meters_igw:.2f} m</b>",
         f"H-Limit OMEN: {h_limit_omen:.3f} A/m",
         f"Safety Distance <a href='https://github.com/petermaerki/fork_nanovna-saver/blob/antenna_tuner/src/NanoVNASaver/antenna_peter/SAFETY_INFO.md'>OMEN</a>: {r_meters_omen:.2f} m",
+        "",
+        f"Antenna deviation frequency: {abs(frequency_deviation_Hz) / 1000.0:.3f} kHz",
+        f"Antenna power due to deviation: <b>{power_part:.0f} %</b>",
     ]
     return "<br/>\n".join(lines)

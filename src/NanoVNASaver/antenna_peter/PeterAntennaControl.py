@@ -14,7 +14,7 @@ from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
 from . import peter_widgets, statemachine_tuner, util_persist, util_set_minus_200hz, util_vna_sweep, util_wsjtx_kommunikation
-from .util_calculate_safety import calculate_safety_distance
+from .util_calculate_safety import calculate_safety_distance, calc_power_part_percent
 from ..Windows import CalibrationSettings
 
 if TYPE_CHECKING:
@@ -555,6 +555,10 @@ class PeterAntennaControl(Control):
                 antenna_q_factor=self.vna.antenna_q,
                 swr_min=self.vna.swr_min,
                 antenna_bandwith_3db_Hz=self.vna.antenna_bandwith_3db_Hz,
+                frequency_deviation_Hz=abs(
+                    self.frequency_current.f_value
+                    - self.frequency_target.f_value
+                ),
             )
             self.safety_info_html.setHtml(info)
         except Exception:
@@ -640,7 +644,15 @@ class PeterAntennaControl(Control):
 
         current_hz = self.frequency_current.f_value
         target_hz = self.frequency_target.f_value
-        out_of_range = target_hz > 0 and current_hz > 0 and abs(current_hz - target_hz) / target_hz > 0.01
+        bandwidth_hz = self.vna.antenna_bandwith_3db_Hz
+        if target_hz > 0 and current_hz > 0 and bandwidth_hz > 0:
+            power_part = calc_power_part_percent(
+                frequency_deviation_Hz=abs(current_hz - target_hz),
+                antenna_bandwith_3db_Hz=bandwidth_hz,
+            )
+            out_of_range = power_part < 70.0
+        else:
+            out_of_range = False
         self.set_frequency_out_of_range(out_of_range)
 
     def _frequency_set_servo_f(self, target_ta: float) -> float:

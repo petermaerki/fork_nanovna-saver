@@ -7,6 +7,7 @@ from ..RFTools import Datapoint
 
 from ..Hardware.VNA import VNA
 from ..Settings.Sweep import Sweep
+from .util_calculate_safety import calc_power_part_percent
 
 if typing.TYPE_CHECKING:
     from .PeterAntennaControl import PeterAntennaControl
@@ -370,7 +371,15 @@ class VnaSweeper:
         self._set_marker(1, freq_Hz=freq_Hz)
         self.ctl.frequency_current.set_value(float(freq_Hz))
         target_hz = self.ctl.frequency_target.f_value
-        out_of_range = target_hz > 0 and abs(freq_Hz - target_hz) / target_hz > 0.01
+        bandwidth_hz = self.antenna_bandwith_3db_Hz
+        if target_hz > 0 and bandwidth_hz > 0:
+            power_part = calc_power_part_percent(
+                frequency_deviation_Hz=abs(freq_Hz - target_hz),
+                antenna_bandwith_3db_Hz=bandwidth_hz,
+            )
+            out_of_range = power_part < 70.0
+        else:
+            out_of_range = False
         self.ctl.set_frequency_out_of_range(out_of_range)
 
     @property

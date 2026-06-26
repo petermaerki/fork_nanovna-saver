@@ -195,8 +195,11 @@ class StatemachineTuner:
         for entry in reversed(entries):
             freq_diff = abs(entry.frequency_target_hz - frequency_target_hz)
             head_diff = abs(entry.heading_target_deg - heading_target_deg)
-            logger.info(f"  check entry freq={entry.frequency_target_hz} heading={entry.heading_target_deg} -> freq_diff={freq_diff:.0f} head_diff={head_diff:.1f}")
-            if freq_diff < 50 and head_diff < 5:
+            # logger.info(f"  check entry freq={entry.frequency_target_hz} heading={entry.heading_target_deg} -> freq_diff={freq_diff:.0f} head_diff={head_diff:.1f}")
+            if freq_diff < 300 and head_diff < 10:
+                if entry is entries[-1]:
+                    logger.info("history: newest entry matches, servos already at target values")
+                    return
                 logger.info(f"found entry in history, set servos to: {entry.to_json_line()}")
                 ctl.heading_servo.set_value(entry.servo_h_ta)
                 logger.info(f"set heading_servo to {entry.servo_h_ta:0.3f} turns")

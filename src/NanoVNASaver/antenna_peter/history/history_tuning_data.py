@@ -41,6 +41,13 @@ class TuningHistoryEntry:
 def append(entry: TuningHistoryEntry, filename: pathlib.Path = HISTORY_FILE) -> None:
     with filename.open("a", encoding="utf-8") as f:
         f.write(entry.to_json_line() + "\n")
+    _trim_if_needed(filename)
+
+
+def _trim_if_needed(filename: pathlib.Path, max_entries: int = 1000, keep_entries: int = 900) -> None:
+    lines = [l for l in filename.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if len(lines) > max_entries:
+        filename.write_text("\n".join(lines[-keep_entries:]) + "\n", encoding="utf-8")
 
 
 def load_all(filename: pathlib.Path = HISTORY_FILE) -> list[TuningHistoryEntry]:

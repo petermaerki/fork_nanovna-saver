@@ -348,6 +348,32 @@ class NanoVNASaver(QWidget):
         )
         self.marker_column.addWidget(btn_show_analysis)
 
+        btn_sweep_1_30 = QtWidgets.QPushButton("Sweep 1 – 30 MHz")
+        btn_sweep_1_30.setMinimumHeight(20)
+        btn_sweep_1_30.clicked.connect(self.sweep_1_30_mhz)
+        left_column.addWidget(btn_sweep_1_30)
+
+        zoom_range_layout = QtWidgets.QHBoxLayout()
+        zoom_range_layout.addWidget(QtWidgets.QLabel("Zoom range +/- Hz:"))
+        self.inp_zoom_range = QtWidgets.QLineEdit("1000000")
+        self.inp_zoom_range.setFixedWidth(80)
+        zoom_range_layout.addWidget(self.inp_zoom_range)
+        zoom_range_layout.addStretch()
+        left_column.addLayout(zoom_range_layout)
+
+        zoom_segments_layout = QtWidgets.QHBoxLayout()
+        zoom_segments_layout.addWidget(QtWidgets.QLabel("Zoom segments:"))
+        self.inp_zoom_segments = QtWidgets.QLineEdit("50")
+        self.inp_zoom_segments.setFixedWidth(50)
+        zoom_segments_layout.addWidget(self.inp_zoom_segments)
+        zoom_segments_layout.addStretch()
+        left_column.addLayout(zoom_segments_layout)
+
+        btn_zoom = QtWidgets.QPushButton("Zoom (min SWR ±0.5 MHz)")
+        btn_zoom.setMinimumHeight(20)
+        btn_zoom.clicked.connect(self.sweep_zoom_swr)
+        left_column.addWidget(btn_zoom)
+
         ###############################################################
         # TDR
         ###############################################################
@@ -457,6 +483,30 @@ class NanoVNASaver(QWidget):
         self.auto_connect()
 
         logger.debug("Finished building interface")
+
+    def sweep_1_30_mhz(self):
+        self.sweep_control.set_start(1_000_000)
+        self.sweep_control.set_end(30_000_000)
+        self.sweep_control.set_segments(50)
+        self.sweep_start()
+
+    def sweep_zoom_swr(self):
+        try:
+            half = int(self.inp_zoom_range.text())
+        except ValueError:
+            half = 1_000_000
+        try:
+            segments = int(self.inp_zoom_segments.text())
+        except ValueError:
+            segments = 5
+        if not self.data.s11:
+            return
+        center = min(self.data.s11, key=lambda d: d.vswr).freq
+        start = max(100_000, center - half)
+        self.sweep_control.set_start(start)
+        self.sweep_control.set_end(start + 2 * half)
+        self.sweep_control.set_segments(segments)
+        self.sweep_start()
 
     def auto_connect(
         self,

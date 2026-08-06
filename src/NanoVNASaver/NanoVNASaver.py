@@ -454,6 +454,8 @@ class NanoVNASaver(QWidget):
         button_grid.addWidget(btn_about, 1, 1)
         left_column.addLayout(button_grid)
 
+        self.auto_connect()
+
         logger.debug("Finished building interface")
 
     def auto_connect(

@@ -1,0 +1,486 @@
+2026-08-04 16:56:23,089 - NanoVNASaver - DEBUG - Runtime information:
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.39
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - CPU: x86_64
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - scipy: 1.18.0
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - pyserial: 3.5
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - numpy: 2.5.1
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - PySide6_Essentials: 6.11.1
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - PySide6: 6.11.1
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - shiboken6: 6.11.1
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - PySide6_Addons: 6.11.1
+2026-08-04 16:56:23,094 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-04 16:56:23,094 - NanoVNASaver - INFO - Startup...
+2026-08-04 16:56:23,403 - NanoVNASaver.Defaults - INFO - Loading settings from: /home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+2026-08-04 16:56:23,403 - NanoVNASaver.Defaults - DEBUG - restored
+(
+AppConfig(gui=GuiConfig(window_height=1100, window_width=965, font_size=8, custom_colors=False, dark_mode=False, splitter_sizes=PySide6.QtCore.QByteArray(b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x01V\x00\x00\x00\x12\x01\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00'), markers_hidden=True), charts_selected=ChartsSelectedConfig(chart_00='S11 Smith Chart', chart_01='S11 Return Loss', chart_02='None', chart_10='S21 Polar Plot', chart_11='S21 Gain', chart_12='None'), chart=ChartConfig(point_size=3, show_lines=False, line_thickness=1, marker_count=3, marker_label=False, marker_filled=False, marker_at_tip=False, marker_size=10, returnloss_is_positive=True, show_bands=False, vswr_lines=[]), chart_colors=ChartColorsConfig(background=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000), foreground=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000), reference=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 0.250980), reference_secondary=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.752941, 0.188235), sweep=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.000000, 1.000000), sweep_secondary=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.000000, 0.501961, 1.000000), swr=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 0.501961), text=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000), bands=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 0.188235)), markers=MarkersConfig(active_labels=['actualfreq', 'impedance', 'serr', 'serl', 'serc', 'parr', 'parlc', 'vswr', 'returnloss', 's11q', 's11phase', 's21gain', 's21phase'], colored_names=True, color_0=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 1.000000), color_1=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 1.000000), color_2=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 0.000000, 1.000000), color_3=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000), color_4=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 1.000000, 1.000000), color_5=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 1.000000, 1.000000), color_6=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 0.000000, 1.000000), color_7=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000)), sweep_settings=SweepConfig(start='14.005037MHz', end='14.145963MHz', center='14.0755MHz', span='140.926kHz', segments='1'))
+)
+2026-08-04 16:56:23,403 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:56:23,403 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:56:23,403 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:56:23,403 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (3600000, 30000000)
+2026-08-04 16:56:23,403 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-04 16:56:23,414 - NanoVNASaver.Hardware.Hardware - DEBUG - Found S-A-A-2 USB:(04b4:0008) on port /dev/ttyACM0
+2026-08-04 16:56:23,415 - NanoVNASaver.Hardware.Hardware - INFO - Finding correct VNA type...
+2026-08-04 16:56:23,716 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Hardware version ({device_variant}.{hardware_revision}): 2.4.0
+2026-08-04 16:56:23,810 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Firmware version: 1.2.0
+2026-08-04 16:56:23,845 - NanoVNASaver.Hardware.Hardware - DEBUG - Interfaces: [Interface<id=0x7cbd5d15c3d0, open=False>(port='/dev/ttyACM0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=0.05, xonxoff=False, rtscts=False, dsrdtr=False)]
+2026-08-04 16:56:23,848 - NanoVNASaver.NanoVNASaver - DEBUG - Building user interface
+2026-08-04 16:56:23,885 - NanoVNASaver.Windows.SweepSettings - DEBUG - update_band(False)
+2026-08-04 16:56:23,903 - NanoVNASaver.NanoVNASaver - DEBUG - New font width: 167.843750, normal font: 167.843750, factor: 1.000000
+2026-08-04 16:56:23,919 - NanoVNASaver.NanoVNASaver - DEBUG - Finished building interface
+2026-08-04 16:56:40,102 - NanoVNASaver.Hardware.Hardware - DEBUG - Found S-A-A-2 USB:(04b4:0008) on port /dev/ttyACM0
+2026-08-04 16:56:40,103 - NanoVNASaver.Hardware.Hardware - INFO - Finding correct VNA type...
+2026-08-04 16:56:40,449 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Hardware version ({device_variant}.{hardware_revision}): 2.4.0
+2026-08-04 16:56:40,499 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Firmware version: 1.2.0
+2026-08-04 16:56:40,534 - NanoVNASaver.Hardware.Hardware - DEBUG - Interfaces: [Interface<id=0x7cbd5cd5b880, open=False>(port='/dev/ttyACM0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=0.05, xonxoff=False, rtscts=False, dsrdtr=False)]
+2026-08-04 16:56:42,619 - NanoVNASaver.Controls.SerialControl - INFO - Connection /dev/ttyACM0 (S-A-A-2)
+2026-08-04 16:56:44,721 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Firmware Version: 1.0.2
+2026-08-04 16:56:46,721 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - read_board_revision: 2.0.4
+2026-08-04 16:56:46,721 - NanoVNASaver.Hardware.VNA - DEBUG - Features: {'Set TX power partial', 'Multi data points', 'Set Average', 'Customizable data points'}
+2026-08-04 16:56:46,826 - NanoVNASaver.Controls.SerialControl - INFO - Read starting frequency 200000000 and end frequency 300000000
+2026-08-04 16:56:46,837 - NanoVNASaver.Controls.SerialControl - DEBUG - Starting initial sweep
+2026-08-04 16:56:46,837 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-04 16:56:46,837 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:56:46,837 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:56:46,838 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-04 16:56:46,838 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-04 16:56:46,838 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-04 16:56:46,938 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-04 16:56:47,251 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 63
+2026-08-04 16:56:47,251 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 99
+2026-08-04 16:56:47,251 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:56:47,251 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-04 16:56:47,251 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:56:47,251 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-04 16:56:47,252 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-04 16:56:47,252 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-04 16:56:47,252 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-04 16:56:47,252 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-04 16:56:47,285 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-04 16:56:52,794 - NanoVNASaver.Charts.Chart - DEBUG - wheelEvent 120, [Datapoint(freq=200000000, re=-0.5000973343849182, im=0.6691002249717712), Datapoint(freq=201000000, re=-0.4877869188785553, im=0.6810230016708374), Datapoint(freq=202000000, re=-0.47534051537513733, im=0.6947630643844604), Datapoint(freq=203000000, re=-0.46141567826271057, im=0.7075861096382141), Datapoint(freq=204000000, re=-0.44779902696609497, im=0.7194743752479553), Datapoint(freq=205000000, re=-0.4347096383571625, im=0.7322832345962524), Datapoint(freq=206000000, re=-0.42001375555992126, im=0.7444774508476257), Datapoint(freq=207000000, re=-0.4052846133708954, im=0.7569094300270081), Datapoint(freq=208000000, re=-0.3899490237236023, im=0.7677884101867676), Datapoint(freq=209000000, re=-0.37404197454452515, im=0.7797800898551941), Datapoint(freq=210000000, re=-0.35828202962875366, im=0.7912413477897644), Datapoint(freq=211000000, re=-0.34273573756217957, im=0.8014833927154541), Datapoint(freq=212000000, re=-0.3262121379375458, im=0.812501847743988), Datapoint(freq=213000000, re=-0.3100734055042267, im=0.8223479390144348), Datapoint(freq=214000000, re=-0.29279661178588867, im=0.8319332599639893), Datapoint(freq=215000000, re=-0.27563226222991943, im=0.8409768342971802), Datapoint(freq=216000000, re=-0.2567022740840912, im=0.8508586883544922), Datapoint(freq=217000000, re=-0.23861762881278992, im=0.8595917224884033), Datapoint(freq=218000000, re=-0.21972933411598206, im=0.8674840331077576), Datapoint(freq=219000000, re=-0.2006518691778183, im=0.8757687211036682), Datapoint(freq=220000000, re=-0.18186061084270477, im=0.8837015628814697), Datapoint(freq=221000000, re=-0.16221833229064941, im=0.8910983800888062), Datapoint(freq=222000000, re=-0.14331071078777313, im=0.896809995174408), Datapoint(freq=223000000, re=-0.12276242673397064, im=0.9036828279495239), Datapoint(freq=224000000, re=-0.10248566418886185, im=0.9091801643371582), Datapoint(freq=225000000, re=-0.0829387679696083, im=0.9143434166908264), Datapoint(freq=226000000, re=-0.06133806332945824, im=0.9189954400062561), Datapoint(freq=227000000, re=-0.04062596336007118, im=0.923663854598999), Datapoint(freq=228000000, re=-0.019545041024684906, im=0.9270825386047363), Datapoint(freq=229000000, re=0.0017939349636435509, im=0.9304682016372681), Datapoint(freq=230000000, re=0.023281050845980644, im=0.9337483048439026), Datapoint(freq=231000000, re=0.044725678861141205, im=0.9350799918174744), Datapoint(freq=232000000, re=0.06740018725395203, im=0.9369634389877319), Datapoint(freq=233000000, re=0.08916933834552765, im=0.9382714629173279), Datapoint(freq=234000000, re=0.11100488901138306, im=0.9382375478744507), Datapoint(freq=235000000, re=0.13299348950386047, im=0.9372395277023315), Datapoint(freq=236000000, re=0.15555255115032196, im=0.938022792339325), Datapoint(freq=237000000, re=0.17730188369750977, im=0.9361759424209595), Datapoint(freq=238000000, re=0.1998702883720398, im=0.9341831207275391), Datapoint(freq=239000000, re=0.22195953130722046, im=0.9319432377815247), Datapoint(freq=240000000, re=0.2448478639125824, im=0.9288995265960693), Datapoint(freq=241000000, re=0.26716166734695435, im=0.9243679642677307), Datapoint(freq=242000000, re=0.2893543243408203, im=0.9202135801315308), Datapoint(freq=243000000, re=0.31130051612854004, im=0.9151161313056946), Datapoint(freq=244000000, re=0.3333844840526581, im=0.9098852276802063), Datapoint(freq=245000000, re=0.3562530279159546, im=0.9034981727600098), Datapoint(freq=246000000, re=0.3779522776603699, im=0.8965670466423035), Datapoint(freq=247000000, re=0.3997221887111664, im=0.88913494348526), Datapoint(freq=248000000, re=0.42086148262023926, im=0.8815714716911316), Datapoint(freq=249000000, re=0.44173815846443176, im=0.8721138834953308), Datapoint(freq=250000000, re=0.4633324146270752, im=0.8634871244430542), Datapoint(freq=251000000, re=0.4845753014087677, im=0.8531708717346191), Datapoint(freq=252000000, re=0.5058937668800354, im=0.843174159526825), Datapoint(freq=253000000, re=0.526485025882721, im=0.8329483270645142), Datapoint(freq=254000000, re=0.5466879606246948, im=0.8215269446372986), Datapoint(freq=255000000, re=0.5669271945953369, im=0.8096309900283813), Datapoint(freq=256000000, re=0.586158037185669, im=0.795989990234375), Datapoint(freq=257000000, re=0.6050882935523987, im=0.7829566597938538), Datapoint(freq=258000000, re=0.6230866312980652, im=0.7695541381835938), Datapoint(freq=259000000, re=0.6416819095611572, im=0.7551534175872803), Datapoint(freq=260000000, re=0.6594626903533936, im=0.7401244640350342), Datapoint(freq=261000000, re=0.6779324412345886, im=0.7262352705001831), Datapoint(freq=262000000, re=0.6953026056289673, im=0.7092339396476746), Datapoint(freq=263000000, re=0.7112700343132019, im=0.6928223371505737), Datapoint(freq=264000000, re=0.7275800108909607, im=0.6769338250160217), Datapoint(freq=265000000, re=0.7441127896308899, im=0.6602353453636169), Datapoint(freq=266000000, re=0.7591122388839722, im=0.6424257159233093), Datapoint(freq=267000000, re=0.7747417092323303, im=0.6251234412193298), Datapoint(freq=268000000, re=0.7884977459907532, im=0.6067906022071838), Datapoint(freq=269000000, re=0.8019556999206543, im=0.588362991809845), Datapoint(freq=270000000, re=0.8158472776412964, im=0.5695070624351501), Datapoint(freq=271000000, re=0.8292229175567627, im=0.5494382381439209), Datapoint(freq=272000000, re=0.8404717445373535, im=0.5304936170578003), Datapoint(freq=273000000, re=0.852616548538208, im=0.5119382739067078), Datapoint(freq=274000000, re=0.8638139963150024, im=0.4915357530117035), Datapoint(freq=275000000, re=0.8731867074966431, im=0.4716014564037323), Datapoint(freq=276000000, re=0.8842291235923767, im=0.4512876868247986), Datapoint(freq=277000000, re=0.8944267630577087, im=0.43031707406044006), Datapoint(freq=278000000, re=0.9027650952339172, im=0.40900346636772156), Datapoint(freq=279000000, re=0.911791205406189, im=0.3885004222393036), Datapoint(freq=280000000, re=0.9189202785491943, im=0.36762121319770813), Datapoint(freq=281000000, re=0.9263418316841125, im=0.34649205207824707), Datapoint(freq=282000000, re=0.9329497218132019, im=0.3245627284049988), Datapoint(freq=283000000, re=0.9391047954559326, im=0.3040710389614105), Datapoint(freq=284000000, re=0.9442621469497681, im=0.2819593846797943), Datapoint(freq=285000000, re=0.9494820237159729, im=0.2603633403778076), Datapoint(freq=286000000, re=0.9541705846786499, im=0.23940490186214447), Datapoint(freq=287000000, re=0.958297848701477, im=0.21786078810691833), Datapoint(freq=288000000, re=0.9610137939453125, im=0.194743350148201), Datapoint(freq=289000000, re=0.9632326364517212, im=0.1745530366897583), Datapoint(freq=290000000, re=0.9654678106307983, im=0.15279486775398254), Datapoint(freq=291000000, re=0.9677138328552246, im=0.13138924539089203), Datapoint(freq=292000000, re=0.968745768070221, im=0.1102706789970398), Datapoint(freq=293000000, re=0.9694718718528748, im=0.08864188939332962), Datapoint(freq=294000000, re=0.9693208932876587, im=0.06693709641695023), Datapoint(freq=295000000, re=0.9689972400665283, im=0.04629429802298546), Datapoint(freq=296000000, re=0.967980682849884, im=0.025084933266043663), Datapoint(freq=297000000, re=0.9676478505134583, im=0.004242757335305214), Datapoint(freq=298000000, re=0.9651703238487244, im=-0.01658572070300579), Datapoint(freq=299000000, re=0.9625990986824036, im=-0.03715360909700394), Datapoint(freq=300000000, re=0.0, im=0.0)], []
+2026-08-04 16:56:52,818 - NanoVNASaver.Charts.Chart - DEBUG - wheelEvent 120, [Datapoint(freq=200000000, re=-0.5000973343849182, im=0.6691002249717712), Datapoint(freq=201000000, re=-0.4877869188785553, im=0.6810230016708374), Datapoint(freq=202000000, re=-0.47534051537513733, im=0.6947630643844604), Datapoint(freq=203000000, re=-0.46141567826271057, im=0.7075861096382141), Datapoint(freq=204000000, re=-0.44779902696609497, im=0.7194743752479553), Datapoint(freq=205000000, re=-0.4347096383571625, im=0.7322832345962524), Datapoint(freq=206000000, re=-0.42001375555992126, im=0.7444774508476257), Datapoint(freq=207000000, re=-0.4052846133708954, im=0.7569094300270081), Datapoint(freq=208000000, re=-0.3899490237236023, im=0.7677884101867676), Datapoint(freq=209000000, re=-0.37404197454452515, im=0.7797800898551941), Datapoint(freq=210000000, re=-0.35828202962875366, im=0.7912413477897644), Datapoint(freq=211000000, re=-0.34273573756217957, im=0.8014833927154541), Datapoint(freq=212000000, re=-0.3262121379375458, im=0.812501847743988), Datapoint(freq=213000000, re=-0.3100734055042267, im=0.8223479390144348), Datapoint(freq=214000000, re=-0.29279661178588867, im=0.8319332599639893), Datapoint(freq=215000000, re=-0.27563226222991943, im=0.8409768342971802), Datapoint(freq=216000000, re=-0.2567022740840912, im=0.8508586883544922), Datapoint(freq=217000000, re=-0.23861762881278992, im=0.8595917224884033), Datapoint(freq=218000000, re=-0.21972933411598206, im=0.8674840331077576), Datapoint(freq=219000000, re=-0.2006518691778183, im=0.8757687211036682), Datapoint(freq=220000000, re=-0.18186061084270477, im=0.8837015628814697), Datapoint(freq=221000000, re=-0.16221833229064941, im=0.8910983800888062), Datapoint(freq=222000000, re=-0.14331071078777313, im=0.896809995174408), Datapoint(freq=223000000, re=-0.12276242673397064, im=0.9036828279495239), Datapoint(freq=224000000, re=-0.10248566418886185, im=0.9091801643371582), Datapoint(freq=225000000, re=-0.0829387679696083, im=0.9143434166908264), Datapoint(freq=226000000, re=-0.06133806332945824, im=0.9189954400062561), Datapoint(freq=227000000, re=-0.04062596336007118, im=0.923663854598999), Datapoint(freq=228000000, re=-0.019545041024684906, im=0.9270825386047363), Datapoint(freq=229000000, re=0.0017939349636435509, im=0.9304682016372681), Datapoint(freq=230000000, re=0.023281050845980644, im=0.9337483048439026), Datapoint(freq=231000000, re=0.044725678861141205, im=0.9350799918174744), Datapoint(freq=232000000, re=0.06740018725395203, im=0.9369634389877319), Datapoint(freq=233000000, re=0.08916933834552765, im=0.9382714629173279), Datapoint(freq=234000000, re=0.11100488901138306, im=0.9382375478744507), Datapoint(freq=235000000, re=0.13299348950386047, im=0.9372395277023315), Datapoint(freq=236000000, re=0.15555255115032196, im=0.938022792339325), Datapoint(freq=237000000, re=0.17730188369750977, im=0.9361759424209595), Datapoint(freq=238000000, re=0.1998702883720398, im=0.9341831207275391), Datapoint(freq=239000000, re=0.22195953130722046, im=0.9319432377815247), Datapoint(freq=240000000, re=0.2448478639125824, im=0.9288995265960693), Datapoint(freq=241000000, re=0.26716166734695435, im=0.9243679642677307), Datapoint(freq=242000000, re=0.2893543243408203, im=0.9202135801315308), Datapoint(freq=243000000, re=0.31130051612854004, im=0.9151161313056946), Datapoint(freq=244000000, re=0.3333844840526581, im=0.9098852276802063), Datapoint(freq=245000000, re=0.3562530279159546, im=0.9034981727600098), Datapoint(freq=246000000, re=0.3779522776603699, im=0.8965670466423035), Datapoint(freq=247000000, re=0.3997221887111664, im=0.88913494348526), Datapoint(freq=248000000, re=0.42086148262023926, im=0.8815714716911316), Datapoint(freq=249000000, re=0.44173815846443176, im=0.8721138834953308), Datapoint(freq=250000000, re=0.4633324146270752, im=0.8634871244430542), Datapoint(freq=251000000, re=0.4845753014087677, im=0.8531708717346191), Datapoint(freq=252000000, re=0.5058937668800354, im=0.843174159526825), Datapoint(freq=253000000, re=0.526485025882721, im=0.8329483270645142), Datapoint(freq=254000000, re=0.5466879606246948, im=0.8215269446372986), Datapoint(freq=255000000, re=0.5669271945953369, im=0.8096309900283813), Datapoint(freq=256000000, re=0.586158037185669, im=0.795989990234375), Datapoint(freq=257000000, re=0.6050882935523987, im=0.7829566597938538), Datapoint(freq=258000000, re=0.6230866312980652, im=0.7695541381835938), Datapoint(freq=259000000, re=0.6416819095611572, im=0.7551534175872803), Datapoint(freq=260000000, re=0.6594626903533936, im=0.7401244640350342), Datapoint(freq=261000000, re=0.6779324412345886, im=0.7262352705001831), Datapoint(freq=262000000, re=0.6953026056289673, im=0.7092339396476746), Datapoint(freq=263000000, re=0.7112700343132019, im=0.6928223371505737), Datapoint(freq=264000000, re=0.7275800108909607, im=0.6769338250160217), Datapoint(freq=265000000, re=0.7441127896308899, im=0.6602353453636169), Datapoint(freq=266000000, re=0.7591122388839722, im=0.6424257159233093), Datapoint(freq=267000000, re=0.7747417092323303, im=0.6251234412193298), Datapoint(freq=268000000, re=0.7884977459907532, im=0.6067906022071838), Datapoint(freq=269000000, re=0.8019556999206543, im=0.588362991809845), Datapoint(freq=270000000, re=0.8158472776412964, im=0.5695070624351501), Datapoint(freq=271000000, re=0.8292229175567627, im=0.5494382381439209), Datapoint(freq=272000000, re=0.8404717445373535, im=0.5304936170578003), Datapoint(freq=273000000, re=0.852616548538208, im=0.5119382739067078), Datapoint(freq=274000000, re=0.8638139963150024, im=0.4915357530117035), Datapoint(freq=275000000, re=0.8731867074966431, im=0.4716014564037323), Datapoint(freq=276000000, re=0.8842291235923767, im=0.4512876868247986), Datapoint(freq=277000000, re=0.8944267630577087, im=0.43031707406044006), Datapoint(freq=278000000, re=0.9027650952339172, im=0.40900346636772156), Datapoint(freq=279000000, re=0.911791205406189, im=0.3885004222393036), Datapoint(freq=280000000, re=0.9189202785491943, im=0.36762121319770813), Datapoint(freq=281000000, re=0.9263418316841125, im=0.34649205207824707), Datapoint(freq=282000000, re=0.9329497218132019, im=0.3245627284049988), Datapoint(freq=283000000, re=0.9391047954559326, im=0.3040710389614105), Datapoint(freq=284000000, re=0.9442621469497681, im=0.2819593846797943), Datapoint(freq=285000000, re=0.9494820237159729, im=0.2603633403778076), Datapoint(freq=286000000, re=0.9541705846786499, im=0.23940490186214447), Datapoint(freq=287000000, re=0.958297848701477, im=0.21786078810691833), Datapoint(freq=288000000, re=0.9610137939453125, im=0.194743350148201), Datapoint(freq=289000000, re=0.9632326364517212, im=0.1745530366897583), Datapoint(freq=290000000, re=0.9654678106307983, im=0.15279486775398254), Datapoint(freq=291000000, re=0.9677138328552246, im=0.13138924539089203), Datapoint(freq=292000000, re=0.968745768070221, im=0.1102706789970398), Datapoint(freq=293000000, re=0.9694718718528748, im=0.08864188939332962), Datapoint(freq=294000000, re=0.9693208932876587, im=0.06693709641695023), Datapoint(freq=295000000, re=0.9689972400665283, im=0.04629429802298546), Datapoint(freq=296000000, re=0.967980682849884, im=0.025084933266043663), Datapoint(freq=297000000, re=0.9676478505134583, im=0.004242757335305214), Datapoint(freq=298000000, re=0.9651703238487244, im=-0.01658572070300579), Datapoint(freq=299000000, re=0.9625990986824036, im=-0.03715360909700394), Datapoint(freq=300000000, re=0.0, im=0.0)], []
+2026-08-04 16:56:52,850 - NanoVNASaver.Charts.Chart - DEBUG - wheelEvent 120, [Datapoint(freq=200000000, re=-0.5000973343849182, im=0.6691002249717712), Datapoint(freq=201000000, re=-0.4877869188785553, im=0.6810230016708374), Datapoint(freq=202000000, re=-0.47534051537513733, im=0.6947630643844604), Datapoint(freq=203000000, re=-0.46141567826271057, im=0.7075861096382141), Datapoint(freq=204000000, re=-0.44779902696609497, im=0.7194743752479553), Datapoint(freq=205000000, re=-0.4347096383571625, im=0.7322832345962524), Datapoint(freq=206000000, re=-0.42001375555992126, im=0.7444774508476257), Datapoint(freq=207000000, re=-0.4052846133708954, im=0.7569094300270081), Datapoint(freq=208000000, re=-0.3899490237236023, im=0.7677884101867676), Datapoint(freq=209000000, re=-0.37404197454452515, im=0.7797800898551941), Datapoint(freq=210000000, re=-0.35828202962875366, im=0.7912413477897644), Datapoint(freq=211000000, re=-0.34273573756217957, im=0.8014833927154541), Datapoint(freq=212000000, re=-0.3262121379375458, im=0.812501847743988), Datapoint(freq=213000000, re=-0.3100734055042267, im=0.8223479390144348), Datapoint(freq=214000000, re=-0.29279661178588867, im=0.8319332599639893), Datapoint(freq=215000000, re=-0.27563226222991943, im=0.8409768342971802), Datapoint(freq=216000000, re=-0.2567022740840912, im=0.8508586883544922), Datapoint(freq=217000000, re=-0.23861762881278992, im=0.8595917224884033), Datapoint(freq=218000000, re=-0.21972933411598206, im=0.8674840331077576), Datapoint(freq=219000000, re=-0.2006518691778183, im=0.8757687211036682), Datapoint(freq=220000000, re=-0.18186061084270477, im=0.8837015628814697), Datapoint(freq=221000000, re=-0.16221833229064941, im=0.8910983800888062), Datapoint(freq=222000000, re=-0.14331071078777313, im=0.896809995174408), Datapoint(freq=223000000, re=-0.12276242673397064, im=0.9036828279495239), Datapoint(freq=224000000, re=-0.10248566418886185, im=0.9091801643371582), Datapoint(freq=225000000, re=-0.0829387679696083, im=0.9143434166908264), Datapoint(freq=226000000, re=-0.06133806332945824, im=0.9189954400062561), Datapoint(freq=227000000, re=-0.04062596336007118, im=0.923663854598999), Datapoint(freq=228000000, re=-0.019545041024684906, im=0.9270825386047363), Datapoint(freq=229000000, re=0.0017939349636435509, im=0.9304682016372681), Datapoint(freq=230000000, re=0.023281050845980644, im=0.9337483048439026), Datapoint(freq=231000000, re=0.044725678861141205, im=0.9350799918174744), Datapoint(freq=232000000, re=0.06740018725395203, im=0.9369634389877319), Datapoint(freq=233000000, re=0.08916933834552765, im=0.9382714629173279), Datapoint(freq=234000000, re=0.11100488901138306, im=0.9382375478744507), Datapoint(freq=235000000, re=0.13299348950386047, im=0.9372395277023315), Datapoint(freq=236000000, re=0.15555255115032196, im=0.938022792339325), Datapoint(freq=237000000, re=0.17730188369750977, im=0.9361759424209595), Datapoint(freq=238000000, re=0.1998702883720398, im=0.9341831207275391), Datapoint(freq=239000000, re=0.22195953130722046, im=0.9319432377815247), Datapoint(freq=240000000, re=0.2448478639125824, im=0.9288995265960693), Datapoint(freq=241000000, re=0.26716166734695435, im=0.9243679642677307), Datapoint(freq=242000000, re=0.2893543243408203, im=0.9202135801315308), Datapoint(freq=243000000, re=0.31130051612854004, im=0.9151161313056946), Datapoint(freq=244000000, re=0.3333844840526581, im=0.9098852276802063), Datapoint(freq=245000000, re=0.3562530279159546, im=0.9034981727600098), Datapoint(freq=246000000, re=0.3779522776603699, im=0.8965670466423035), Datapoint(freq=247000000, re=0.3997221887111664, im=0.88913494348526), Datapoint(freq=248000000, re=0.42086148262023926, im=0.8815714716911316), Datapoint(freq=249000000, re=0.44173815846443176, im=0.8721138834953308), Datapoint(freq=250000000, re=0.4633324146270752, im=0.8634871244430542), Datapoint(freq=251000000, re=0.4845753014087677, im=0.8531708717346191), Datapoint(freq=252000000, re=0.5058937668800354, im=0.843174159526825), Datapoint(freq=253000000, re=0.526485025882721, im=0.8329483270645142), Datapoint(freq=254000000, re=0.5466879606246948, im=0.8215269446372986), Datapoint(freq=255000000, re=0.5669271945953369, im=0.8096309900283813), Datapoint(freq=256000000, re=0.586158037185669, im=0.795989990234375), Datapoint(freq=257000000, re=0.6050882935523987, im=0.7829566597938538), Datapoint(freq=258000000, re=0.6230866312980652, im=0.7695541381835938), Datapoint(freq=259000000, re=0.6416819095611572, im=0.7551534175872803), Datapoint(freq=260000000, re=0.6594626903533936, im=0.7401244640350342), Datapoint(freq=261000000, re=0.6779324412345886, im=0.7262352705001831), Datapoint(freq=262000000, re=0.6953026056289673, im=0.7092339396476746), Datapoint(freq=263000000, re=0.7112700343132019, im=0.6928223371505737), Datapoint(freq=264000000, re=0.7275800108909607, im=0.6769338250160217), Datapoint(freq=265000000, re=0.7441127896308899, im=0.6602353453636169), Datapoint(freq=266000000, re=0.7591122388839722, im=0.6424257159233093), Datapoint(freq=267000000, re=0.7747417092323303, im=0.6251234412193298), Datapoint(freq=268000000, re=0.7884977459907532, im=0.6067906022071838), Datapoint(freq=269000000, re=0.8019556999206543, im=0.588362991809845), Datapoint(freq=270000000, re=0.8158472776412964, im=0.5695070624351501), Datapoint(freq=271000000, re=0.8292229175567627, im=0.5494382381439209), Datapoint(freq=272000000, re=0.8404717445373535, im=0.5304936170578003), Datapoint(freq=273000000, re=0.852616548538208, im=0.5119382739067078), Datapoint(freq=274000000, re=0.8638139963150024, im=0.4915357530117035), Datapoint(freq=275000000, re=0.8731867074966431, im=0.4716014564037323), Datapoint(freq=276000000, re=0.8842291235923767, im=0.4512876868247986), Datapoint(freq=277000000, re=0.8944267630577087, im=0.43031707406044006), Datapoint(freq=278000000, re=0.9027650952339172, im=0.40900346636772156), Datapoint(freq=279000000, re=0.911791205406189, im=0.3885004222393036), Datapoint(freq=280000000, re=0.9189202785491943, im=0.36762121319770813), Datapoint(freq=281000000, re=0.9263418316841125, im=0.34649205207824707), Datapoint(freq=282000000, re=0.9329497218132019, im=0.3245627284049988), Datapoint(freq=283000000, re=0.9391047954559326, im=0.3040710389614105), Datapoint(freq=284000000, re=0.9442621469497681, im=0.2819593846797943), Datapoint(freq=285000000, re=0.9494820237159729, im=0.2603633403778076), Datapoint(freq=286000000, re=0.9541705846786499, im=0.23940490186214447), Datapoint(freq=287000000, re=0.958297848701477, im=0.21786078810691833), Datapoint(freq=288000000, re=0.9610137939453125, im=0.194743350148201), Datapoint(freq=289000000, re=0.9632326364517212, im=0.1745530366897583), Datapoint(freq=290000000, re=0.9654678106307983, im=0.15279486775398254), Datapoint(freq=291000000, re=0.9677138328552246, im=0.13138924539089203), Datapoint(freq=292000000, re=0.968745768070221, im=0.1102706789970398), Datapoint(freq=293000000, re=0.9694718718528748, im=0.08864188939332962), Datapoint(freq=294000000, re=0.9693208932876587, im=0.06693709641695023), Datapoint(freq=295000000, re=0.9689972400665283, im=0.04629429802298546), Datapoint(freq=296000000, re=0.967980682849884, im=0.025084933266043663), Datapoint(freq=297000000, re=0.9676478505134583, im=0.004242757335305214), Datapoint(freq=298000000, re=0.9651703238487244, im=-0.01658572070300579), Datapoint(freq=299000000, re=0.9625990986824036, im=-0.03715360909700394), Datapoint(freq=300000000, re=0.0, im=0.0)], []
+2026-08-04 16:56:58,523 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-04 16:56:58,524 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:56:58,524 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:56:58,524 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-04 16:56:58,524 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-04 16:56:58,525 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:56:58,525 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-04 16:56:58,525 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-04 16:56:58,525 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-04 16:56:58,525 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-04 16:56:58,525 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-04 16:56:58,626 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-04 16:56:58,817 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 52
+2026-08-04 16:56:58,817 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 51
+2026-08-04 16:56:58,817 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:56:58,817 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-04 16:56:58,818 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:56:58,818 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-04 16:56:58,818 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-04 16:56:58,818 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-04 16:56:58,818 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-04 16:56:58,818 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-04 16:56:58,820 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-04 16:56:59,460 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:56:59,461 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-04 16:56:59,461 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-04 16:56:59,461 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-04 16:56:59,561 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-04 16:56:59,754 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 37
+2026-08-04 16:56:59,755 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 36
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-04 16:56:59,755 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-04 16:56:59,756 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-04 16:57:00,229 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:57:00,229 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-04 16:57:00,229 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-04 16:57:00,229 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-04 16:57:00,333 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-04 16:57:00,525 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 54
+2026-08-04 16:57:00,525 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 53
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-04 16:57:00,526 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-04 16:57:01,187 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-04 16:57:01,187 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:57:01,187 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:57:01,187 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-04 16:57:01,187 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-04 16:57:01,187 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:57:01,187 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-04 16:57:01,187 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-04 16:57:01,187 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-04 16:57:01,188 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-04 16:57:01,188 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-04 16:57:01,291 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-04 16:57:01,484 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 48
+2026-08-04 16:57:01,484 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 47
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-04 16:57:01,485 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-04 16:57:01,489 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-04 16:57:02,532 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-04 16:57:02,532 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-04 16:57:02,536 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-04 16:57:02,536 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-04 16:57:02,536 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-04 16:57:02,636 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-04 16:57:02,828 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 0
+2026-08-04 16:57:02,828 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 100
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-04 16:57:02,829 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:16:51,473 - NanoVNASaver - DEBUG - Runtime information:
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.39
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - CPU: x86_64
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - scipy: 1.18.0
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - pyserial: 3.5
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - numpy: 2.5.1
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - PySide6_Essentials: 6.11.1
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - PySide6: 6.11.1
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - shiboken6: 6.11.1
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - PySide6_Addons: 6.11.1
+2026-08-06 20:16:51,482 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-06 20:16:51,482 - NanoVNASaver - INFO - Startup...
+2026-08-06 20:16:51,791 - NanoVNASaver.Defaults - INFO - Loading settings from: /home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+2026-08-06 20:16:51,792 - NanoVNASaver.Defaults - DEBUG - restored
+(
+AppConfig(gui=GuiConfig(window_height=1100, window_width=965, font_size=8, custom_colors=False, dark_mode=False, splitter_sizes=PySide6.QtCore.QByteArray(b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x01V\x00\x00\x00\x12\x01\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00'), markers_hidden=True), charts_selected=ChartsSelectedConfig(chart_00='S11 Smith Chart', chart_01='S11 Return Loss', chart_02='None', chart_10='S21 Polar Plot', chart_11='S21 Gain', chart_12='None'), chart=ChartConfig(point_size=3, show_lines=False, line_thickness=1, marker_count=3, marker_label=False, marker_filled=False, marker_at_tip=False, marker_size=10, returnloss_is_positive=True, show_bands=False, vswr_lines=[]), chart_colors=ChartColorsConfig(background=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000), foreground=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000), reference=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 0.250980), reference_secondary=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.752941, 0.188235), sweep=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.000000, 1.000000), sweep_secondary=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.000000, 0.501961, 1.000000), swr=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 0.501961), text=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000), bands=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 0.188235)), markers=MarkersConfig(active_labels=['actualfreq', 'impedance', 'serr', 'serl', 'serc', 'parr', 'parlc', 'vswr', 'returnloss', 's11q', 's11phase', 's21gain', 's21phase'], colored_names=True, color_0=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 1.000000), color_1=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 1.000000), color_2=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 0.000000, 1.000000), color_3=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000), color_4=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 1.000000, 1.000000), color_5=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 1.000000, 1.000000), color_6=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 0.000000, 1.000000), color_7=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000)), sweep_settings=SweepConfig(start='14.005037MHz', end='14.145963MHz', center='14.0755MHz', span='140.926kHz', segments='1'))
+)
+2026-08-06 20:16:51,792 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:16:51,792 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:16:51,792 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:16:51,792 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (3600000, 30000000)
+2026-08-06 20:16:51,792 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:16:51,802 - NanoVNASaver.Hardware.Hardware - DEBUG - Interfaces: []
+2026-08-06 20:16:51,803 - NanoVNASaver.NanoVNASaver - DEBUG - Building user interface
+2026-08-06 20:16:51,822 - NanoVNASaver.Windows.SweepSettings - DEBUG - update_band(False)
+2026-08-06 20:16:51,833 - NanoVNASaver.NanoVNASaver - DEBUG - New font width: 167.843750, normal font: 167.843750, factor: 1.000000
+2026-08-06 20:16:51,849 - NanoVNASaver.NanoVNASaver - DEBUG - Finished building interface
+2026-08-06 20:17:04,568 - NanoVNASaver.Hardware.Hardware - DEBUG - Found S-A-A-2 USB:(04b4:0008) on port /dev/ttyACM0
+2026-08-06 20:17:04,569 - NanoVNASaver.Hardware.Hardware - INFO - Finding correct VNA type...
+2026-08-06 20:17:04,870 - NanoVNASaver.Hardware.LiteVNA64 - ERROR - Timeout reading version registers. Got: b''
+2026-08-06 20:17:14,535 - NanoVNASaver.Hardware.Hardware - DEBUG - Found S-A-A-2 USB:(04b4:0008) on port /dev/ttyACM0
+2026-08-06 20:17:14,535 - NanoVNASaver.Hardware.Hardware - INFO - Finding correct VNA type...
+2026-08-06 20:17:14,786 - NanoVNASaver.Hardware.Hardware - DEBUG - Retry detection: 1
+2026-08-06 20:17:15,113 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Hardware version ({device_variant}.{hardware_revision}): 2.4.0
+2026-08-06 20:17:15,163 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Firmware version: 1.2.0
+2026-08-06 20:17:15,164 - NanoVNASaver.Hardware.Hardware - DEBUG - Interfaces: [Interface<id=0x793656c9a890, open=False>(port='/dev/ttyACM0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=0.05, xonxoff=False, rtscts=False, dsrdtr=False)]
+2026-08-06 20:17:17,732 - NanoVNASaver.Controls.SerialControl - INFO - Connection /dev/ttyACM0 (S-A-A-2)
+2026-08-06 20:17:19,834 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Firmware Version: 1.0.2
+2026-08-06 20:17:21,834 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - read_board_revision: 2.0.4
+2026-08-06 20:17:21,835 - NanoVNASaver.Hardware.VNA - DEBUG - Features: {'Multi data points', 'Set Average', 'Set TX power partial', 'Customizable data points'}
+2026-08-06 20:17:21,937 - NanoVNASaver.Controls.SerialControl - INFO - Read starting frequency 200000000 and end frequency 300000000
+2026-08-06 20:17:21,952 - NanoVNASaver.Controls.SerialControl - DEBUG - Starting initial sweep
+2026-08-06 20:17:21,952 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:17:21,952 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:17:21,952 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:17:21,952 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:17:21,953 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:17:21,953 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:17:22,053 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:17:22,390 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 60
+2026-08-06 20:17:22,391 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 99
+2026-08-06 20:17:22,391 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:17:22,391 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:17:22,391 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:17:22,391 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:17:22,393 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:17:22,394 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:17:22,394 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:17:22,394 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:17:22,394 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:17:38,502 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:17:38,502 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:17:38,503 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(8000000, 22000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:17:38,503 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (8000000, 22000000)
+2026-08-06 20:17:38,503 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:17:38,503 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:17:38,503 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:17:38,503 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (8000000, 22000000)
+2026-08-06 20:17:38,503 - NanoVNASaver.SweepWorker - INFO - Reading from 8000000 to 22000000. Averaging 1 values
+2026-08-06 20:17:38,503 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:17:38,503 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 8000000 to 22000000
+2026-08-06 20:17:38,503 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - NanoVNAV2: set sweep start 8000000 step 140000
+2026-08-06 20:17:38,554 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:17:38,554 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:17:38,655 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:17:38,858 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 40
+2026-08-06 20:17:38,858 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 39
+2026-08-06 20:17:38,858 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:17:38,858 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:17:38,858 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:17:38,858 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:17:38,859 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:17:38,863 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:17:38,863 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:17:38,863 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:17:38,864 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:17:50,094 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:17:50,094 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:17:50,094 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(500000, 29500000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:17:50,095 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (500000, 29500000)
+2026-08-06 20:17:50,095 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:17:50,095 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:17:50,095 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:17:50,095 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (500000, 29500000)
+2026-08-06 20:17:50,095 - NanoVNASaver.SweepWorker - INFO - Reading from 500000 to 29500000. Averaging 1 values
+2026-08-06 20:17:50,095 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:17:50,095 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 500000 to 29500000
+2026-08-06 20:17:50,095 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - NanoVNAV2: set sweep start 500000 step 290000
+2026-08-06 20:17:50,148 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:17:50,148 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:17:50,248 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:17:50,452 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 32
+2026-08-06 20:17:50,452 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 31
+2026-08-06 20:17:50,452 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:17:50,452 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:17:50,452 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:17:50,452 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:17:50,453 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:17:50,453 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:17:50,453 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:17:50,455 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:17:50,455 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:18:08,229 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:18:08,229 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(500000, 29500000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:18:08,229 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (500000, 29500000)
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - INFO - Reading from 500000 to 29500000. Averaging 1 values
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 500000 to 29500000
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:18:08,229 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:18:08,330 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:18:08,534 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 26
+2026-08-06 20:18:08,534 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 25
+2026-08-06 20:18:08,534 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:18:08,534 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:18:08,534 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:18:08,534 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:18:08,535 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:18:08,535 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:18:08,535 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:18:08,535 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:18:08,535 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:38:59,979 - NanoVNASaver - DEBUG - Runtime information:
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.39
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - CPU: x86_64
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - PySide6_Addons: 6.11.1
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - pyserial: 3.5
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - numpy: 2.5.1
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - PySide6: 6.11.1
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - PySide6_Essentials: 6.11.1
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - shiboken6: 6.11.1
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - scipy: 1.18.0
+2026-08-06 20:38:59,983 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-06 20:38:59,983 - NanoVNASaver - INFO - Startup...
+2026-08-06 20:39:00,062 - NanoVNASaver.Defaults - INFO - Loading settings from: /home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+2026-08-06 20:39:00,063 - NanoVNASaver.Defaults - DEBUG - restored
+(
+AppConfig(gui=GuiConfig(window_height=1007, window_width=709, font_size=7, custom_colors=False, dark_mode=False, splitter_sizes=PySide6.QtCore.QByteArray(b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\xcf\x00\x00\x01>\x01\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00'), markers_hidden=True), charts_selected=ChartsSelectedConfig(chart_00='S11 Smith Chart', chart_01='S11 Return Loss', chart_02='None', chart_10='S21 Polar Plot', chart_11='S21 Gain', chart_12='None'), chart=ChartConfig(point_size=3, show_lines=False, line_thickness=1, marker_count=5, marker_label=False, marker_filled=False, marker_at_tip=False, marker_size=12, returnloss_is_positive=False, show_bands=False, vswr_lines=[]), chart_colors=ChartColorsConfig(background=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000), foreground=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000), reference=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 0.250980), reference_secondary=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.752941, 0.188235), sweep=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.000000, 1.000000), sweep_secondary=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.000000, 0.501961, 1.000000), swr=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 0.501961), text=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000), bands=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 0.188235)), markers=MarkersConfig(active_labels=['actualfreq', 'impedance', 'serr', 'serl', 'serc', 'parr', 'parlc', 'vswr', 'returnloss', 's11q', 's11phase', 's21gain', 's21phase'], colored_names=True, color_0=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 1.000000), color_1=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 1.000000), color_2=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 0.000000, 1.000000), color_3=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000), color_4=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 1.000000, 1.000000), color_5=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 1.000000, 1.000000), color_6=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 0.000000, 1.000000), color_7=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000)), sweep_settings=SweepConfig(start='200MHz', end='300MHz', center='250MHz', span='100MHz', segments='1'))
+)
+2026-08-06 20:39:00,063 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:39:00,063 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:39:00,063 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:39:00,063 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (3600000, 30000000)
+2026-08-06 20:39:00,064 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:39:00,089 - NanoVNASaver.Hardware.Hardware - DEBUG - Found S-A-A-2 USB:(04b4:0008) on port /dev/ttyACM1
+2026-08-06 20:39:00,089 - NanoVNASaver.Hardware.Hardware - INFO - Finding correct VNA type...
+2026-08-06 20:39:00,392 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Hardware version ({device_variant}.{hardware_revision}): 2.4.0
+2026-08-06 20:39:00,443 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Firmware version: 1.2.0
+2026-08-06 20:39:00,481 - NanoVNASaver.Hardware.Hardware - DEBUG - Interfaces: [Interface<id=0x7160a1c551e0, open=False>(port='/dev/ttyACM1', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=0.05, xonxoff=False, rtscts=False, dsrdtr=False)]
+2026-08-06 20:39:00,494 - NanoVNASaver.NanoVNASaver - DEBUG - Building user interface
+2026-08-06 20:39:00,524 - NanoVNASaver.Windows.SweepSettings - DEBUG - update_band(False)
+2026-08-06 20:39:00,539 - NanoVNASaver.NanoVNASaver - DEBUG - New font width: 137.015625, normal font: 167.843750, factor: 0.816328
+2026-08-06 20:39:00,574 - NanoVNASaver.NanoVNASaver - DEBUG - Finished building interface
+2026-08-06 20:39:02,854 - NanoVNASaver.SweepWorker - DEBUG - Worker quit request
+2026-08-06 20:39:02,889 - NanoVNASaver.Defaults - INFO - Saving settings to: /home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+2026-08-06 20:39:02,890 - NanoVNASaver.Defaults - DEBUG - storing
+(
+AppConfig(gui=GuiConfig(window_height=1007, window_width=709, font_size=7, custom_colors=False, dark_mode=False, splitter_sizes=PySide6.QtCore.QByteArray(b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\xcf\x00\x00\x01>\x01\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00'), markers_hidden=True), charts_selected=ChartsSelectedConfig(chart_00='S11 Smith Chart', chart_01='S11 Return Loss', chart_02='None', chart_10='S21 Polar Plot', chart_11='S21 Gain', chart_12='None'), chart=ChartConfig(point_size=3, show_lines=False, line_thickness=1, marker_count=5, marker_label=False, marker_filled=False, marker_at_tip=False, marker_size=12, returnloss_is_positive=False, show_bands=False, vswr_lines=[]), chart_colors=ChartColorsConfig(background=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000), foreground=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000), reference=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 0.250980), reference_secondary=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.752941, 0.188235), sweep=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.000000, 1.000000), sweep_secondary=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.000000, 0.501961, 1.000000), swr=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 0.501961), text=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000), bands=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 0.188235)), markers=MarkersConfig(active_labels=['actualfreq', 'impedance', 'serr', 'serl', 'serc', 'parr', 'parlc', 'vswr', 'returnloss', 's11q', 's11phase', 's21gain', 's21phase'], colored_names=True, color_0=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 1.000000), color_1=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 1.000000), color_2=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 0.000000, 1.000000), color_3=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000), color_4=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 1.000000, 1.000000), color_5=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 1.000000, 1.000000), color_6=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 0.000000, 1.000000), color_7=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000)), sweep_settings=SweepConfig(start='200MHz', end='300MHz', center='250MHz', span='100MHz', segments='1'))
+)
+2026-08-06 20:39:02,891 - NanoVNASaver.Controls.SerialControl - INFO - Closing connection to None (none)
+2026-08-06 20:39:02,892 - NanoVNASaver.Hardware.VNA - INFO - disconnect None (None)
+2026-08-06 20:42:27,594 - NanoVNASaver - DEBUG - Runtime information:
+2026-08-06 20:42:27,597 - NanoVNASaver - DEBUG -  - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.39
+2026-08-06 20:42:27,597 - NanoVNASaver - DEBUG -  - CPU: x86_64
+2026-08-06 20:42:27,597 - NanoVNASaver - DEBUG -  - PySide6_Addons: 6.11.1
+2026-08-06 20:42:27,597 - NanoVNASaver - DEBUG -  - pyserial: 3.5
+2026-08-06 20:42:27,597 - NanoVNASaver - DEBUG -  - numpy: 2.5.1
+2026-08-06 20:42:27,597 - NanoVNASaver - DEBUG -  - PySide6: 6.11.1
+2026-08-06 20:42:27,598 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-06 20:42:27,598 - NanoVNASaver - DEBUG -  - PySide6_Essentials: 6.11.1
+2026-08-06 20:42:27,598 - NanoVNASaver - DEBUG -  - shiboken6: 6.11.1
+2026-08-06 20:42:27,598 - NanoVNASaver - DEBUG -  - scipy: 1.18.0
+2026-08-06 20:42:27,598 - NanoVNASaver - DEBUG -  - NanoVNASaver: 0.7.3.post1.dev14+gc42ddc4f1
+2026-08-06 20:42:27,598 - NanoVNASaver - INFO - Startup...
+2026-08-06 20:42:27,674 - NanoVNASaver.Defaults - INFO - Loading settings from: /home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+2026-08-06 20:42:27,675 - NanoVNASaver.Defaults - DEBUG - restored
+(
+AppConfig(gui=GuiConfig(window_height=1007, window_width=709, font_size=7, custom_colors=False, dark_mode=False, splitter_sizes=PySide6.QtCore.QByteArray(b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\xcf\x00\x00\x01>\x01\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00'), markers_hidden=True), charts_selected=ChartsSelectedConfig(chart_00='S11 Smith Chart', chart_01='S11 Return Loss', chart_02='None', chart_10='S21 Polar Plot', chart_11='S21 Gain', chart_12='None'), chart=ChartConfig(point_size=3, show_lines=False, line_thickness=1, marker_count=5, marker_label=False, marker_filled=False, marker_at_tip=False, marker_size=12, returnloss_is_positive=False, show_bands=False, vswr_lines=[]), chart_colors=ChartColorsConfig(background=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000), foreground=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000), reference=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 0.250980), reference_secondary=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.752941, 0.188235), sweep=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.000000, 1.000000), sweep_secondary=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.000000, 0.501961, 1.000000), swr=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 0.501961), text=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000), bands=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 0.188235)), markers=MarkersConfig(active_labels=['actualfreq', 'impedance', 'serr', 'serl', 'serc', 'parr', 'parlc', 'vswr', 'returnloss', 's11q', 's11phase', 's21gain', 's21phase'], colored_names=True, color_0=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 1.000000), color_1=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 1.000000), color_2=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 0.000000, 1.000000), color_3=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000), color_4=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 1.000000, 1.000000), color_5=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 1.000000, 1.000000), color_6=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 0.000000, 1.000000), color_7=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000)), sweep_settings=SweepConfig(start='200MHz', end='300MHz', center='250MHz', span='100MHz', segments='1'))
+)
+2026-08-06 20:42:27,675 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:42:27,675 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:42:27,675 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(3600000, 30000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:42:27,675 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (3600000, 30000000)
+2026-08-06 20:42:27,675 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:42:27,693 - NanoVNASaver.Hardware.Hardware - DEBUG - Found S-A-A-2 USB:(04b4:0008) on port /dev/ttyACM1
+2026-08-06 20:42:27,693 - NanoVNASaver.Hardware.Hardware - INFO - Finding correct VNA type...
+2026-08-06 20:42:27,996 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Hardware version ({device_variant}.{hardware_revision}): 2.4.0
+2026-08-06 20:42:28,048 - NanoVNASaver.Hardware.LiteVNA64 - DEBUG - Firmware version: 1.2.0
+2026-08-06 20:42:28,087 - NanoVNASaver.Hardware.Hardware - DEBUG - Interfaces: [Interface<id=0x7f1e8d4e9540, open=False>(port='/dev/ttyACM1', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=0.05, xonxoff=False, rtscts=False, dsrdtr=False)]
+2026-08-06 20:42:28,092 - NanoVNASaver.NanoVNASaver - DEBUG - Building user interface
+2026-08-06 20:42:28,119 - NanoVNASaver.Windows.SweepSettings - DEBUG - update_band(False)
+2026-08-06 20:42:28,135 - NanoVNASaver.NanoVNASaver - DEBUG - New font width: 137.015625, normal font: 167.843750, factor: 0.816328
+2026-08-06 20:42:28,179 - NanoVNASaver.Controls.SerialControl - INFO - Connection /dev/ttyACM1 (S-A-A-2)
+2026-08-06 20:42:30,281 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Firmware Version: 1.0.2
+2026-08-06 20:42:32,282 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - read_board_revision: 2.0.4
+2026-08-06 20:42:32,283 - NanoVNASaver.Hardware.VNA - DEBUG - Features: {'Multi data points', 'Customizable data points', 'Set Average', 'Set TX power partial'}
+2026-08-06 20:42:32,385 - NanoVNASaver.Controls.SerialControl - INFO - Read starting frequency 200000000 and end frequency 300000000
+2026-08-06 20:42:32,392 - NanoVNASaver.Controls.SerialControl - DEBUG - Starting initial sweep
+2026-08-06 20:42:32,393 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:42:32,394 - NanoVNASaver.NanoVNASaver - DEBUG - Finished building interface
+2026-08-06 20:42:32,394 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:42:32,415 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:42:32,415 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - DEBUG - Init data length: 101
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:42:32,415 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:42:32,415 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:42:32,516 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:42:32,708 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 53
+2026-08-06 20:42:32,708 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 52
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:42:32,709 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:42:32,710 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:42:32,715 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:42:39,680 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:42:39,681 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:42:39,681 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:42:39,681 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:42:39,784 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:42:39,978 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 40
+2026-08-06 20:42:39,978 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 39
+2026-08-06 20:42:39,978 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:42:39,978 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:42:39,978 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:42:39,979 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:42:39,985 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:42:39,985 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:42:39,986 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:42:39,986 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:42:39,987 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:42:41,619 - NanoVNASaver.NanoVNASaver - DEBUG - Starting worker thread
+2026-08-06 20:42:41,620 - NanoVNASaver.SweepWorker - INFO - Initializing SweepWorker
+2026-08-06 20:42:41,620 - NanoVNASaver.Settings.Sweep - DEBUG - Sweep(200000000, 300000000, 101, 1, Properties(name='', mode=<SweepMode.SINGLE: 0>, averages=(3, 0), logarithmic=False))
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - INFO - 1 averages
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - DEBUG - Sweep segment no 0
+2026-08-06 20:42:41,621 - NanoVNASaver.Settings.Sweep - DEBUG - get_index_range(0) -> (200000000, 300000000)
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - INFO - Reading from 200000000 to 300000000. Averaging 1 values
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - DEBUG - Reading average no 1 / 1
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - DEBUG - Setting sweep range to 200000000 to 300000000
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - DEBUG - Read 101 frequencies
+2026-08-06 20:42:41,621 - NanoVNASaver.SweepWorker - DEBUG - Reading data 0
+2026-08-06 20:42:41,722 - NanoVNASaver.Hardware.NanoVNA_V2 - INFO - reading values
+2026-08-06 20:42:41,915 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index from: 36
+2026-08-06 20:42:41,916 - NanoVNASaver.Hardware.NanoVNA_V2 - DEBUG - Freq index to: 35
+2026-08-06 20:42:41,916 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:42:41,916 - NanoVNASaver.SweepWorker - DEBUG - Reading data 1
+2026-08-06 20:42:41,916 - NanoVNASaver.SweepWorker - DEBUG - Read 101 values
+2026-08-06 20:42:41,917 - NanoVNASaver.SweepWorker - DEBUG - Averaging 101 values
+2026-08-06 20:42:41,917 - NanoVNASaver.SweepWorker - DEBUG - Calculating data and inserting in existing data at index 0
+2026-08-06 20:42:41,918 - NanoVNASaver.SweepWorker - DEBUG - update Freqs: 101, Offset: 0
+2026-08-06 20:42:41,918 - NanoVNASaver.SweepWorker - DEBUG - Saving data to application (101 and 101 points)
+2026-08-06 20:42:41,918 - NanoVNASaver.SweepWorker - DEBUG - Sending "updated" signal
+2026-08-06 20:42:41,918 - NanoVNASaver.SweepWorker - DEBUG - Sending "finished" signal
+2026-08-06 20:42:46,106 - NanoVNASaver.SweepWorker - DEBUG - Worker quit request
+2026-08-06 20:42:46,142 - NanoVNASaver.Defaults - INFO - Saving settings to: /home/maerki/.config/NanoVNASaver/NanoVNASaver.ini
+2026-08-06 20:42:46,142 - NanoVNASaver.Defaults - DEBUG - storing
+(
+AppConfig(gui=GuiConfig(window_height=1007, window_width=709, font_size=7, custom_colors=False, dark_mode=False, splitter_sizes=PySide6.QtCore.QByteArray(b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\xcf\x00\x00\x01>\x01\xff\xff\xff\xff\x01\x00\x00\x00\x01\x00'), markers_hidden=True), charts_selected=ChartsSelectedConfig(chart_00='S11 Smith Chart', chart_01='S11 Return Loss', chart_02='None', chart_10='S21 Polar Plot', chart_11='S21 Gain', chart_12='None'), chart=ChartConfig(point_size=3, show_lines=False, line_thickness=1, marker_count=5, marker_label=False, marker_filled=False, marker_at_tip=False, marker_size=12, returnloss_is_positive=False, show_bands=False, vswr_lines=[]), chart_colors=ChartColorsConfig(background=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 1.000000, 1.000000), foreground=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000), reference=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 0.250980), reference_secondary=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.752941, 0.188235), sweep=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.000000, 1.000000), sweep_secondary=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.000000, 0.501961, 1.000000), swr=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 0.501961), text=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 0.000000, 1.000000), bands=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 0.188235)), markers=MarkersConfig(active_labels=['actualfreq', 'impedance', 'serr', 'serl', 'serc', 'parr', 'parlc', 'vswr', 'returnloss', 's11q', 's11phase', 's21gain', 's21phase'], colored_names=True, color_0=PySide6.QtGui.QColor.fromRgbF(0.501961, 0.501961, 0.501961, 1.000000), color_1=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 0.000000, 1.000000), color_2=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 0.000000, 1.000000), color_3=PySide6.QtGui.QColor.fromRgbF(0.000000, 0.000000, 1.000000, 1.000000), color_4=PySide6.QtGui.QColor.fromRgbF(0.000000, 1.000000, 1.000000, 1.000000), color_5=PySide6.QtGui.QColor.fromRgbF(1.000000, 0.000000, 1.000000, 1.000000), color_6=PySide6.QtGui.QColor.fromRgbF(1.000000, 1.000000, 0.000000, 1.000000), color_7=PySide6.QtGui.QColor.fromRgbF(0.752941, 0.752941, 0.752941, 1.000000)), sweep_settings=SweepConfig(start='200MHz', end='300MHz', center='250MHz', span='100MHz', segments='1'))
+)
+2026-08-06 20:42:46,144 - NanoVNASaver.Controls.SerialControl - INFO - Closing connection to /dev/ttyACM1 (S-A-A-2)
+2026-08-06 20:42:46,144 - NanoVNASaver.Hardware.VNA - INFO - disconnect /dev/ttyACM1 (S-A-A-2)

@@ -133,6 +133,7 @@ class NanoVNASaver(QWidget):
 
         self.sweepSource = ""
         self.referenceSource = ""
+        self._snap_marker1_to_min_swr = False
 
         logger.debug("Building user interface")
 
@@ -348,10 +349,19 @@ class NanoVNASaver(QWidget):
         )
         self.marker_column.addWidget(btn_show_analysis)
 
-        btn_sweep_1_30 = QtWidgets.QPushButton("Sweep 1 – 30 MHz")
+        quick_box = QtWidgets.QGroupBox("Peter controls magnetic loop antenna")
+        quick_box.setStyleSheet(
+            "QGroupBox { border: 2px solid #f0c000;"
+            " border-radius: 4px; margin-top: 6px; }"
+            " QGroupBox::title { color: #f0c000; }"
+        )
+        quick_layout = QtWidgets.QVBoxLayout()
+        quick_box.setLayout(quick_layout)
+
+        btn_sweep_1_30 = QtWidgets.QPushButton("Sweep Overview 1 – 30 MHz")
         btn_sweep_1_30.setMinimumHeight(20)
         btn_sweep_1_30.clicked.connect(self.sweep_1_30_mhz)
-        left_column.addWidget(btn_sweep_1_30)
+        quick_layout.addWidget(btn_sweep_1_30)
 
         zoom_range_layout = QtWidgets.QHBoxLayout()
         zoom_range_layout.addWidget(QtWidgets.QLabel("Zoom range +/- Hz:"))
@@ -359,7 +369,7 @@ class NanoVNASaver(QWidget):
         self.inp_zoom_range.setFixedWidth(80)
         zoom_range_layout.addWidget(self.inp_zoom_range)
         zoom_range_layout.addStretch()
-        left_column.addLayout(zoom_range_layout)
+        quick_layout.addLayout(zoom_range_layout)
 
         zoom_segments_layout = QtWidgets.QHBoxLayout()
         zoom_segments_layout.addWidget(QtWidgets.QLabel("Zoom segments:"))
@@ -367,12 +377,25 @@ class NanoVNASaver(QWidget):
         self.inp_zoom_segments.setFixedWidth(50)
         zoom_segments_layout.addWidget(self.inp_zoom_segments)
         zoom_segments_layout.addStretch()
-        left_column.addLayout(zoom_segments_layout)
+        quick_layout.addLayout(zoom_segments_layout)
 
-        btn_zoom = QtWidgets.QPushButton("Zoom (min SWR ±0.5 MHz)")
+        btn_zoom = QtWidgets.QPushButton("Sweep Zoom to min SWR")
         btn_zoom.setMinimumHeight(20)
         btn_zoom.clicked.connect(self.sweep_zoom_swr)
-        left_column.addWidget(btn_zoom)
+        quick_layout.addWidget(btn_zoom)
+
+        antenna_name_layout = QtWidgets.QHBoxLayout()
+        antenna_name_layout.addWidget(QtWidgets.QLabel("Name:"))
+        self.inp_antenna_name = QtWidgets.QLineEdit("antenna_xy")
+        antenna_name_layout.addWidget(self.inp_antenna_name)
+        quick_layout.addLayout(antenna_name_layout)
+
+        self.btn_save_s1p = QtWidgets.QPushButton("save ...")
+        self.btn_save_s1p.setMinimumHeight(20)
+        self.btn_save_s1p.clicked.connect(self.save_s1p_quick)
+        quick_layout.addWidget(self.btn_save_s1p)
+
+        left_column.addWidget(quick_box)
 
         ###############################################################
         # TDR
@@ -485,12 +508,33 @@ class NanoVNASaver(QWidget):
         logger.debug("Finished building interface")
 
     def sweep_1_30_mhz(self):
+        self._snap_marker1_to_min_swr = True
+        self.sweep.set_logarithmic(True)
         self.sweep_control.set_start(1_000_000)
         self.sweep_control.set_end(30_000_000)
         self.sweep_control.set_segments(50)
         self.sweep_start()
 
+    def save_s1p_quick(self):
+        if not self.data.s11:
+            return
+        min_vswr = min(self.data.s11, key=lambda d: d.vswr)
+        freq_mhz = round(min_vswr.freq / 1e6)
+        ts = strftime("%Y%m%d_%H%M", localtime())
+        name = self.inp_antenna_name.text().strip() or "antenna"
+        filename = f"{ts}_{name}_{freq_mhz}MHz.s1p"
+        t = Touchstone(filename)
+        t.sdata[0] = self.data.s11[:]
+        try:
+            t.save(1)
+            logger.info("Saved %s", filename)
+            QtWidgets.QMessageBox.information(self, "Saved", filename)
+        except IOError as e:
+            logger.exception("Error saving %s: %s", filename, e)
+
     def sweep_zoom_swr(self):
+        self._snap_marker1_to_min_swr = True
+        self.sweep.set_logarithmic(False)
         try:
             half = int(self.inp_zoom_range.text())
         except ValueError:
@@ -611,6 +655,13 @@ class NanoVNASaver(QWidget):
                 f" {format_frequency(min_vswr.freq)}"
             )
             self.s11_min_rl_label.setText(format_gain(min_vswr.gain))
+            freq_mhz = round(min_vswr.freq / 1e6)
+            ts = strftime("%Y%m%d_%H%M", localtime())
+            name = self.inp_antenna_name.text().strip() or "antenna"
+            self.btn_save_s1p.setText(f"save {ts}_{name}_{freq_mhz}MHz.s1p")
+            if self._snap_marker1_to_min_swr and self.markers:
+                self._snap_marker1_to_min_swr = False
+                self.markers[0].setFrequency(str(min_vswr.freq))
         else:
             self.s11_min_swr_label.setText("")
             self.s11_min_rl_label.setText("")

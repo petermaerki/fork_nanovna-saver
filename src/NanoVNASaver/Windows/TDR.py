@@ -231,6 +231,9 @@ class TDRWindow(QtWidgets.QWidget):
         if len(self.app.data.s11) < MIN_DATA_LENGTH:
             return
 
+        if self.app.sweep.segments > 5:
+            return
+
         step_size = self.app.data.s11[1].freq - self.app.data.s11[0].freq
         if step_size == 0:
             self.tdr_result_label.setText("")
@@ -300,12 +303,15 @@ class TDRWindow(QtWidgets.QWidget):
         self.updated.emit()
 
     def _tdr_lowpass(self, tdr_format, s11, tdr_window) -> np.ndarray:
-        pad_points = (
-            self.app.tdr_chart.get_fft_points() - len(self.windowed_s11)
-        ) // 2
-        self.windowed_s11 = np.pad(
-            self.windowed_s11, [pad_points + 1, pad_points]
-        )  # Pad array to length self.app.tdr_chart.get_fft_points()
+        fft_points = self.app.tdr_chart.get_fft_points()
+        pad_points = (fft_points - len(self.windowed_s11)) // 2
+        if pad_points >= 0:
+            self.windowed_s11 = np.pad(
+                self.windowed_s11, [pad_points + 1, pad_points]
+            )  # Pad array to length fft_points
+        else:
+            # more data points than FFT size — truncate symmetrically
+            self.windowed_s11 = self.windowed_s11[:fft_points]
         self.windowed_s11 = np.fft.ifftshift(self.windowed_s11)
 
         td = np.fft.ifft(self.windowed_s11)

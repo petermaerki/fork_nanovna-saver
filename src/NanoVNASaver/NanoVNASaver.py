@@ -382,13 +382,15 @@ class NanoVNASaver(QWidget):
         self.btn_save_s1p.clicked.connect(self.save_s1p_quick)
         quick_layout.addWidget(self.btn_save_s1p)
 
+        left_column.addWidget(quick_box)
+
         zoom_range_layout = QtWidgets.QHBoxLayout()
         zoom_range_layout.addWidget(QtWidgets.QLabel("Zoom range +/- Hz:"))
         self.inp_zoom_range = QtWidgets.QLineEdit("1000000")
         self.inp_zoom_range.setFixedWidth(80)
         zoom_range_layout.addWidget(self.inp_zoom_range)
         zoom_range_layout.addStretch()
-        quick_layout.addLayout(zoom_range_layout)
+        left_column.addLayout(zoom_range_layout)
 
         zoom_segments_layout = QtWidgets.QHBoxLayout()
         zoom_segments_layout.addWidget(QtWidgets.QLabel("Zoom segments:"))
@@ -396,14 +398,12 @@ class NanoVNASaver(QWidget):
         self.inp_zoom_segments.setFixedWidth(50)
         zoom_segments_layout.addWidget(self.inp_zoom_segments)
         zoom_segments_layout.addStretch()
-        quick_layout.addLayout(zoom_segments_layout)
+        left_column.addLayout(zoom_segments_layout)
 
         btn_zoom = QtWidgets.QPushButton("Optional: Sweep Zoom to min SWR")
         btn_zoom.setMinimumHeight(20)
         btn_zoom.clicked.connect(self.sweep_zoom_swr)
-        quick_layout.addWidget(btn_zoom)
-
-        left_column.addWidget(quick_box)
+        left_column.addWidget(btn_zoom)
 
         ###############################################################
         # TDR

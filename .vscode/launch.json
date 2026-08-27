@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "NanoVNASaver GUI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "NanoVNASaver.__main__",
+            "console": "integratedTerminal",
+            "args": ["--debug", "--debug-file=${workspaceFolder}/NanoVNASaver.txt"],
+            "justMyCode": false
+        },
+        {
+            "name": "ui_compile",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "tools.ui_compile",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

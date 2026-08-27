@@ -38,12 +38,14 @@ logger = logging.getLogger(__name__)
 
 class FrequencyInputWidget(QtWidgets.QLineEdit):
     def __init__(self, text=""):
-        super().__init__(text)
+        super().__init__()
         self.nextFrequency = -1
         self.previousFrequency = -1
         self.setFixedHeight(20)
         self.setMinimumWidth(60)
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        if text:
+            self.setText(text)
 
     def setText(self, text: str) -> None:
         super().setText(format_frequency_inputs(text))
@@ -251,8 +253,6 @@ class SweepControl(Control):
 
     def store_settings(self) -> None:
         settings = self.get_settings()
-        settings.start = self.inputs["Start"].text()
-        settings.end = self.inputs["Stop"].text()
         settings.center = self.inputs["Center"].text()
         settings.span = self.inputs["Span"].text()
         settings.segments = self.input_segments.text()

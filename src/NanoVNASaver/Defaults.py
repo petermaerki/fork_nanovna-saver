@@ -124,8 +124,8 @@ class MarkersConfig:
 
 @dataclass
 class SweepConfig:
-    start: str = ""
-    end: str = ""
+    start: str = "500000"
+    end: str = "30000000"
     center: str = ""
     span: str = ""
     segments: str = "1"

@@ -134,15 +134,18 @@ class SerialControl(Control):
             frequencies[0],
             frequencies[-1],
         )
-        self.app.sweep_control.set_start(frequencies[0])
-        if frequencies[0] < frequencies[-1]:
-            self.app.sweep_control.set_end(frequencies[-1])
-        else:
-            self.app.sweep_control.set_end(
-                frequencies[0]
-                + self.app.vna.datapoints
-                * self.app.sweep_control.get_segments()
-            )
+        # keep configured sweep range instead of adopting hardware defaults
+        if self.app.sweep_control.get_start() <= 0:
+            self.app.sweep_control.set_start(frequencies[0])
+        if self.app.sweep_control.get_end() <= 0:
+            if frequencies[0] < frequencies[-1]:
+                self.app.sweep_control.set_end(frequencies[-1])
+            else:
+                self.app.sweep_control.set_end(
+                    frequencies[0]
+                    + self.app.vna.datapoints
+                    * self.app.sweep_control.get_segments()
+                )
 
         self.app.sweep_control.set_segments(1)  # speed up things
         self.app.sweep_control.update_center_span()

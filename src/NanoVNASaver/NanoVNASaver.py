@@ -359,7 +359,9 @@ class NanoVNASaver(QWidget):
         quick_box.setLayout(quick_layout)
 
         overview_segments_layout = QtWidgets.QHBoxLayout()
-        overview_segments_layout.addWidget(QtWidgets.QLabel("Overview segments:"))
+        overview_segments_layout.addWidget(
+            QtWidgets.QLabel("Overview segments:")
+        )
         self.inp_overview_segments = QtWidgets.QLineEdit("200")
         self.inp_overview_segments.setFixedWidth(50)
         overview_segments_layout.addWidget(self.inp_overview_segments)
@@ -381,6 +383,33 @@ class NanoVNASaver(QWidget):
         self.btn_save_s1p.setMinimumHeight(20)
         self.btn_save_s1p.clicked.connect(self.save_s1p_quick)
         quick_layout.addWidget(self.btn_save_s1p)
+
+        swr_info_box = QtWidgets.QGroupBox()
+        swr_info_layout = QtWidgets.QFormLayout()
+        swr_info_layout.setVerticalSpacing(0)
+        swr_info_box.setLayout(swr_info_layout)
+
+        self.chk_continuous = QtWidgets.QCheckBox(
+            "sweep continuous for manual tuning"
+        )
+        self.chk_continuous.setChecked(False)
+
+        def _on_continuous_toggled(checked: bool):
+            if checked:
+                self.sweep_control.set_start(500_000)
+                self.sweep_control.set_end(30_000_000)
+                self.sweep_control.set_segments(5)
+                self.sweep.set_logarithmic(True)
+                self.sweep_start()
+
+        self.chk_continuous.toggled.connect(_on_continuous_toggled)
+        swr_info_layout.addRow(self.chk_continuous)
+
+        self.quick_swr_min_label = QtWidgets.QLabel()
+        swr_info_layout.addRow("SWR min", self.quick_swr_min_label)
+        self.quick_swr_freq_label = QtWidgets.QLabel()
+        swr_info_layout.addRow("SWR min f MHz", self.quick_swr_freq_label)
+        left_column.addWidget(swr_info_box)
 
         left_column.addWidget(quick_box)
 
@@ -531,7 +560,7 @@ class NanoVNASaver(QWidget):
         if not self.data.s11:
             return
         min_vswr = min(self.data.s11, key=lambda d: d.vswr)
-        freq_mhz = round(min_vswr.freq / 1e6)
+        freq_mhz = f"{min_vswr.freq / 1e6:.1f}"
         ts = strftime("%Y%m%d_%H%M", localtime())
         name = self.inp_antenna_name.text().strip() or "antenna"
         filename = f"{ts}_{name}_{freq_mhz}MHz.s1p"
@@ -586,6 +615,8 @@ class NanoVNASaver(QWidget):
             m.resetLabels()
         self.s11_min_rl_label.setText("")
         self.s11_min_swr_label.setText("")
+        self.quick_swr_min_label.setText("")
+        self.quick_swr_freq_label.setText("")
         self.s21_min_gain_label.setText("")
         self.s21_max_gain_label.setText("")
         self.tdr_result_label.setText("")
@@ -667,16 +698,20 @@ class NanoVNASaver(QWidget):
                 f" {format_frequency(min_vswr.freq)}"
             )
             self.s11_min_rl_label.setText(format_gain(min_vswr.gain))
-            freq_mhz = round(min_vswr.freq / 1e6)
+            freq_mhz = f"{min_vswr.freq / 1e6:.1f}"
             ts = strftime("%Y%m%d_%H%M", localtime())
             name = self.inp_antenna_name.text().strip() or "antenna"
             self.btn_save_s1p.setText(f"save {ts}_{name}_{freq_mhz}MHz.s1p")
+            self.quick_swr_min_label.setText(format_vswr(min_vswr.vswr))
+            self.quick_swr_freq_label.setText(f"{min_vswr.freq / 1e6:.6f}")
             if self._snap_marker1_to_min_swr and self.markers:
                 self._snap_marker1_to_min_swr = False
                 self.markers[0].setFrequency(str(min_vswr.freq))
         else:
             self.s11_min_swr_label.setText("")
             self.s11_min_rl_label.setText("")
+            self.quick_swr_min_label.setText("")
+            self.quick_swr_freq_label.setText("")
 
         if s21:
             min_gain = min(s21, key=lambda data: data.gain)
@@ -701,6 +736,9 @@ class NanoVNASaver(QWidget):
 
         for marker in self.markers:
             marker.frequencyInput.textEdited.emit(marker.frequencyInput.text())
+
+        if self.chk_continuous.isChecked():
+            self.sweep_start()
 
     def setReference(self, s11=None, s21=None, source=None):
         if not s11:

@@ -175,7 +175,7 @@ class VnaSweeper:
         #     logger.exception("Failed to stop motor after error")
 
     def _find_min_swr(self) -> bool:
-        """Returns True if swr und 2.64 freqeuencies are found"""
+        """Returns True if swr und 2.62 freqeuencies are found"""
         with self.app.dataLock:
             s11: list[Datapoint]
             s11 = self.app.data.s11[:]
@@ -332,7 +332,7 @@ class VnaSweeper:
                 logger.exception("Failed to analyze phase double derivative")
 
         if f_swr_min_Hz is not None:
-            target_swr = 2.64
+            target_swr = 2.62
 
             left_idx = np.where(swr[:idx_min] >= target_swr)[0]
             right_idx = np.where(swr[idx_min:] >= target_swr)[0]
@@ -537,7 +537,7 @@ class VnaSweeper:
         f_swr_p2_64_h_Hz: float,
         swr_min: float,
     ):
-        SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.64 band
+        SWEEP_RANGE_OVERLAP = 1.3  # range biger than plus minus 2.62 band
         assert SWEEP_RANGE_OVERLAP > 1.1
 
         # Safety check: if no valid data from find_min_swr, use full range
@@ -569,7 +569,7 @@ class VnaSweeper:
             use_fixed_zoom = False
             if f_swr_p2_64_l_Hz is None or f_swr_p2_64_h_Hz is None:
                 use_fixed_zoom = True
-                logger.debug("2.64 markers missing, using ±1 MHz zoom")
+                logger.debug("2.62 markers missing, using ±1 MHz zoom")
             elif (
                 abs(f_swr_p2_64_l_Hz - f_swr_min_Hz) > 500e3
                 or abs(f_swr_p2_64_h_Hz - f_swr_min_Hz) > 500e3
@@ -583,7 +583,7 @@ class VnaSweeper:
                 # Use fixed ±1 MHz zoom around set frequency
                 distance_f = 1e6
             else:
-                # Use 2.64 markers for zoom calculation
+                # Use 2.62 markers for zoom calculation
                 distance_f = abs(set_f_swr_min_Hz - f_swr_min_Hz)
                 distance_f = max(
                     abs(f_swr_p2_64_l_Hz - set_f_swr_min_Hz), distance_f

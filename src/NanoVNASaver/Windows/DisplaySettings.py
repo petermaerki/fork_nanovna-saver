@@ -223,13 +223,13 @@ class DisplaySettingsWindow(QtWidgets.QWidget):
         if isinstance(self.vswrMarkers, float):
             self.vswrMarkers = [] if self.vswrMarkers == 0.0 else [self.vswrMarkers]
 
-        # Automatisch Marker 2.64 hinzufügen, falls nicht vorhanden
-        if 2.64 not in self.vswrMarkers:
-            self.vswrMarkers.append(2.64)
+        # Automatisch Marker 2.62 hinzufügen, falls nicht vorhanden
+        if 2.62 not in self.vswrMarkers:
+            self.vswrMarkers.append(2.62)
             self.app.settings.setValue("VSWRMarkers", self.vswrMarkers)
         # Marker in allen relevanten Charts anzeigen
         for c in self.app.s11charts:
-            c.addSWRMarker(2.64)
+            c.addSWRMarker(2.62)
 
         vswr_marker_layout.addRow(
             "VSWR Markers", self.color_picker("VSWRColor", "swr")

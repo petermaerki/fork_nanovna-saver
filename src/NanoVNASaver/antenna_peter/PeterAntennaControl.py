@@ -9,7 +9,7 @@ import re
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from sts3215_ctl import util_mpremote
-from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent, ServoNotAccessibleException
+from sts3215_ctl.servo_ctl import Servo, ServoPortConfig, ServoPersistent, MpRemoteException as ServoNotAccessibleException
 from sts3215_micropython.sts3215_portable import calculator
 
 from ..Controls.Control import Control
@@ -423,7 +423,7 @@ class PeterAntennaControl(Control):
                     self.servos = Servos(port_config=self.port_config)
                 # Setze VSWR-Marker bei Aktivierung des VNA
                 try:
-                    self.vna._set_marker(0, 2.64)
+                    self.vna._set_marker(0, 2.62)
                 except Exception as e:
                     logger.warning(
                         f"VSWR Marker konnte nicht gesetzt werden: {e}"

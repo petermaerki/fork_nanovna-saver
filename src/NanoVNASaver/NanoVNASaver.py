@@ -563,7 +563,7 @@ class NanoVNASaver(QWidget):
         freq_mhz = f"{min_vswr.freq / 1e6:.1f}"
         ts = strftime("%Y%m%d_%H%M", localtime())
         name = self.inp_antenna_name.text().strip() or "antenna"
-        filename = f"{ts}_{name}_{freq_mhz}MHz.s1p"
+        filename = f"{ts}_{name}_{freq_mhz.replace('.', 'p')}MHz.s1p"
         t = Touchstone(filename)
         t.sdata[0] = self.data.s11[:]
         try:
@@ -701,7 +701,7 @@ class NanoVNASaver(QWidget):
             freq_mhz = f"{min_vswr.freq / 1e6:.1f}"
             ts = strftime("%Y%m%d_%H%M", localtime())
             name = self.inp_antenna_name.text().strip() or "antenna"
-            self.btn_save_s1p.setText(f"save {ts}_{name}_{freq_mhz}MHz.s1p")
+            self.btn_save_s1p.setText(f"save {ts}_{name}_{freq_mhz.replace('.', 'p')}MHz.s1p")
             self.quick_swr_min_label.setText(format_vswr(min_vswr.vswr))
             self.quick_swr_freq_label.setText(f"{min_vswr.freq / 1e6:.6f}")
             if self._snap_marker1_to_min_swr and self.markers:

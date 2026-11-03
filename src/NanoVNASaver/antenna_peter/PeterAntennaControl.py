@@ -34,7 +34,9 @@ assert DIRECTORY_MICROPYTHON.is_dir()
 DIRECTORY_LOGS = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f_logs"
 DIRECTORY_LOGS.mkdir(exist_ok=True)
 FILENAME_PERSIST_SERVO_F = DIRECTORY_OF_THIS_FILE / "tmp_sts3215_servo_f.json"
-FILENAME_VNA_CALIBRATION = DIRECTORY_OF_THIS_FILE/"20260401_vna_calibration_at_cables_choke_antenna_MP.cal"
+# FILENAME_VNA_CALIBRATION = DIRECTORY_OF_THIS_FILE/"20260401_vna_calibration_at_cables_choke_antenna_MP.cal"
+FILENAME_VNA_CALIBRATION = DIRECTORY_OF_THIS_FILE/"20261027_SAA2_antennenfusspunkt_tubby.cal"
+
 
 ENABLE_STS3215 = True
 ENABLE_STS3215_SERVO_F = True
@@ -554,7 +556,7 @@ class PeterAntennaControl(Control):
                 p_watt=watts,
                 antenna_q_factor=self.vna.antenna_q,
                 swr_min=self.vna.swr_min,
-                antenna_bandwith_3db_Hz=self.vna.antenna_bandwith_3db_Hz,
+                antenna_bandwith_2p62_Hz=self.vna.antenna_bandwith_2p62_Hz,
                 frequency_deviation_Hz=abs(
                     self.frequency_current.f_value
                     - self.frequency_target.f_value
@@ -644,11 +646,11 @@ class PeterAntennaControl(Control):
 
         current_hz = self.frequency_current.f_value
         target_hz = self.frequency_target.f_value
-        bandwidth_hz = self.vna.antenna_bandwith_3db_Hz
+        bandwidth_hz = self.vna.antenna_bandwith_2p62_Hz
         if target_hz > 0 and current_hz > 0 and bandwidth_hz > 0:
             power_part = calc_power_part_percent(
                 frequency_deviation_Hz=abs(current_hz - target_hz),
-                antenna_bandwith_3db_Hz=bandwidth_hz,
+                antenna_bandwith_2p62_Hz=bandwidth_hz,
             )
             out_of_range = power_part < 70.0
         else:

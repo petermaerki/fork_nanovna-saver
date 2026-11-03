@@ -313,7 +313,7 @@ dependencies = [
     { name = "servo-sts3215" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
@@ -333,30 +333,27 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "mpremote" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = "~=1.19" },
     { name = "numpy", specifier = "~=2.3.5" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = "~=4.1" },
+    { name = "pyinstaller", marker = "extra == 'dev'", specifier = "~=6.11.1" },
+    { name = "pylint", marker = "extra == 'dev'", specifier = "~=4.0" },
     { name = "pyserial", specifier = "~=3.5" },
     { name = "pyside6", specifier = "~=6.10.2" },
+    { name = "pyside6-stubs", marker = "extra == 'dev'", specifier = ">=6.7.3.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = "~=8.3" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = "~=6.0" },
     { name = "qasync", specifier = ">=0.27.1" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = "~=0.14" },
     { name = "scipy", specifier = "~=1.17.0" },
     { name = "servo-sts3215", git = "https://github.com/petermaerki/2026_antenna_servo_controller_git?subdirectory=servo_sts3215&rev=main" },
+    { name = "setuptools-scm", marker = "extra == 'dev'", specifier = ">=8" },
+    { name = "taskipy", marker = "extra == 'dev'", specifier = "~=1.14" },
+    { name = "tox", marker = "extra == 'dev'", specifier = "~=4.23" },
+    { name = "tox-uv", marker = "extra == 'dev'", specifier = "~=1.17" },
+    { name = "types-pyserial", marker = "extra == 'dev'", specifier = "~=3.5" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = "~=1.19" },
-    { name = "pre-commit", specifier = "~=4.1" },
-    { name = "pyinstaller", specifier = "~=6.11.1" },
-    { name = "pylint", specifier = "~=4.0" },
-    { name = "pyside6-stubs", specifier = ">=6.7.3.0" },
-    { name = "pytest", specifier = "~=8.3" },
-    { name = "pytest-cov", specifier = "~=6.0" },
-    { name = "ruff", specifier = "~=0.14" },
-    { name = "setuptools-scm", specifier = ">=8" },
-    { name = "taskipy", specifier = "~=1.14" },
-    { name = "tox", specifier = "~=4.23" },
-    { name = "tox-uv", specifier = "~=1.17" },
-    { name = "types-pyserial", specifier = "~=3.5" },
-]
+provides-extras = ["dev"]
 
 [[package]]
 name = "nodeenv"
@@ -801,7 +798,7 @@ wheels = [
 [[package]]
 name = "servo-sts3215"
 version = "0.1.1"
-source = { git = "https://github.com/petermaerki/2026_antenna_servo_controller_git?subdirectory=servo_sts3215&rev=main#91fe47a138933ed5e00e1f2b16b47d7c3e262b1d" }
+source = { git = "https://github.com/petermaerki/2026_antenna_servo_controller_git?subdirectory=servo_sts3215&rev=main#f973e75f0a5625a281b35bce66691c161200e330" }
 dependencies = [
     { name = "mpremote" },
     { name = "typer" },

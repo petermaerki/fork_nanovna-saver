@@ -212,9 +212,9 @@ class VnaSweeper:
             )
 
         if f_swr_p2_64_l_Hz is not None and f_swr_p2_64_h_Hz is not None:
-            self.f_swr_p2_64_l_Hz = f_swr_p2_64_l_Hz
+            self.f_swr_p2_62_l_Hz = f_swr_p2_64_l_Hz
             self.f_swr_min_Hz = f_swr_min_Hz
-            self.f_swr_p2_64_h_Hz = f_swr_p2_64_h_Hz
+            self.f_swr_p2_62_h_Hz = f_swr_p2_64_h_Hz
             self.swr_min = swr_min
             return True
         return False
@@ -224,8 +224,8 @@ class VnaSweeper:
         assert SWEEP_RANGE_OVERLAP > 1.05
         target_hz = self.ctl.frequency_target.f_value
         distance_f = abs(target_hz - self.f_swr_min_Hz)
-        distance_f = max(abs(self.f_swr_p2_64_l_Hz - target_hz), distance_f)
-        distance_f = max(abs(self.f_swr_p2_64_h_Hz - target_hz), distance_f)
+        distance_f = max(abs(self.f_swr_p2_62_l_Hz - target_hz), distance_f)
+        distance_f = max(abs(self.f_swr_p2_62_h_Hz - target_hz), distance_f)
         upper_freq_Hz = target_hz + distance_f * SWEEP_RANGE_OVERLAP
         upper_freq_Hz = min(F_USEFUL_MAX_Hz_obsolete, upper_freq_Hz)
         lower_freq_Hz = target_hz - distance_f * SWEEP_RANGE_OVERLAP
@@ -235,7 +235,7 @@ class VnaSweeper:
         self.upper_freq_Hz = upper_freq_Hz
         # self.POINTS_IN_BANDWITH_ZOOM = 50
         frequency_per_point = (
-            abs(self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz)
+            abs(self.f_swr_p2_62_h_Hz - self.f_swr_p2_62_l_Hz)
             / self.POINTS_IN_BANDWITH_ZOOM
         )
         points_total = (upper_freq_Hz - lower_freq_Hz) / frequency_per_point
@@ -355,11 +355,11 @@ class VnaSweeper:
         return f_swr_p2_64_l_Hz, f_swr_min_Hz, f_swr_p2_64_h_Hz, swr_min
 
     @property
-    def f_swr_p2_64_l_Hz(self) -> int:
+    def f_swr_p2_62_l_Hz(self) -> int:
         return self.app.markers[0].frequencyInput.get_freq()
 
-    @f_swr_p2_64_l_Hz.setter
-    def f_swr_p2_64_l_Hz(self, freq_Hz: int) -> None:
+    @f_swr_p2_62_l_Hz.setter
+    def f_swr_p2_62_l_Hz(self, freq_Hz: int) -> None:
         self._set_marker(0, freq_Hz=freq_Hz)
 
     @property
@@ -371,11 +371,11 @@ class VnaSweeper:
         self._set_marker(1, freq_Hz=freq_Hz)
         self.ctl.frequency_current.set_value(float(freq_Hz))
         target_hz = self.ctl.frequency_target.f_value
-        bandwidth_hz = self.antenna_bandwith_3db_Hz
+        bandwidth_hz = self.antenna_bandwith_2p62_Hz
         if target_hz > 0 and bandwidth_hz > 0:
             power_part = calc_power_part_percent(
                 frequency_deviation_Hz=abs(freq_Hz - target_hz),
-                antenna_bandwith_3db_Hz=bandwidth_hz,
+                antenna_bandwith_2p62_Hz=bandwidth_hz,
             )
             out_of_range = power_part < 70.0
         else:
@@ -383,11 +383,11 @@ class VnaSweeper:
         self.ctl.set_frequency_out_of_range(out_of_range)
 
     @property
-    def f_swr_p2_64_h_Hz(self) -> int:
+    def f_swr_p2_62_h_Hz(self) -> int:
         return self.app.markers[2].frequencyInput.get_freq()
 
-    @f_swr_p2_64_h_Hz.setter
-    def f_swr_p2_64_h_Hz(self, freq_Hz: int) -> None:
+    @f_swr_p2_62_h_Hz.setter
+    def f_swr_p2_62_h_Hz(self, freq_Hz: int) -> None:
         self._set_marker(2, freq_Hz=freq_Hz)
 
     def _set_marker(self, index_0: int, freq_Hz: int | float):
@@ -398,8 +398,8 @@ class VnaSweeper:
             logger.warning(f"_set_marker: Marker-Index {index_0} nicht vorhanden (len={len(self.app.markers)})")
 
     @property
-    def antenna_bandwith_3db_Hz(self) -> float:
-        bandwith_hz = self.f_swr_p2_64_h_Hz - self.f_swr_p2_64_l_Hz
+    def antenna_bandwith_2p62_Hz(self) -> float:
+        bandwith_hz = self.f_swr_p2_62_h_Hz - self.f_swr_p2_62_l_Hz
         if bandwith_hz >= 0:
             return bandwith_hz
         return 42.0
@@ -407,7 +407,7 @@ class VnaSweeper:
     @property
     def antenna_q(self) -> float:
         try:
-            antenna_q = self.f_swr_min_Hz / self.antenna_bandwith_3db_Hz
+            antenna_q = self.f_swr_min_Hz / self.antenna_bandwith_2p62_Hz
         except ZeroDivisionError:
             return 42
         return antenna_q

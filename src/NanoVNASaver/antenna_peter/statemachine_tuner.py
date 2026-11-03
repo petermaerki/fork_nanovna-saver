@@ -194,9 +194,9 @@ class StatemachineTuner:
         logger.info(f"search history: {len(entries)} entries, freq={frequency_target_hz:.0f} heading={heading_target_deg:.1f}")
         for entry in reversed(entries):
             freq_diff = abs(entry.frequency_target_hz - frequency_target_hz)
-            head_diff = abs(entry.heading_target_deg - heading_target_deg)
+            head_diff = abs((entry.heading_target_deg - heading_target_deg + 90.0) % 180.0 - 90.0)
             # logger.info(f"  check entry freq={entry.frequency_target_hz} heading={entry.heading_target_deg} -> freq_diff={freq_diff:.0f} head_diff={head_diff:.1f}")
-            if freq_diff < 300 and head_diff < 10:
+            if freq_diff < 1000 and head_diff < 20:
                 if entry is entries[-1]:
                     logger.info("history: newest entry matches, servos already at target values")
                     return
@@ -274,7 +274,7 @@ class StatemachineTuner:
         difference_hz = current_hz - target_hz
         set_iteratoins_plus = 1
         points_zoom = ctl.vna.POINTS_IN_BANDWITH_ZOOM
-        bandwith_Hz = ctl.vna.antenna_bandwith_3db_Hz
+        bandwith_Hz = ctl.vna.antenna_bandwith_2p62_Hz
         bandwith_per_point_Hz = bandwith_Hz/points_zoom
         tolerance_Hz = max(400, bandwith_per_point_Hz*2.0)
         if abs(difference_hz) < tolerance_Hz:

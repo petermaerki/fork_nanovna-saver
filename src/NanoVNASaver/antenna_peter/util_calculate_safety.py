@@ -1,12 +1,12 @@
 import math
 
 
-def calc_power_part_percent(frequency_deviation_Hz: float, antenna_bandwith_3db_Hz: float) -> float:
+def calc_power_part_percent(frequency_deviation_Hz: float, antenna_bandwith_2p62_Hz: float) -> float:
     """Lorentz-like off-resonance power share in percent.
     P_rel = 100 / (1 + (2*df/BW)^2), BW = full 3 dB bandwidth.
     """
-    if antenna_bandwith_3db_Hz > 0:
-        return 100.0 / (1.0 + (2.0 * abs(frequency_deviation_Hz) / antenna_bandwith_3db_Hz) ** 2)
+    if antenna_bandwith_2p62_Hz > 0:
+        return 100.0 / (1.0 + (2.0 * abs(frequency_deviation_Hz) / antenna_bandwith_2p62_Hz) ** 2)
     if abs(frequency_deviation_Hz) == 0:
         return 100.0
     return 0.0
@@ -17,7 +17,7 @@ def calculate_safety_distance(
     p_watt: float,
     antenna_q_factor: float,
     swr_min: float,
-    antenna_bandwith_3db_Hz: float,
+    antenna_bandwith_2p62_Hz: float,
     frequency_deviation_Hz: float,
     loop_diameter_m=1.0,
     loop_area_m2=0.78,
@@ -70,13 +70,13 @@ def calculate_safety_distance(
 
     power_part = calc_power_part_percent(
         frequency_deviation_Hz=frequency_deviation_Hz,
-        antenna_bandwith_3db_Hz=antenna_bandwith_3db_Hz,
+        antenna_bandwith_2p62_Hz=antenna_bandwith_2p62_Hz,
     )
 
     lines = [
         f"Antenna Q Factor: {antenna_q_factor:.0f}",
         f"Antenna SWR: {swr_min:.2f}",
-        f"Antenna Bandwidth 3dB: {antenna_bandwith_3db_Hz / 1000.0:.3f} kHz",
+        f"Antenna Bandwidth SWR 2.62: {antenna_bandwith_2p62_Hz / 1000.0:.3f} kHz",
         f"TX Frequency: {f_mhz:.3f} MHz",
         f"TX Power Transmitter: {p_watt:.0f} W",
         f"Antenna Efficiency: {efficiency:.2f} %",
